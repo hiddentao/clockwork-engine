@@ -1,0 +1,117 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+Clockwork is a TypeScript game engine focused on deterministic, replayable games. It provides deterministic game loops, recording/replay functionality, and spatial collision systems built on top of Pixi.js.
+
+## Build System & Commands
+- **Package manager**: Bun
+- **Build**: `bun run build` - Compiles TypeScript to dist/
+- **Development**: `bun run dev` - Watch mode compilation
+- **Testing**: `bun test` (watch with `bun test --watch`)
+- **Linting**: `biome check .` (fix with `biome check --write .`)
+- **Demo**: `bun run demo` - Runs Vite dev server in demo/ directory
+
+## Architecture Overview
+
+### Core Systems
+- **GameEngine**: Abstract base class providing game state management (READY/PLAYING/PAUSED/ENDED), object registration, and deterministic updates
+- **GameRecorder**: Captures user inputs and object updates for later replay (recording only - does not execute)
+- **ReplayManager**: Handles playback of recorded game sessions with frame-accurate determinism
+- **InputManager**: Abstracts input handling between live and recorded sources via InputSource interface
+- **PRNG**: Seeded random number generator using 'alea' package for deterministic behavior
+- **Timer**: Frame-based timer system with async callbacks (replaces setTimeout/setInterval)
+- **Serializer**: Universal serialization with type registration for all parameter types
+
+### Key Patterns
+- Frame-based deterministic updates (not delta-time based)
+- GameObject type registry: objects self-register by type string, engine manages groups automatically
+- Manual recording requirement: developers must explicitly call recordObjectUpdate() for direct object changes
+- Strict separation of recorded inputs vs live inputs via InputSource abstraction
+- Event-driven architecture with GameEventType enum (USER_INPUT, OBJECT_UPDATE)
+- Universal serialization supporting primitives, arrays, objects, and custom classes with serialize/deserialize methods
+
+### Directory Structure
+- `src/` - Main engine source code
+- `src/geometry/` - Vector math, collision detection, spatial utilities
+- `src/enums/` - Game state and event type definitions
+- `demo/` - Example implementation using Vite + Pixi.js
+- `tests/` - Unit tests for core systems
+
+### Dependencies
+- **Runtime**: pixi.js (rendering), pixi-viewport (camera), alea (PRNG)
+- **Development**: TypeScript, Biome (linting/formatting), Bun (runtime/testing)
+
+## Development Guidelines
+
+### GameObject Implementation
+- All game objects must extend abstract GameObject class and implement getId(), getType(), serialize()
+- Objects self-register with engine in constructor: engine.registerGameObject(this)
+- Custom classes need serialization support: serialize() method and static deserialize() method
+
+### Deterministic Behavior
+- Use engine.getPRNG() for all randomization to maintain determinism
+- Frame counts are integers; avoid floating-point delta times for determinism
+- Use engine.setTimeout()/setInterval() for frame-based timing instead of native timers
+
+### Recording System
+- GameRecorder only records events - it does not execute commands
+- Must manually call recorder.recordObjectUpdate() for direct object modifications outside input flow
+- All parameters are automatically serialized before recording
+- Serializer requires type registration: serializer.registerType('ClassName', ClassName)
+
+### State Management
+- Engine enforces strict state transitions with error checking
+- READY → PLAYING (start), PLAYING → PAUSED (pause), PAUSED → PLAYING (resume), PLAYING/PAUSED → ENDED (end)
+- Only PLAYING state processes updates in the game loop
+
+## Game Loop Update Order
+The engine processes updates in this specific order each frame:
+1. Process inputs first (InputManager.update)
+2. Update timer system with async callbacks (Timer.update) 
+3. Update all game object groups by type (GameObjectGroup.update)
+4. Increment frame counter (totalFrames += deltaFrames)
+
+## Usage Examples
+
+### Recording Example
+```typescript
+const recorder = new GameRecorder()
+const serializer = new Serializer()
+serializer.registerType('Vector2D', Vector2D)
+
+engine.initialize("seed123")
+recorder.startRecording(engine)
+
+// Manual object updates must be recorded explicitly
+const player = engine.getGameObjectGroup("Player")?.getById("player1")
+player.setPosition(new Vector2D(10, 20))
+recorder.recordObjectUpdate({
+  type: GameEventType.OBJECT_UPDATE,
+  frame: engine.getTotalFrames(),
+  objectType: "Player", 
+  objectId: "player1",
+  method: "setPosition",
+  params: [serializer.serialize(new Vector2D(10, 20))]
+})
+```
+
+### Replay Example
+```typescript
+const replayManager = new ReplayManager(engine, inputManager, serializer)
+replayManager.replay(recording) // Deterministic playback
+```
+
+## Testing
+Tests use Bun's built-in test runner. Run specific test files with `bun test path/to/file.test.ts`. Key test areas:
+- Deterministic behavior with fixed seeds
+- Serialization/deserialization for all custom types  
+- Record/replay produces identical outcomes
+- State transition enforcement
+
+
+## Library docs
+- Pixi.js - .devdocs/pixi.txt
+- Always use bun as the package maanger
+- don't auto-run demo and/or engine dev server
