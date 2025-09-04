@@ -1,8 +1,5 @@
 import type { GameEngine } from "./GameEngine"
-import type {
-  AnyGameEvent,
-  GameRecording,
-} from "./types"
+import type { AnyGameEvent, GameRecording } from "./types"
 
 export class GameRecorder {
   private recording: GameRecording | null = null
@@ -81,5 +78,4 @@ export class GameRecorder {
     this.isRecording = false
     this.recording = null
   }
-
 }

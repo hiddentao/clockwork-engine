@@ -1,13 +1,8 @@
 import type { GameEventSource } from "./EventSource"
 import type { GameEngine } from "./GameEngine"
 import type { GameRecorder } from "./GameRecorder"
-import type {
-  AnyGameEvent,
-  GameRecording,
-  ObjectUpdateEvent,
-  UserInputEvent,
-} from "./types"
 import type { IGameLoop } from "./IGameLoop"
+import type { AnyGameEvent, ObjectUpdateEvent, UserInputEvent } from "./types"
 import { GameEventType } from "./types"
 
 export class GameEventManager implements IGameLoop {

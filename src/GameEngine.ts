@@ -8,14 +8,21 @@ import { UserInputEventSource } from "./UserInputEventSource"
 import { GameState } from "./types"
 
 export enum GameEngineEventType {
-  STATE_CHANGE = 'stateChange'
+  STATE_CHANGE = "stateChange",
 }
 
-export interface GameEngineEvents extends Record<string, (...args: any[]) => void> {
-  [GameEngineEventType.STATE_CHANGE]: (newState: GameState, oldState: GameState) => void
+export interface GameEngineEvents
+  extends Record<string, (...args: any[]) => void> {
+  [GameEngineEventType.STATE_CHANGE]: (
+    newState: GameState,
+    oldState: GameState,
+  ) => void
 }
 
-export abstract class GameEngine extends EventEmitter<GameEngineEvents> implements GameEngineInterface {
+export abstract class GameEngine
+  extends EventEmitter<GameEngineEvents>
+  implements GameEngineInterface
+{
   private gameObjectGroups: Map<string, GameObjectGroup> = new Map()
   private totalFrames: number = 0
   private state: GameState = GameState.READY

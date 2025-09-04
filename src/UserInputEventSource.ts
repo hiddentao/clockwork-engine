@@ -63,7 +63,7 @@ export class UserInputEventSource implements GameEventSource {
    * Get all queued data (read-only)
    */
   getQueuedData(): readonly any[] {
-    return this.dataQueue.map(item => item.data)
+    return this.dataQueue.map((item) => item.data)
   }
 
   /**

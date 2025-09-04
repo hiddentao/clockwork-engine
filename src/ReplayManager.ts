@@ -1,10 +1,7 @@
 import type { GameEngine } from "./GameEngine"
-import type {
-  AnyGameEvent,
-  GameRecording,
-} from "./types"
 import { RecordedEventSource } from "./RecordedEventSource"
 import { Serializer } from "./Serializer"
+import type { AnyGameEvent, GameRecording } from "./types"
 
 export interface ReplayOptions {
   pauseOnEnd?: boolean
@@ -16,7 +13,7 @@ export class ReplayManager {
   private originalEventSource: any = null
   private isReplaying: boolean = false
   private replayOptions: ReplayOptions = {}
-  
+
   // Timestamp-based progress tracking
   private recordingStartTime: number = 0
   private recordingEndTime: number = 0
@@ -45,8 +42,10 @@ export class ReplayManager {
 
     // Store timing information for progress calculation
     const events = recording.events as AnyGameEvent[]
-    this.recordingStartTime = events.length > 0 ? events[0].timestamp : Date.now()
-    this.recordingEndTime = events.length > 0 ? events[events.length - 1].timestamp : Date.now()
+    this.recordingStartTime =
+      events.length > 0 ? events[0].timestamp : Date.now()
+    this.recordingEndTime =
+      events.length > 0 ? events[events.length - 1].timestamp : Date.now()
     this.replayStartTime = Date.now()
 
     // 1. Initialize engine with recording seed
@@ -108,7 +107,7 @@ export class ReplayManager {
     // Calculate progress based on elapsed time vs recording duration
     const recordingDuration = this.recordingEndTime - this.recordingStartTime
     const elapsedTime = Date.now() - this.replayStartTime
-    
+
     let progress = 0
     if (recordingDuration > 0) {
       progress = Math.min(1, elapsedTime / recordingDuration)
@@ -120,5 +119,4 @@ export class ReplayManager {
       hasMoreEvents,
     }
   }
-
 }

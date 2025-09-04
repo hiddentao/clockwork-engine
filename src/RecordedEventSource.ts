@@ -46,5 +46,4 @@ export class RecordedEventSource implements GameEventSource {
   reset(): void {
     this.currentIndex = 0
   }
-
 }
