@@ -85,12 +85,11 @@ export class UI {
     this.gameControls.innerHTML = `
       <h3>Game Controls</h3>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-        <button id="start-btn">Start</button>
         <button id="pause-btn">Pause</button>
         <button id="reset-btn">Reset</button>
       </div>
       <div style="margin-top: 10px; padding: 8px; background: #1a1a3e; border-radius: 4px;">
-        <small>🎮 Use WASD or Arrow Keys to control the snake</small>
+        <small>🎮 Use WASD or Arrow Keys to move the snake</small>
       </div>
     `
     this.controlsContainer.appendChild(this.gameControls)
@@ -225,11 +224,6 @@ export class UI {
     })
 
     // Game controls
-    this.element.querySelector("#start-btn")?.addEventListener("click", () => {
-      this.onAction("start")
-      this.closeMobileMenuIfOpen()
-    })
-
     this.element.querySelector("#pause-btn")?.addEventListener("click", () => {
       this.onAction("pause")
       this.closeMobileMenuIfOpen()
@@ -314,7 +308,7 @@ export class UI {
   private getStateInstructions(state: GameState): string {
     switch (state) {
       case GameState.READY:
-        return "Click Start to begin playing"
+        return "Move the snake to begin playing"
       case GameState.PLAYING:
         return "Use WASD or arrows to move snake"
       case GameState.PAUSED:
@@ -327,9 +321,6 @@ export class UI {
   }
 
   private updateButtonStates(status: UIStatus): void {
-    const startBtn = this.element.querySelector(
-      "#start-btn",
-    ) as HTMLButtonElement
     const pauseBtn = this.element.querySelector(
       "#pause-btn",
     ) as HTMLButtonElement
@@ -344,7 +335,6 @@ export class UI {
     ) as HTMLButtonElement
 
     // Game controls
-    startBtn.disabled = status.state !== GameState.READY || status.isReplaying
     pauseBtn.disabled =
       (status.state !== GameState.PLAYING &&
         status.state !== GameState.PAUSED) ||

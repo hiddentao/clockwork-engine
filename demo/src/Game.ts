@@ -5,23 +5,22 @@ import {
   ReplayManager,
   Serializer,
   UserInputEventSource,
-  Vector2D,
 } from "clockwork"
 import * as PIXI from "pixi.js"
 import { Renderer } from "./Renderer"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
-import { Apple, Snake, Wall } from "./gameObjects"
 import { Direction } from "./utils/constants"
 
 export class Game {
   private app!: PIXI.Application
-  private engine!: DemoGameEngine
+  private playEngine!: DemoGameEngine
+  private replayEngine!: DemoGameEngine
+  private activeEngine!: DemoGameEngine
   private renderer!: Renderer
   private ui!: UI
   private recorder!: GameRecorder
   private replayManager!: ReplayManager
-  private serializer!: Serializer
 
   // Game state
   private isRecording = false
@@ -45,18 +44,20 @@ export class Game {
       antialias: false,
     })
 
-    // Initialize engine
-    this.engine = new DemoGameEngine()
-    this.engine.reset("demo-seed-" + Date.now())
+    // Initialize engines
+    this.playEngine = new DemoGameEngine()
+    this.replayEngine = new DemoGameEngine()
+    this.activeEngine = this.playEngine // Start with play engine active
+
+    this.playEngine.reset("demo-seed-" + Date.now())
 
     // Initialize systems
-    this.serializer = new Serializer()
-    this.setupSerializerTypes()
     this.recorder = new GameRecorder()
-    this.replayManager = new ReplayManager(this.engine, this.serializer)
+    this.replayManager = new ReplayManager(this.replayEngine, new Serializer())
 
-    // Connect recorder to event manager
-    this.engine.getEventManager().setRecorder(this.recorder)
+    // Connect recorder ONLY to play engine
+    this.playEngine.getEventManager().setRecorder(this.recorder)
+    // Replay engine has NO recorder connected - prevents re-recording
 
     // Listen for state changes to auto-start/stop recording
     this.setupStateChangeListeners()
@@ -115,41 +116,30 @@ export class Game {
     window.addEventListener("resize", handleResize)
   }
 
-  private setupSerializerTypes(): void {
-    this.serializer.registerType("Vector2D", Vector2D)
-    this.serializer.registerType("Snake", Snake)
-    this.serializer.registerType("Apple", Apple)
-    this.serializer.registerType("Wall", Wall)
-  }
-
   private setupStateChangeListeners(): void {
-    this.engine.on(GameEngineEventType.STATE_CHANGE, (newState, oldState) => {
-      console.log(`🎮 State changed: ${oldState} → ${newState}`)
+    this.playEngine.on(
+      GameEngineEventType.STATE_CHANGE,
+      (newState, oldState) => {
+        console.log(`🎮 State changed: ${oldState} → ${newState}`)
 
-      // Auto-start recording when game starts playing
-      if (newState === GameState.PLAYING && !this.isReplaying) {
-        if (!this.isRecording) {
-          console.log("📹 Auto-starting recording...")
-          this.startRecording()
+        // Auto-start recording when game starts playing
+        if (newState === GameState.PLAYING && !this.isReplaying) {
+          if (!this.isRecording) {
+            console.log("📹 Auto-starting recording...")
+            this.startRecording()
+          }
         }
-      }
 
-      // Auto-stop recording when game ends
-      if (newState === GameState.ENDED) {
-        if (this.isRecording) {
+        // Auto-stop recording when game ends or resets
+        if (
+          (newState === GameState.ENDED || newState === GameState.READY) &&
+          this.isRecording
+        ) {
           console.log("🛑 Auto-stopping recording...")
           this.stopRecording()
         }
-      }
-
-      // Stop recording if game is reset
-      if (newState === GameState.READY) {
-        if (this.isRecording) {
-          console.log("🔄 Stopping recording due to reset...")
-          this.stopRecording()
-        }
-      }
-    })
+      },
+    )
   }
 
   private setupInput(): void {
@@ -191,12 +181,12 @@ export class Game {
     console.log(`🎮 Key pressed: ${direction}`)
 
     // Auto-start game if in READY state
-    if (this.engine.getState() === GameState.READY) {
+    if (this.activeEngine.getState() === GameState.READY) {
       console.log("🚀 Auto-starting game from movement key...")
-      this.engine.start()
+      this.activeEngine.start()
     }
 
-    const eventManager = this.engine.getEventManager()
+    const eventManager = this.activeEngine.getEventManager()
     const eventSource = eventManager.getSource() as UserInputEventSource
 
     // Queue input event with just the data
@@ -205,17 +195,17 @@ export class Game {
   }
 
   private handlePauseResume(): void {
-    const currentState = this.engine.getState()
+    const currentState = this.activeEngine.getState()
 
     if (currentState === GameState.PLAYING) {
       console.log("⏸️  Pausing game/replay...")
-      this.engine.pause()
+      this.activeEngine.pause()
     } else if (currentState === GameState.PAUSED) {
       console.log("▶️  Resuming game/replay...")
-      this.engine.resume()
+      this.activeEngine.resume()
       // Ensure normal speed for gameplay (not replay)
       if (!this.isReplaying) {
-        this.app.ticker.speed = 1
+        this.setTickerSpeed(1)
       }
     }
   }
@@ -227,10 +217,10 @@ export class Game {
 
       this.updateGame(deltaFrames)
 
-      this.renderer.render(this.engine)
+      this.renderer.render(this.activeEngine)
       this.ui.updateStatus({
-        state: this.engine.getState(),
-        frame: this.engine.getTotalFrames(),
+        state: this.activeEngine.getState(),
+        frame: this.activeEngine.getTotalFrames(),
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
@@ -239,8 +229,8 @@ export class Game {
   }
 
   private async updateGame(deltaFrames: number): Promise<void> {
-    if (this.engine.getState() === GameState.PLAYING) {
-      await this.engine.update(deltaFrames)
+    if (this.activeEngine.getState() === GameState.PLAYING) {
+      await this.activeEngine.update(deltaFrames)
 
       // Stop replay if replay manager has finished
       if (this.isReplaying && !this.replayManager.isCurrentlyReplaying()) {
@@ -251,37 +241,15 @@ export class Game {
 
   private onUIAction(action: string, data?: any): void {
     console.log(`🔧 UI Action: ${action}`, data)
-    const currentState = this.engine.getState()
+    const currentState = this.activeEngine.getState()
     console.log(`📊 Current state: ${currentState}`)
 
     switch (action) {
-      case "start":
-        console.log("🚀 Starting game...")
-        this.app.ticker.speed = 1 // Ensure normal speed for gameplay
-        this.engine.start()
-        console.log(`📊 New state: ${this.engine.getState()}`)
-        break
       case "pause":
-        if (this.engine.getState() === GameState.PLAYING) {
-          console.log("⏸️  Pausing game...")
-          this.engine.pause()
-        } else if (this.engine.getState() === GameState.PAUSED) {
-          console.log("▶️  Resuming game...")
-          this.engine.resume()
-          // Ensure normal speed for gameplay (not replay)
-          if (!this.isReplaying) {
-            this.app.ticker.speed = 1
-          }
-        }
-        console.log(`📊 New state: ${this.engine.getState()}`)
+        this.handlePauseResume()
         break
       case "reset":
-        console.log("🔄 Resetting game...")
-        this.engine.reset()
-        this.stopRecording()
-        this.stopReplay()
-        this.app.ticker.speed = 1 // Ensure normal speed after reset
-        console.log(`📊 New state: ${this.engine.getState()}`)
+        this.switchToPlayMode()
         break
       case "record":
         this.startRecording()
@@ -298,7 +266,7 @@ export class Game {
       case "replaySpeed":
         this.replaySpeed = data
         if (this.isReplaying) {
-          this.app.ticker.speed = this.replaySpeed
+          this.setTickerSpeed(this.replaySpeed)
         }
         break
     }
@@ -309,7 +277,7 @@ export class Game {
 
     this.isRecording = true
     const description = `Snake game recorded at ${new Date().toISOString()}`
-    this.recorder.startRecording(this.engine, description)
+    this.recorder.startRecording(this.playEngine, description)
   }
 
   private stopRecording(): void {
@@ -322,19 +290,49 @@ export class Game {
   private startReplay(): void {
     if (this.isReplaying || !this.recorder.getCurrentRecording()) return
 
-    this.isReplaying = true
-    this.app.ticker.speed = this.replaySpeed
     const recording = this.recorder.getCurrentRecording()
-    if (recording) {
-      this.replayManager.replay(recording)
-    }
+    if (!recording) return
+
+    console.log("🎬 Starting replay mode...")
+    this.isReplaying = true
+    this.setTickerSpeed(this.replaySpeed)
+
+    // Switch to replay engine
+    this.activeEngine = this.replayEngine
+
+    // Start replay on the replay engine
+    this.replayManager.replay(recording)
   }
 
   private stopReplay(): void {
     if (!this.isReplaying) return
 
+    console.log("⏹️ Stopping replay mode...")
     this.isReplaying = false
-    this.app.ticker.speed = 1 // Reset to normal speed
+    this.setTickerSpeed(1) // Reset to normal speed
     this.replayManager.stopReplay()
+
+    // Switch back to play engine
+    this.switchToPlayMode()
+  }
+
+  private switchToPlayMode(): void {
+    console.log("🔄 Switching to play mode...")
+
+    // Stop any ongoing recording or replay
+    this.stopRecording()
+    this.stopReplay()
+
+    // Switch to play engine and reset it
+    this.activeEngine = this.playEngine
+    this.playEngine.reset("demo-seed-" + Date.now())
+    this.playEngine.getEventManager().setRecorder(this.recorder)
+
+    // Reset speed
+    this.setTickerSpeed(1)
+  }
+
+  private setTickerSpeed(speed: number): void {
+    this.app.ticker.speed = speed
   }
 }
