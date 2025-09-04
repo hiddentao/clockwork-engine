@@ -1,44 +1,30 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
-import { Serializer } from "./Serializer"
 import type { AnyGameEvent, GameRecording } from "./types"
-
-export interface ReplayOptions {
-  pauseOnEnd?: boolean
-}
 
 export class ReplayManager {
   private engine: GameEngine
-  private serializer: Serializer
-  private originalEventSource: any = null
   private isReplaying: boolean = false
-  private replayOptions: ReplayOptions = {}
 
   // Timestamp-based progress tracking
   private recordingStartTime: number = 0
   private recordingEndTime: number = 0
   private replayStartTime: number = 0
 
-  constructor(engine: GameEngine, serializer: Serializer) {
+  constructor(engine: GameEngine) {
     this.engine = engine
-    this.serializer = serializer
   }
 
   /**
    * Start replaying a recorded game session
    * @param recording The game recording to replay
-   * @param options Optional replay configuration
    */
-  replay(recording: GameRecording, options: ReplayOptions = {}): void {
+  replay(recording: GameRecording): void {
     if (this.isReplaying) {
       throw new Error("Already replaying. Stop current replay first.")
     }
 
-    this.replayOptions = { ...options }
     this.isReplaying = true
-
-    // Store the original input source so we can restore it later
-    this.originalEventSource = this.engine.getEventManager().getSource()
 
     // Store timing information for progress calculation
     const events = recording.events as AnyGameEvent[]
@@ -60,7 +46,7 @@ export class ReplayManager {
   }
 
   /**
-   * Stop the current replay and restore original input source
+   * Stop the current replay
    */
   stopReplay(): void {
     if (!this.isReplaying) {
@@ -68,12 +54,6 @@ export class ReplayManager {
     }
 
     this.isReplaying = false
-
-    // Restore original input source
-    if (this.originalEventSource) {
-      this.engine.getEventManager().setSource(this.originalEventSource)
-      this.originalEventSource = null
-    }
 
     // Pause the engine
     if (this.engine.getState() === "PLAYING") {

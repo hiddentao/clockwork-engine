@@ -105,12 +105,10 @@ export class UI {
       </div>
       <div style="margin-top: 10px;">
         <label>Speed: </label>
-        <select id="replay-speed">
-          <option value="0.5">0.5x</option>
-          <option value="1" selected>1x</option>
-          <option value="2">2x</option>
-          <option value="4">4x</option>
-        </select>
+        <input type="range" id="replay-speed" 
+               min="0.1" max="3" step="0.1" value="1"
+               style="width: 150px; vertical-align: middle;">
+        <span id="replay-speed-value">1.0x</span>
       </div>
     `
     this.controlsContainer.appendChild(this.replayControls)
@@ -256,9 +254,14 @@ export class UI {
 
     this.element
       .querySelector("#replay-speed")
-      ?.addEventListener("change", (e) => {
-        const target = e.target as HTMLSelectElement
-        this.onAction("replaySpeed", parseFloat(target.value))
+      ?.addEventListener("input", (e) => {
+        const target = e.target as HTMLInputElement
+        const speed = parseFloat(target.value)
+        const displayElement = this.element.querySelector("#replay-speed-value")
+        if (displayElement) {
+          displayElement.textContent = `${speed.toFixed(1)}x`
+        }
+        this.onAction("replaySpeed", speed)
       })
   }
 

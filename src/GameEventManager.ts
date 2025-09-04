@@ -18,7 +18,7 @@ export class GameEventManager implements IGameLoop {
   /**
    * Set the game recorder for this event manager
    */
-  setRecorder(recorder: GameRecorder): void {
+  setRecorder(recorder: GameRecorder | undefined): void {
     this.recorder = recorder
   }
 

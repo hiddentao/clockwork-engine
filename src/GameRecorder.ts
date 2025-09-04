@@ -1,17 +1,22 @@
-import type { GameEngine } from "./GameEngine"
+import type { GameEventManager } from "./GameEventManager"
 import type { AnyGameEvent, GameRecording } from "./types"
 
 export class GameRecorder {
   private recording: GameRecording | null = null
   private isRecording: boolean = false
+  private eventManager: GameEventManager | null = null
 
   /**
    * Start recording a game session
-   * Begins recording from the current engine state
+   * Begins recording from the current event manager
    */
-  startRecording(engine: GameEngine, description?: string): void {
+  startRecording(
+    eventManager: GameEventManager,
+    seed: string,
+    description?: string,
+  ): void {
     this.recording = {
-      seed: engine.getSeed(),
+      seed,
       events: [],
       metadata: {
         createdAt: Date.now(),
@@ -20,6 +25,8 @@ export class GameRecorder {
       },
     }
 
+    this.eventManager = eventManager
+    this.eventManager.setRecorder(this)
     this.isRecording = true
   }
 
@@ -34,19 +41,20 @@ export class GameRecorder {
   }
 
   /**
-   * Stop recording and return the recorded session
-   * @returns The recorded game session, or null if not recording
+   * Stop recording
+   * Recording data remains available via getCurrentRecording()
    */
-  stopRecording(): GameRecording | null {
+  stopRecording(): void {
     if (!this.isRecording || !this.recording) {
-      return null
+      return
+    }
+
+    if (this.eventManager) {
+      this.eventManager.setRecorder(undefined)
+      this.eventManager = null
     }
 
     this.isRecording = false
-    const finalRecording = { ...this.recording }
-    this.recording = null
-
-    return finalRecording
   }
 
   /**
@@ -65,17 +73,14 @@ export class GameRecorder {
   }
 
   /**
-   * Get the number of events recorded so far
+   * Reset the recorder, clearing any existing recording
    */
-  getEventCount(): number {
-    return this.recording ? this.recording.events.length : 0
-  }
-
-  /**
-   * Cancel the current recording without returning data
-   */
-  cancelRecording(): void {
-    this.isRecording = false
+  reset(): void {
     this.recording = null
+    this.isRecording = false
+    if (this.eventManager) {
+      this.eventManager.setRecorder(undefined)
+      this.eventManager = null
+    }
   }
 }

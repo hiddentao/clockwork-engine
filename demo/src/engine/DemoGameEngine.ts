@@ -240,10 +240,8 @@ export class DemoGameEngine extends GameEngine {
   // Input handling methods (these will be recorded for replay)
   public handleInput(direction: Direction): void {
     console.log(`🐍 handleInput called with direction: ${direction}`)
-    console.log(`📊 Engine state: ${this.getState()}`)
 
     const snake = this.getSnake()
-    console.log(`🐍 Snake found:`, snake ? `ID: ${snake.getId()}` : "null")
 
     if (snake && this.getState() === GameState.PLAYING) {
       console.log(`✅ Setting snake direction to: ${direction}`)
