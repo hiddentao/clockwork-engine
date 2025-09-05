@@ -5,10 +5,10 @@ export const GAME_CONFIG = {
   CANVAS_WIDTH: 600,
   CANVAS_HEIGHT: 600,
 
-  // Game timing (in frames at 50 FPS)
-  SNAKE_MOVE_INTERVAL: 5, // Move every 5 frames (0.1 seconds)
-  WALL_SPAWN_INTERVAL: 250, // Spawn wall every 250 frames (5 seconds)
-  APPLE_TIMEOUT: 500, // Apple disappears after 500 frames (10 seconds)
+  // Game timing (in frames at 60 FPS)
+  SNAKE_MOVE_INTERVAL: 6,
+  WALL_SPAWN_INTERVAL: 30,
+  APPLE_TIMEOUT: 600,
 
   // Game rules
   SNAKE_INITIAL_LENGTH: 2,

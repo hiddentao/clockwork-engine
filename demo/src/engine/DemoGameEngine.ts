@@ -57,9 +57,14 @@ export class DemoGameEngine extends GameEngine {
 
     // Move snake
     snake.move()
+  }
 
-    // Check collisions
-    this.checkCollisions()
+  update(deltaFrames: number): void {
+    super.update(deltaFrames)
+
+    if (this.getState() === GameState.PLAYING) {
+      this.checkCollisions()
+    }
   }
 
   private checkCollisions() {

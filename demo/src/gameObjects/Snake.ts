@@ -124,20 +124,6 @@ export class Snake extends GameObject {
     return false
   }
 
-  checkWallCollision(wallPositions: Vector2D[]): boolean {
-    const head = this.segments[0].position
-
-    return wallPositions.some(
-      (wallPos) => head.x === wallPos.x && head.y === wallPos.y,
-    )
-  }
-
-  checkBoundaryCollision(gridSize: number): boolean {
-    const head = this.segments[0].position
-
-    return head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize
-  }
-
   checkAppleCollision(applePosition: Vector2D): boolean {
     const head = this.segments[0].position
     return head.x === applePosition.x && head.y === applePosition.y

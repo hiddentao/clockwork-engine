@@ -223,6 +223,7 @@ export class Game {
   private setupGameLoop(): void {
     this.app.ticker.add((ticker) => {
       const deltaFrames = ticker.deltaTime
+      console.log(deltaFrames)
 
       this.activeEngine.update(deltaFrames)
 
