@@ -221,10 +221,10 @@ export class Game {
   }
 
   private setupGameLoop(): void {
-    this.app.ticker.add(async (ticker) => {
+    this.app.ticker.add((ticker) => {
       const deltaFrames = ticker.deltaTime
 
-      await this.activeEngine.update(deltaFrames)
+      this.activeEngine.update(deltaFrames)
 
       this.renderer.render(this.activeEngine)
 

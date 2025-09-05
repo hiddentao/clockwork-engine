@@ -121,7 +121,7 @@ export abstract class GameEngine
    * Update the game state for the current frame
    * Only processes updates when state is PLAYING
    */
-  async update(deltaFrames: number): Promise<void> {
+  update(deltaFrames: number): void {
     if (this.state !== GameState.PLAYING) {
       return
     }
@@ -132,8 +132,8 @@ export abstract class GameEngine
     // 2. Process events with updated frame count
     this.eventManager.update(deltaFrames, this.totalFrames)
 
-    // 3. Update timer system (async)
-    await this.timer.update(deltaFrames, this.totalFrames)
+    // 3. Update timer system
+    this.timer.update(deltaFrames, this.totalFrames)
 
     // 4. Update all game object groups
     for (const [_type, group] of this.gameObjectGroups) {
@@ -215,14 +215,14 @@ export abstract class GameEngine
   /**
    * Schedule a one-time callback to execute after the specified number of frames
    */
-  setTimeout(callback: () => Promise<void>, frames: number): string {
+  setTimeout(callback: () => void, frames: number): string {
     return this.timer.setTimeout(callback, frames)
   }
 
   /**
    * Schedule a repeating callback to execute every specified number of frames
    */
-  setInterval(callback: () => Promise<void>, frames: number): string {
+  setInterval(callback: () => void, frames: number): string {
     return this.timer.setInterval(callback, frames)
   }
 

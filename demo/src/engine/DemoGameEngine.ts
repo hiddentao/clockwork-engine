@@ -36,24 +36,24 @@ export class DemoGameEngine extends GameEngine {
 
   private setupTimers(): void {
     // Snake movement timer
-    this.setInterval(async () => {
+    this.setInterval(() => {
       this.moveSnake()
     }, GAME_CONFIG.SNAKE_MOVE_INTERVAL)
 
     // Wall spawning timer
-    this.setInterval(async () => {
+    this.setInterval(() => {
       this.spawnWall()
     }, GAME_CONFIG.WALL_SPAWN_INTERVAL)
 
     // Apple cleanup timer - check every 30 frames
-    this.setInterval(async () => {
+    this.setInterval(() => {
       this.cleanupExpiredApples()
     }, 30)
   }
 
   private moveSnake() {
     const snake = this.getSnake()
-    if (!snake || this.getState() !== GameState.PLAYING) return
+    if (!snake) return
 
     // Move snake
     snake.move()
@@ -65,13 +65,6 @@ export class DemoGameEngine extends GameEngine {
   private checkCollisions() {
     const snake = this.getSnake()
     if (!snake) return
-
-    // Check boundary collision
-    if (snake.checkBoundaryCollision(GAME_CONFIG.GRID_SIZE)) {
-      this.gameLost = true
-      this.end()
-      return
-    }
 
     // Check self collision
     if (snake.checkSelfCollision()) {

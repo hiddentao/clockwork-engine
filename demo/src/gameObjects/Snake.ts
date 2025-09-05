@@ -1,6 +1,6 @@
 import type { GameEngineInterface } from "clockwork"
 import { GameObject, Vector2D } from "clockwork"
-import { DIRECTION_VECTORS, Direction } from "../utils/constants"
+import { DIRECTION_VECTORS, Direction, GAME_CONFIG } from "../utils/constants"
 
 interface SnakeSegment {
   position: Vector2D
@@ -56,6 +56,19 @@ export class Snake extends GameObject {
     const newHeadPosition = headPosition.add(
       new Vector2D(directionVector.x, directionVector.y),
     )
+
+    // Wrap around boundaries
+    if (newHeadPosition.x < 0) {
+      newHeadPosition.x = GAME_CONFIG.GRID_SIZE - 1
+    } else if (newHeadPosition.x >= GAME_CONFIG.GRID_SIZE) {
+      newHeadPosition.x = 0
+    }
+
+    if (newHeadPosition.y < 0) {
+      newHeadPosition.y = GAME_CONFIG.GRID_SIZE - 1
+    } else if (newHeadPosition.y >= GAME_CONFIG.GRID_SIZE) {
+      newHeadPosition.y = 0
+    }
 
     // Add new head
     this.segments.unshift({ position: newHeadPosition })

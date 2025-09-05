@@ -2,7 +2,7 @@ import type { IGameLoop } from "./IGameLoop"
 
 interface TimerCallback {
   id: string
-  callback: () => Promise<void>
+  callback: () => void
   targetFrame: number
   interval?: number // For repeating timers
   isActive: boolean
@@ -15,11 +15,11 @@ export class Timer implements IGameLoop {
 
   /**
    * Schedule a one-time callback to execute after the specified number of frames
-   * @param callback Async callback to execute
+   * @param callback Callback to execute
    * @param frames Number of frames to wait before execution
    * @returns Timer ID that can be used to cancel the timer
    */
-  setTimeout(callback: () => Promise<void>, frames: number): string {
+  setTimeout(callback: () => void, frames: number): string {
     const id = `timer_${this.nextId++}`
     this.timers.set(id, {
       id,
@@ -32,11 +32,11 @@ export class Timer implements IGameLoop {
 
   /**
    * Schedule a repeating callback to execute every specified number of frames
-   * @param callback Async callback to execute
+   * @param callback Callback to execute
    * @param frames Number of frames between executions
    * @returns Timer ID that can be used to cancel the timer
    */
-  setInterval(callback: () => Promise<void>, frames: number): string {
+  setInterval(callback: () => void, frames: number): string {
     const id = `timer_${this.nextId++}`
     this.timers.set(id, {
       id,
@@ -59,9 +59,9 @@ export class Timer implements IGameLoop {
 
   /**
    * Update the timer system - called by GameEngine
-   * Executes all ready timers in parallel with proper error handling
+   * Executes all ready timers with proper error handling
    */
-  async update(_deltaFrames: number, totalFrames: number): Promise<void> {
+  update(_deltaFrames: number, totalFrames: number): void {
     this.currentFrame = totalFrames
 
     const readyTimers: TimerCallback[] = []
@@ -73,19 +73,16 @@ export class Timer implements IGameLoop {
       }
     }
 
-    // Execute all ready timers in parallel with error handling
+    // Execute all ready timers with error handling
     if (readyTimers.length > 0) {
-      const promises = readyTimers.map(async (timer) => {
+      for (const timer of readyTimers) {
         try {
-          await timer.callback()
+          timer.callback()
         } catch (error) {
           console.error(`Timer ${timer.id} failed:`, error)
           // Don't rethrow - we don't want one timer failure to break others
         }
-      })
-
-      // Wait for all timers to complete
-      await Promise.all(promises)
+      }
 
       // Reschedule or remove timers after execution
       for (const timer of readyTimers) {
@@ -108,13 +105,6 @@ export class Timer implements IGameLoop {
     this.timers.clear()
     this.currentFrame = 0
     this.nextId = 0
-  }
-
-  /**
-   * Get the current frame number
-   */
-  getCurrentFrame(): number {
-    return this.currentFrame
   }
 
   /**
@@ -170,13 +160,6 @@ export class Timer implements IGameLoop {
       return true
     }
     return false
-  }
-
-  /**
-   * Clear all timers
-   */
-  clearAllTimers(): void {
-    this.timers.clear()
   }
 
   /**
