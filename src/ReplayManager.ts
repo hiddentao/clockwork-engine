@@ -37,11 +37,14 @@ export class ReplayManager {
     // 1. Initialize engine with recording seed
     this.engine.reset(recording.seed)
 
-    // 2. Set input source to recorded events
+    // 2. Enable fractional frame updates for deterministic replay
+    this.engine.setFractionalFrameDelta(0.1)
+
+    // 3. Set input source to recorded events
     const recordedSource = new RecordedEventSource(events)
     this.engine.getEventManager().setSource(recordedSource)
 
-    // 3. Start engine
+    // 4. Start engine
     this.engine.start()
   }
 
@@ -54,6 +57,9 @@ export class ReplayManager {
     }
 
     this.isReplaying = false
+
+    // Disable fractional frame updates
+    this.engine.setFractionalFrameDelta(0)
 
     // Pause the engine
     if (this.engine.getState() === "PLAYING") {

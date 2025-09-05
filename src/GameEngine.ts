@@ -30,6 +30,7 @@ export abstract class GameEngine
   private prng: PRNG = new PRNG()
   private timer: Timer = new Timer()
   private eventManager: GameEventManager
+  private fractionalFrameDelta: number = 0
 
   constructor() {
     super()
@@ -126,6 +127,26 @@ export abstract class GameEngine
       return
     }
 
+    // Split deltaFrames if fractionalFrameDelta is set
+    if (
+      this.fractionalFrameDelta > 0 &&
+      deltaFrames > this.fractionalFrameDelta
+    ) {
+      const numUpdates = Math.ceil(deltaFrames / this.fractionalFrameDelta)
+      const fractionPerUpdate = deltaFrames / numUpdates
+
+      for (let i = 0; i < numUpdates; i++) {
+        this.processUpdate(fractionPerUpdate)
+      }
+    } else {
+      this.processUpdate(deltaFrames)
+    }
+  }
+
+  /**
+   * Process a single frame update with the given deltaFrames
+   */
+  private processUpdate(deltaFrames: number): void {
     // 1. Increment frame counter FIRST
     this.totalFrames += deltaFrames
 
@@ -245,5 +266,16 @@ export abstract class GameEngine
    */
   getEventManager(): GameEventManager {
     return this.eventManager
+  }
+
+  /**
+   * Set the fractional frame delta for replay determinism
+   * When > 0, large deltaFrames are split into smaller chunks
+   * When 0, deltaFrames are passed through normally
+   */
+  setFractionalFrameDelta(delta: number): void {
+    if (delta >= 0) {
+      this.fractionalFrameDelta = delta
+    }
   }
 }

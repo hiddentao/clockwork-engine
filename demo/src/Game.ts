@@ -11,8 +11,6 @@ import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
 import { Direction } from "./utils/constants"
 
-const REPLAY_MAX_FRAMES_PER_UPDATE = 0.1
-
 export class Game {
   private app!: PIXI.Application
   private playEngine!: DemoGameEngine
@@ -226,18 +224,7 @@ export class Game {
     this.app.ticker.add((ticker) => {
       const deltaFrames = ticker.deltaTime
 
-      if (this.isReplaying && deltaFrames > REPLAY_MAX_FRAMES_PER_UPDATE) {
-        // During replay, split large deltaFrames into smaller chunks
-        const numUpdates = Math.ceil(deltaFrames / REPLAY_MAX_FRAMES_PER_UPDATE)
-        const fractionPerUpdate = deltaFrames / numUpdates
-
-        for (let i = 0; i < numUpdates; i++) {
-          this.activeEngine.update(fractionPerUpdate)
-        }
-      } else {
-        // Normal gameplay or small deltaFrames - pass directly
-        this.activeEngine.update(deltaFrames)
-      }
+      this.activeEngine.update(deltaFrames)
 
       this.renderer.render(this.activeEngine)
 
