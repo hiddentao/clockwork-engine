@@ -5,6 +5,7 @@ import { GameObjectGroup } from "./GameObjectGroup"
 import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
+import { CollisionBspTree } from "./geometry/CollisionUtils"
 import { GameState } from "./types"
 
 export enum GameEngineEventType {
@@ -31,6 +32,7 @@ export abstract class GameEngine
   private timer: Timer = new Timer()
   private eventManager: GameEventManager
   private fractionalFrameDelta: number = 0
+  protected collisionTree: CollisionBspTree = new CollisionBspTree()
 
   constructor() {
     super()
@@ -57,6 +59,7 @@ export abstract class GameEngine
     this.gameObjectGroups.clear()
     this.timer.reset()
     this.eventManager.reset()
+    this.collisionTree.clear()
     this.setup()
   }
 
@@ -277,5 +280,12 @@ export abstract class GameEngine
     if (delta >= 0) {
       this.fractionalFrameDelta = delta
     }
+  }
+
+  /**
+   * Get the collision tree for spatial collision detection
+   */
+  getCollisionTree(): CollisionBspTree {
+    return this.collisionTree
   }
 }

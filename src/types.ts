@@ -22,7 +22,7 @@ export interface GameEvent {
 export interface UserInputEvent extends GameEvent {
   type: GameEventType.USER_INPUT
   inputType: string
-  params: any[]
+  params: any
 }
 
 export interface ObjectUpdateEvent extends GameEvent {
@@ -30,7 +30,7 @@ export interface ObjectUpdateEvent extends GameEvent {
   objectType: string
   objectId: string
   method: string
-  params: any[]
+  params: any
 }
 
 export interface GameRecording {

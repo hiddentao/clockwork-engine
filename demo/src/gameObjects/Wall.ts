@@ -52,13 +52,6 @@ export class Wall extends GameObject {
     return this.isHorizontal
   }
 
-  // Check if a position collides with any block of this wall
-  checkCollision(position: Vector2D): boolean {
-    return this.blocks.some(
-      (block) => block.x === position.x && block.y === position.y,
-    )
-  }
-
   // Check if this wall would collide with any of the given positions
   wouldCollideWith(positions: Vector2D[]): boolean {
     return this.blocks.some((block) =>

@@ -1,4 +1,4 @@
-import type { GameEngineInterface } from "clockwork"
+import type { GameEngineInterface, GameObjectEvents } from "clockwork"
 import { GameObject, Vector2D } from "clockwork"
 import { DIRECTION_VECTORS, Direction, GAME_CONFIG } from "../utils/constants"
 
@@ -6,11 +6,14 @@ interface SnakeSegment {
   position: Vector2D
 }
 
-export class Snake extends GameObject {
+interface SnakeEvents extends GameObjectEvents {
+  segmentAdded: (snake: Snake, position: Vector2D, index: number) => void
+  segmentRemoved: (snake: Snake, position: Vector2D, index: number) => void
+}
+
+export class Snake extends GameObject<SnakeEvents> {
   private segments: SnakeSegment[] = []
   private direction: Direction = Direction.RIGHT
-  private directionQueue: Direction[] = []
-  private static readonly MAX_QUEUE_SIZE = 3
   private pendingGrowth: number = 0
   private applesEaten: number = 0
 
@@ -30,27 +33,13 @@ export class Snake extends GameObject {
 
   // Movement methods (these will be recorded for replay)
   setDirection(newDirection: Direction): void {
-    // Add to direction queue if there's space
-    if (this.directionQueue.length < Snake.MAX_QUEUE_SIZE) {
-      this.directionQueue.push(newDirection)
+    // Only validate against hitting neck, don't queue
+    if (!this.wouldHitNeck(newDirection)) {
+      this.direction = newDirection
     }
   }
 
   move(): void {
-    // Process one direction from queue if available
-    if (this.directionQueue.length > 0) {
-      const nextDirection = this.directionQueue[0]
-
-      if (this.wouldHitNeck(nextDirection)) {
-        // Invalid direction - clear the entire queue and continue in current direction
-        this.directionQueue = []
-      } else {
-        // Valid direction - apply it and remove from queue
-        this.direction = nextDirection
-        this.directionQueue.shift()
-      }
-    }
-
     const directionVector = DIRECTION_VECTORS[this.direction]
     const headPosition = this.segments[0].position
     const newHeadPosition = headPosition.add(
@@ -72,6 +61,7 @@ export class Snake extends GameObject {
 
     // Add new head
     this.segments.unshift({ position: newHeadPosition })
+    this.emit("segmentAdded", this, newHeadPosition, 0)
 
     // Update main position to head position
     this.setPosition(newHeadPosition)
@@ -80,7 +70,15 @@ export class Snake extends GameObject {
     if (this.pendingGrowth > 0) {
       this.pendingGrowth--
     } else {
-      this.segments.pop()
+      const removed = this.segments.pop()
+      if (removed) {
+        this.emit(
+          "segmentRemoved",
+          this,
+          removed.position,
+          this.segments.length,
+        )
+      }
     }
   }
 
@@ -107,28 +105,6 @@ export class Snake extends GameObject {
     )
   }
 
-  // Collision detection
-  checkSelfCollision(): boolean {
-    const head = this.segments[0].position
-
-    // Check collision with body (skip head itself)
-    for (let i = 1; i < this.segments.length; i++) {
-      if (
-        head.x === this.segments[i].position.x &&
-        head.y === this.segments[i].position.y
-      ) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  checkAppleCollision(applePosition: Vector2D): boolean {
-    const head = this.segments[0].position
-    return head.x === applePosition.x && head.y === applePosition.y
-  }
-
   // Getters
   getSegments(): SnakeSegment[] {
     return [...this.segments] // Return copy
@@ -150,6 +126,34 @@ export class Snake extends GameObject {
     return this.applesEaten
   }
 
+  // Get the next N positions in current direction (up to arena edge)
+  getProjectedPath(maxSteps: number = 8): Vector2D[] {
+    const path: Vector2D[] = []
+    const directionVector = DIRECTION_VECTORS[this.direction]
+    let currentPos = this.segments[0].position.clone()
+
+    for (let i = 0; i < maxSteps; i++) {
+      const nextPos = currentPos.add(
+        new Vector2D(directionVector.x, directionVector.y),
+      )
+
+      // Stop at arena edge (don't wrap around for projection)
+      if (
+        nextPos.x < 0 ||
+        nextPos.x >= GAME_CONFIG.GRID_SIZE ||
+        nextPos.y < 0 ||
+        nextPos.y >= GAME_CONFIG.GRID_SIZE
+      ) {
+        break
+      }
+
+      path.push(nextPos)
+      currentPos = nextPos
+    }
+
+    return path
+  }
+
   // Serialization
   serialize() {
     return {
@@ -158,7 +162,6 @@ export class Snake extends GameObject {
         position: seg.position.serialize(),
       })),
       direction: this.direction,
-      directionQueue: this.directionQueue,
       pendingGrowth: this.pendingGrowth,
       applesEaten: this.applesEaten,
     }
@@ -171,7 +174,6 @@ export class Snake extends GameObject {
       position: Vector2D.deserialize(seg.position),
     }))
     snake.direction = data.direction
-    snake.directionQueue = data.directionQueue || []
     snake.pendingGrowth = data.pendingGrowth
     snake.applesEaten = data.applesEaten
 

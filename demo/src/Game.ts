@@ -199,9 +199,12 @@ export class Game {
     const eventManager = this.activeEngine.getEventManager()
     const eventSource = eventManager.getSource() as UserInputEventSource
 
-    // Queue input event with just the data
-    console.log(`📨 Queueing input data:`, { direction })
-    eventSource.queueInput({ direction })
+    // Queue input event with inputType and data
+    console.log(`📨 Queueing input data:`, {
+      inputType: "direction",
+      direction,
+    })
+    eventSource.queueInput("direction", { direction })
   }
 
   private handlePauseResume(): void {
@@ -295,6 +298,7 @@ export class Game {
     }
 
     const recording = this.recorder.getCurrentRecording()
+    console.log(recording)
     if (!recording) {
       console.log("❌ Cannot start replay - no recording found")
       return

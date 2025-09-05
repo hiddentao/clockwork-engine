@@ -3,14 +3,19 @@ import type { AnyGameEvent, UserInputEvent } from "./types"
 import { GameEventType } from "./types"
 
 export class UserInputEventSource implements GameEventSource {
-  private dataQueue: Array<{ data: any; timestamp: number }> = []
+  private dataQueue: Array<{
+    inputType: string
+    data: any
+    timestamp: number
+  }> = []
 
   /**
    * Queue input data to be processed
+   * @param inputType The type of input (e.g., "direction", "button")
    * @param data The input data to queue
    */
-  queueInput(data: any): void {
-    this.dataQueue.push({ data, timestamp: Date.now() })
+  queueInput(inputType: string, data: any): void {
+    this.dataQueue.push({ inputType, data, timestamp: Date.now() })
   }
 
   /**
@@ -28,8 +33,8 @@ export class UserInputEventSource implements GameEventSource {
       type: GameEventType.USER_INPUT,
       frame: totalFrames,
       timestamp: item.timestamp,
-      inputType: "direction",
-      params: [item.data],
+      inputType: item.inputType,
+      params: item.data,
     }))
 
     // Clear the queue
