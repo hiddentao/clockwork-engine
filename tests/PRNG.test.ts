@@ -14,8 +14,8 @@ describe("PRNG", () => {
       const prng1 = new PRNG(seed)
       const prng2 = new PRNG(seed)
 
-      const sequence1 = Array.from({ length: 10 }, () => prng1.random())
-      const sequence2 = Array.from({ length: 10 }, () => prng2.random())
+      const sequence1 = Array.from({ length: 1000 }, () => prng1.random())
+      const sequence2 = Array.from({ length: 1000 }, () => prng2.random())
 
       expect(sequence1).toEqual(sequence2)
     })
@@ -24,8 +24,8 @@ describe("PRNG", () => {
       const prng1 = new PRNG("seed1")
       const prng2 = new PRNG("seed2")
 
-      const sequence1 = Array.from({ length: 10 }, () => prng1.random())
-      const sequence2 = Array.from({ length: 10 }, () => prng2.random())
+      const sequence1 = Array.from({ length: 1000 }, () => prng1.random())
+      const sequence2 = Array.from({ length: 1000 }, () => prng2.random())
 
       expect(sequence1).not.toEqual(sequence2)
     })
@@ -152,17 +152,6 @@ describe("PRNG", () => {
     it("should accept string seeds", () => {
       const prng = new PRNG("string-seed")
       expect(() => prng.random()).not.toThrow()
-    })
-
-    it("should produce different sequences with different seeds", () => {
-      const prng1 = new PRNG("seed1")
-      const prng2 = new PRNG("seed2")
-
-      // Different seeds should produce different sequences
-      const val1 = prng1.random()
-      const val2 = prng2.random()
-
-      expect(val1).not.toBe(val2)
     })
   })
 

@@ -35,12 +35,12 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private setupTimers(): void {
-    // Snake movement timer - every 10 frames (0.2 seconds at 50fps)
+    // Snake movement timer
     this.setInterval(async () => {
-      await this.moveSnake()
+      this.moveSnake()
     }, GAME_CONFIG.SNAKE_MOVE_INTERVAL)
 
-    // Wall spawning timer - every 250 frames (5 seconds at 50fps)
+    // Wall spawning timer
     this.setInterval(async () => {
       this.spawnWall()
     }, GAME_CONFIG.WALL_SPAWN_INTERVAL)
@@ -51,7 +51,7 @@ export class DemoGameEngine extends GameEngine {
     }, 30)
   }
 
-  private async moveSnake(): Promise<void> {
+  private moveSnake() {
     const snake = this.getSnake()
     if (!snake || this.getState() !== GameState.PLAYING) return
 
@@ -59,10 +59,10 @@ export class DemoGameEngine extends GameEngine {
     snake.move()
 
     // Check collisions
-    await this.checkCollisions()
+    this.checkCollisions()
   }
 
-  private async checkCollisions(): Promise<void> {
+  private checkCollisions() {
     const snake = this.getSnake()
     if (!snake) return
 
