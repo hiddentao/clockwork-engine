@@ -176,23 +176,10 @@ export class DemoGameEngine extends GameEngine {
 
     const position = this.findEmptyPosition()
     if (position) {
-      const isHorizontal = this.getPRNG().randomBoolean()
+      const wall = new Wall(`wall-${this.wallsSpawned++}`, position, this)
 
-      // Make sure the wall doesn't spawn in an invalid position
-      if (this.isValidWallPosition(position, isHorizontal)) {
-        const wall = new Wall(
-          `wall-${this.wallsSpawned++}`,
-          position,
-          isHorizontal,
-          this,
-        )
-
-        // Add wall blocks to collision tree
-        const blocks = wall.getBlocks()
-        for (const block of blocks) {
-          this.getCollisionTree().add(block, wall)
-        }
-      }
+      // Add wall to collision tree
+      this.getCollisionTree().add(position, wall)
     }
   }
 
@@ -261,34 +248,6 @@ export class DemoGameEngine extends GameEngine {
   private isPositionEmpty(position: Vector2D): boolean {
     // Just check collision tree (all objects are now in tree)
     return this.getCollisionTree().containsPoint(position).length === 0
-  }
-
-  private isValidWallPosition(
-    position: Vector2D,
-    isHorizontal: boolean,
-  ): boolean {
-    // Check if both blocks of the wall would be in valid positions
-    const positions = isHorizontal
-      ? [position, position.add(new Vector2D(1, 0))]
-      : [position, position.add(new Vector2D(0, 1))]
-
-    // Check bounds
-    for (const pos of positions) {
-      if (
-        pos.x < 0 ||
-        pos.x >= GAME_CONFIG.GRID_SIZE ||
-        pos.y < 0 ||
-        pos.y >= GAME_CONFIG.GRID_SIZE
-      ) {
-        return false
-      }
-
-      if (!this.isPositionEmpty(pos)) {
-        return false
-      }
-    }
-
-    return true
   }
 
   public handleInput(direction: Direction): void {
