@@ -12,6 +12,8 @@ export class Timer implements IGameLoop {
   private timers: Map<number, TimerCallback> = new Map()
   private nextId: number = 1
   private currentFrame: number = 0
+  private updateStartFrame: number = 0
+  private isUpdating: boolean = false
 
   /**
    * Schedule a one-time callback to execute after the specified number of frames
@@ -21,10 +23,14 @@ export class Timer implements IGameLoop {
    */
   setTimeout(callback: () => void, frames: number): number {
     const id = this.nextId++
+    // Use updateStartFrame if we're currently updating, otherwise use currentFrame
+    const baseFrame = this.isUpdating
+      ? this.updateStartFrame
+      : this.currentFrame
     this.timers.set(id, {
       id,
       callback,
-      targetFrame: this.currentFrame + frames,
+      targetFrame: baseFrame + frames,
       isActive: true,
     })
     return id
@@ -38,10 +44,14 @@ export class Timer implements IGameLoop {
    */
   setInterval(callback: () => void, frames: number): number {
     const id = this.nextId++
+    // Use updateStartFrame if we're currently updating, otherwise use currentFrame
+    const baseFrame = this.isUpdating
+      ? this.updateStartFrame
+      : this.currentFrame
     this.timers.set(id, {
       id,
       callback,
-      targetFrame: this.currentFrame + frames,
+      targetFrame: baseFrame + frames,
       interval: frames,
       isActive: true,
     })
@@ -62,7 +72,9 @@ export class Timer implements IGameLoop {
    * Executes all ready timers with proper error handling
    */
   update(_deltaFrames: number, totalFrames: number): void {
+    this.updateStartFrame = this.currentFrame
     this.currentFrame = totalFrames
+    this.isUpdating = true
 
     // Process timers until no more are ready to execute
     let hasExecutions = true
@@ -122,6 +134,8 @@ export class Timer implements IGameLoop {
         }
       }
     }
+
+    this.isUpdating = false
   }
 
   /**
