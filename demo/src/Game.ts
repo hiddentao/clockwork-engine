@@ -54,8 +54,6 @@ export class Game {
     this.recorder = new GameRecorder()
     this.replayManager = new ReplayManager(this.replayEngine)
 
-    // Replay engine has NO recorder connected - prevents re-recording
-
     // Listen for state changes to auto-start/stop recording
     this.setupStateChangeListeners()
 
@@ -140,13 +138,10 @@ export class Game {
       (newState, oldState) => {
         console.log(`🎬 Replay state changed: ${oldState} → ${newState}`)
 
-        // Auto-stop replay when replay ends
+        // Auto-stop replay when replay ends (but keep replay engine active)
         if (newState === GameState.ENDED && this.isReplaying) {
           console.log("🏁 Replay ended, ready to replay again...")
-          this.isReplaying = false
-          this.setTickerSpeed(1) // Reset to normal speed
-          this.replayManager.stopReplay() // Clear replay manager state
-          // Don't switch engines - keep replay engine active
+          this.stopReplay(false) // Don't switch to play mode
         }
       },
     )
@@ -216,10 +211,6 @@ export class Game {
     } else if (currentState === GameState.PAUSED) {
       console.log("▶️  Resuming game/replay...")
       this.activeEngine.resume()
-      // Ensure normal speed for gameplay (not replay)
-      if (!this.isReplaying) {
-        this.setTickerSpeed(1)
-      }
     }
   }
 
@@ -227,13 +218,20 @@ export class Game {
     this.app.ticker.add((ticker) => {
       const deltaFrames = ticker.deltaTime
 
-      this.activeEngine.update(deltaFrames)
+      // Call appropriate update method based on mode
+      if (this.isReplaying) {
+        this.replayManager.update(deltaFrames)
+      } else {
+        this.activeEngine.update(deltaFrames)
+      }
 
       this.renderer.render(this.activeEngine)
 
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
-        frame: this.activeEngine.getTotalFrames(),
+        frame: this.isReplaying
+          ? this.replayManager.getCurrentFrame()
+          : this.activeEngine.getTotalFrames(),
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
@@ -268,7 +266,7 @@ export class Game {
       case "replaySpeed":
         this.replaySpeed = data
         if (this.isReplaying) {
-          this.setTickerSpeed(this.replaySpeed)
+          this.app.ticker.speed = this.replaySpeed
         }
         break
     }
@@ -278,6 +276,10 @@ export class Game {
     if (this.isRecording) return
     this.isRecording = true
     const description = `Snake game recorded at ${new Date().toISOString()}`
+
+    // Set recorder on engine (this will also set it on the event manager)
+    this.playEngine.setGameRecorder(this.recorder)
+
     this.recorder.startRecording(
       this.playEngine.getEventManager(),
       this.playEngine.getSeed(),
@@ -289,6 +291,9 @@ export class Game {
     if (!this.isRecording) return
     this.isRecording = false
     this.recorder.stopRecording()
+
+    // Clear recorder from engine
+    this.playEngine.setGameRecorder(undefined)
   }
 
   private startReplay(): void {
@@ -298,15 +303,30 @@ export class Game {
     }
 
     const recording = this.recorder.getCurrentRecording()
-    console.log(recording)
     if (!recording) {
       console.log("❌ Cannot start replay - no recording found")
       return
+    } else {
+      // output recording data size in KB/MB
+      const sizeInBytes = JSON.stringify(recording).length * 2
+      const sizeInKB = sizeInBytes / 1024
+      const sizeInMB = sizeInKB / 1024
+      console.log(
+        "📊 Recording data size:",
+        sizeInBytes,
+        "bytes",
+        sizeInKB,
+        "KB",
+        sizeInMB,
+        "MB",
+      )
     }
 
     console.log("🎬 Starting replay mode...")
     this.isReplaying = true
-    this.setTickerSpeed(this.replaySpeed)
+
+    // Set ticker speed for replay
+    this.app.ticker.speed = this.replaySpeed
 
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayEngine) {
@@ -316,20 +336,25 @@ export class Game {
       this.activeEngine = this.replayEngine
     }
 
-    // Start replay on the replay engine
+    // Start replay on the replay engine (this will control the engine internally)
     this.replayManager.replay(recording)
   }
 
-  private stopReplay(): void {
+  private stopReplay(switchToPlay: boolean = true): void {
     if (!this.isReplaying) return
 
     console.log("⏹️ Stopping replay mode...")
     this.isReplaying = false
-    this.setTickerSpeed(1) // Reset to normal speed
+
+    // Reset ticker speed
+    this.app.ticker.speed = 1
+
     this.replayManager.stopReplay()
 
-    // Switch back to play engine
-    this.switchToPlayMode()
+    // Switch back to play engine only if requested
+    if (switchToPlay) {
+      this.switchToPlayMode()
+    }
   }
 
   private switchToPlayMode(): void {
@@ -342,12 +367,5 @@ export class Game {
     // Switch to play engine and reset it
     this.activeEngine = this.playEngine
     this.playEngine.reset("demo-seed-" + Date.now())
-
-    // Reset speed
-    this.setTickerSpeed(1)
-  }
-
-  private setTickerSpeed(speed: number): void {
-    this.app.ticker.speed = speed
   }
 }

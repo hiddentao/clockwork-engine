@@ -106,7 +106,7 @@ export class UI {
       <div style="margin-top: 10px;">
         <label>Speed: </label>
         <input type="range" id="replay-speed" 
-               min="0.1" max="3" step="0.1" value="1"
+               min="0.1" max="10" step="0.1" value="1"
                style="width: 150px; vertical-align: middle;">
         <span id="replay-speed-value">1.0x</span>
       </div>

@@ -1,15 +1,15 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
 import type { AnyGameEvent, GameRecording } from "./types"
+import { GameState } from "./types"
 
 export class ReplayManager {
   private engine: GameEngine
   private isReplaying: boolean = false
-
-  // Timestamp-based progress tracking
-  private recordingStartTime: number = 0
-  private recordingEndTime: number = 0
-  private replayStartTime: number = 0
+  private deltaFramesIndex: number = 0
+  private recording: GameRecording | null = null
+  private currentReplayFrame: number = 0
+  private accumulatedFrames: number = 0
 
   constructor(engine: GameEngine) {
     this.engine = engine
@@ -25,26 +25,21 @@ export class ReplayManager {
     }
 
     this.isReplaying = true
-
-    // Store timing information for progress calculation
-    const events = recording.events as AnyGameEvent[]
-    this.recordingStartTime =
-      events.length > 0 ? events[0].timestamp : Date.now()
-    this.recordingEndTime =
-      events.length > 0 ? events[events.length - 1].timestamp : Date.now()
-    this.replayStartTime = Date.now()
+    this.recording = recording
+    this.deltaFramesIndex = 0
+    this.currentReplayFrame = 0
+    this.accumulatedFrames = 0
 
     // 1. Initialize engine with recording seed
     this.engine.reset(recording.seed)
 
-    // 2. Enable fractional frame updates for deterministic replay
-    this.engine.setFractionalFrameDelta(0.1)
-
-    // 3. Set input source to recorded events
-    const recordedSource = new RecordedEventSource(events)
+    // 2. Set input source to recorded events
+    const recordedSource = new RecordedEventSource(
+      recording.events as AnyGameEvent[],
+    )
     this.engine.getEventManager().setSource(recordedSource)
 
-    // 4. Start engine
+    // 3. Start engine
     this.engine.start()
   }
 
@@ -58,13 +53,15 @@ export class ReplayManager {
 
     this.isReplaying = false
 
-    // Disable fractional frame updates
-    this.engine.setFractionalFrameDelta(0)
-
     // Pause the engine
-    if (this.engine.getState() === "PLAYING") {
+    if (this.engine.getState() === GameState.PLAYING) {
       this.engine.pause()
     }
+
+    // Reset playback state
+    this.deltaFramesIndex = 0
+    this.currentReplayFrame = 0
+    this.accumulatedFrames = 0
   }
 
   /**
@@ -75,34 +72,72 @@ export class ReplayManager {
   }
 
   /**
-   * Get replay progress information based on timestamps
+   * Get the current frame number during replay
+   */
+  getCurrentFrame(): number {
+    return this.currentReplayFrame
+  }
+
+  /**
+   * Update method to be called by PIXI ticker during replay
+   * Accumulates deltaFrames and processes recorded frames when ready
+   */
+  update(deltaFrames: number): void {
+    if (!this.isReplaying) {
+      return
+    }
+
+    // Check if replay is complete
+    if (this.deltaFramesIndex >= this.recording!.deltaFrames.length) {
+      this.stopReplay()
+      return
+    }
+
+    // Accumulate incoming frames
+    this.accumulatedFrames += deltaFrames
+
+    // Process recorded frames while we have enough accumulated frames
+    while (
+      this.deltaFramesIndex < this.recording!.deltaFrames.length &&
+      this.accumulatedFrames >=
+        this.recording!.deltaFrames[this.deltaFramesIndex]
+    ) {
+      const recordedDeltaFrames =
+        this.recording!.deltaFrames[this.deltaFramesIndex]
+      this.deltaFramesIndex++
+
+      // Subtract processed frames from accumulator
+      this.accumulatedFrames -= recordedDeltaFrames
+
+      // Update the engine with the recorded deltaFrames
+      this.engine.update(recordedDeltaFrames)
+
+      // Track current frame
+      this.currentReplayFrame += recordedDeltaFrames
+    }
+  }
+
+  /**
+   * Get replay progress information based on current frame vs total frames
    */
   getReplayProgress(): {
     isReplaying: boolean
     progress: number
-    hasMoreEvents: boolean
+    hasMoreFrames: boolean
   } {
     if (!this.isReplaying) {
-      return { isReplaying: false, progress: 0, hasMoreEvents: false }
+      return { isReplaying: false, progress: 0, hasMoreFrames: false }
     }
 
-    const eventManager = this.engine.getEventManager()
-    const source = eventManager.getSource()
-    const hasMoreEvents = source.hasMoreEvents()
-
-    // Calculate progress based on elapsed time vs recording duration
-    const recordingDuration = this.recordingEndTime - this.recordingStartTime
-    const elapsedTime = Date.now() - this.replayStartTime
-
-    let progress = 0
-    if (recordingDuration > 0) {
-      progress = Math.min(1, elapsedTime / recordingDuration)
-    }
+    const totalFrames = this.recording!.totalFrames
+    const progress = totalFrames > 0 ? this.currentReplayFrame / totalFrames : 0
+    const hasMoreFrames =
+      this.deltaFramesIndex < this.recording!.deltaFrames.length
 
     return {
       isReplaying: true,
-      progress,
-      hasMoreEvents,
+      progress: Math.min(1, progress), // Clamp to 1.0 maximum
+      hasMoreFrames,
     }
   }
 }

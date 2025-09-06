@@ -2,6 +2,7 @@ import { EventEmitter } from "./EventEmitter"
 import { GameEventManager } from "./GameEventManager"
 import type { GameEngineInterface, GameObject } from "./GameObject"
 import { GameObjectGroup } from "./GameObjectGroup"
+import type { GameRecorder } from "./GameRecorder"
 import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
@@ -31,7 +32,7 @@ export abstract class GameEngine
   private prng: PRNG = new PRNG()
   private timer: Timer = new Timer()
   private eventManager: GameEventManager
-  private fractionalFrameDelta: number = 0
+  private recorder: GameRecorder | undefined = undefined
   protected collisionTree: CollisionBspTree = new CollisionBspTree()
 
   constructor() {
@@ -130,36 +131,21 @@ export abstract class GameEngine
       return
     }
 
-    // Split deltaFrames if fractionalFrameDelta is set
-    if (
-      this.fractionalFrameDelta > 0 &&
-      deltaFrames > this.fractionalFrameDelta
-    ) {
-      const numUpdates = Math.ceil(deltaFrames / this.fractionalFrameDelta)
-      const fractionPerUpdate = deltaFrames / numUpdates
-
-      for (let i = 0; i < numUpdates; i++) {
-        this.processUpdate(fractionPerUpdate)
-      }
-    } else {
-      this.processUpdate(deltaFrames)
-    }
-  }
-
-  /**
-   * Process a single frame update with the given deltaFrames
-   */
-  private processUpdate(deltaFrames: number): void {
     // 1. Increment frame counter FIRST
     this.totalFrames += deltaFrames
 
-    // 2. Process events with updated frame count
+    // 2. Record frame update if recorder is set
+    if (this.recorder) {
+      this.recorder.recordFrameUpdate(deltaFrames, this.totalFrames)
+    }
+
+    // 3. Process events with updated frame count
     this.eventManager.update(deltaFrames, this.totalFrames)
 
-    // 3. Update timer system
+    // 4. Update timer system
     this.timer.update(deltaFrames, this.totalFrames)
 
-    // 4. Update all game object groups
+    // 5. Update all game object groups
     for (const [_type, group] of this.gameObjectGroups) {
       group.update(deltaFrames, this.totalFrames)
     }
@@ -272,14 +258,12 @@ export abstract class GameEngine
   }
 
   /**
-   * Set the fractional frame delta for replay determinism
-   * When > 0, large deltaFrames are split into smaller chunks
-   * When 0, deltaFrames are passed through normally
+   * Set the game recorder for recording gameplay
+   * Also sets the recorder on the event manager
    */
-  setFractionalFrameDelta(delta: number): void {
-    if (delta >= 0) {
-      this.fractionalFrameDelta = delta
-    }
+  setGameRecorder(recorder: GameRecorder | undefined): void {
+    this.recorder = recorder
+    this.eventManager.setRecorder(recorder)
   }
 
   /**

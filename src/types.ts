@@ -36,6 +36,8 @@ export interface ObjectUpdateEvent extends GameEvent {
 export interface GameRecording {
   seed: string
   events: GameEvent[]
+  deltaFrames: number[]
+  totalFrames: number
   metadata?: {
     createdAt: number
     version?: string

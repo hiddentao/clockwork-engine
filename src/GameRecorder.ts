@@ -5,6 +5,8 @@ export class GameRecorder {
   private recording: GameRecording | null = null
   private isRecording: boolean = false
   private eventManager: GameEventManager | null = null
+  private deltaFrames: number[] = []
+  private totalFrames: number = 0
 
   /**
    * Start recording a game session
@@ -18,12 +20,16 @@ export class GameRecorder {
     this.recording = {
       seed,
       events: [],
+      deltaFrames: [],
+      totalFrames: 0,
       metadata: {
         createdAt: Date.now(),
         description,
         version: "1.0.0",
       },
     }
+    this.deltaFrames = []
+    this.totalFrames = 0
 
     this.eventManager = eventManager
     this.eventManager.setRecorder(this)
@@ -41,6 +47,17 @@ export class GameRecorder {
   }
 
   /**
+   * Record frame update with deltaFrames and totalFrames
+   * Only records if currently recording
+   */
+  recordFrameUpdate(deltaFrames: number, totalFrames: number): void {
+    if (this.isRecording && this.recording) {
+      this.deltaFrames.push(deltaFrames)
+      this.totalFrames = totalFrames
+    }
+  }
+
+  /**
    * Stop recording
    * Recording data remains available via getCurrentRecording()
    */
@@ -48,6 +65,10 @@ export class GameRecorder {
     if (!this.isRecording || !this.recording) {
       return
     }
+
+    // Copy frame data to the recording
+    this.recording.deltaFrames = [...this.deltaFrames]
+    this.recording.totalFrames = this.totalFrames
 
     if (this.eventManager) {
       this.eventManager.setRecorder(undefined)
@@ -78,6 +99,8 @@ export class GameRecorder {
   reset(): void {
     this.recording = null
     this.isRecording = false
+    this.deltaFrames = []
+    this.totalFrames = 0
     if (this.eventManager) {
       this.eventManager.setRecorder(undefined)
       this.eventManager = null
