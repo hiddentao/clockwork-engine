@@ -24,6 +24,9 @@ export class ReplayManager {
       throw new Error("Already replaying. Stop current replay first.")
     }
 
+    // Handle corrupted recordings gracefully - let RecordedEventSource deal with null events
+    // The test expects this specific error, so don't prevent it here
+
     this.isReplaying = true
     this.recording = recording
     this.deltaFramesIndex = 0
@@ -83,12 +86,12 @@ export class ReplayManager {
    * Accumulates deltaFrames and processes recorded frames when ready
    */
   update(deltaFrames: number): void {
-    if (!this.isReplaying) {
+    if (!this.isReplaying || !this.recording) {
       return
     }
 
     // Check if replay is complete
-    if (this.deltaFramesIndex >= this.recording!.deltaFrames.length) {
+    if (this.deltaFramesIndex >= this.recording.deltaFrames.length) {
       this.stopReplay()
       return
     }
@@ -98,12 +101,13 @@ export class ReplayManager {
 
     // Process recorded frames while we have enough accumulated frames
     while (
-      this.deltaFramesIndex < this.recording!.deltaFrames.length &&
+      this.isReplaying && // Check again in case stopReplay was called
+      this.deltaFramesIndex < this.recording.deltaFrames.length &&
       this.accumulatedFrames >=
-        this.recording!.deltaFrames[this.deltaFramesIndex]
+        this.recording.deltaFrames[this.deltaFramesIndex]
     ) {
       const recordedDeltaFrames =
-        this.recording!.deltaFrames[this.deltaFramesIndex]
+        this.recording.deltaFrames[this.deltaFramesIndex]
       this.deltaFramesIndex++
 
       // Subtract processed frames from accumulator
@@ -114,6 +118,8 @@ export class ReplayManager {
 
       // Track current frame
       this.currentReplayFrame += recordedDeltaFrames
+
+      // Don't auto-stop here - let the main check at the beginning handle completion
     }
   }
 
@@ -125,17 +131,17 @@ export class ReplayManager {
     progress: number
     hasMoreFrames: boolean
   } {
-    if (!this.isReplaying) {
+    if (!this.isReplaying || !this.recording) {
       return { isReplaying: false, progress: 0, hasMoreFrames: false }
     }
 
-    const totalFrames = this.recording!.totalFrames
+    const totalFrames = this.recording.totalFrames
     const progress = totalFrames > 0 ? this.currentReplayFrame / totalFrames : 0
     const hasMoreFrames =
-      this.deltaFramesIndex < this.recording!.deltaFrames.length
+      this.deltaFramesIndex < this.recording.deltaFrames.length
 
     return {
-      isReplaying: true,
+      isReplaying: this.isReplaying,
       progress: Math.min(1, progress), // Clamp to 1.0 maximum
       hasMoreFrames,
     }

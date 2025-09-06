@@ -76,8 +76,27 @@ export class TestPlayer extends GameObject {
       x: data.position.x,
       y: data.position.y,
     })
+
+    // Restore TestPlayer specific state
     player.level = data.level
     player.experience = data.experience
+
+    // Restore base GameObject state
+    player.setVelocity(Vector2D.deserialize(data.velocity))
+
+    // Restore health by adjusting from current health
+    const currentHealth = player.getHealth()
+    const targetHealth = data.health
+    if (targetHealth < currentHealth) {
+      player.takeDamage(currentHealth - targetHealth)
+    } else if (targetHealth > currentHealth) {
+      player.heal(targetHealth - currentHealth)
+    }
+
+    if (data.destroyed) {
+      player.destroy()
+    }
+
     return player
   }
 }

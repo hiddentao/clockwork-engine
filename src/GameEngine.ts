@@ -225,21 +225,21 @@ export abstract class GameEngine
   /**
    * Schedule a one-time callback to execute after the specified number of frames
    */
-  setTimeout(callback: () => void, frames: number): string {
+  setTimeout(callback: () => void, frames: number): number {
     return this.timer.setTimeout(callback, frames)
   }
 
   /**
    * Schedule a repeating callback to execute every specified number of frames
    */
-  setInterval(callback: () => void, frames: number): string {
+  setInterval(callback: () => void, frames: number): number {
     return this.timer.setInterval(callback, frames)
   }
 
   /**
    * Cancel a timer
    */
-  clearTimer(id: string): boolean {
+  clearTimer(id: number): boolean {
     return this.timer.clearTimer(id)
   }
 

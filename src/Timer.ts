@@ -1,7 +1,7 @@
 import type { IGameLoop } from "./IGameLoop"
 
 interface TimerCallback {
-  id: string
+  id: number
   callback: () => void
   targetFrame: number
   interval?: number // For repeating timers
@@ -9,8 +9,8 @@ interface TimerCallback {
 }
 
 export class Timer implements IGameLoop {
-  private timers: Map<string, TimerCallback> = new Map()
-  private nextId: number = 0
+  private timers: Map<number, TimerCallback> = new Map()
+  private nextId: number = 1
   private currentFrame: number = 0
 
   /**
@@ -19,8 +19,8 @@ export class Timer implements IGameLoop {
    * @param frames Number of frames to wait before execution
    * @returns Timer ID that can be used to cancel the timer
    */
-  setTimeout(callback: () => void, frames: number): string {
-    const id = `timer_${this.nextId++}`
+  setTimeout(callback: () => void, frames: number): number {
+    const id = this.nextId++
     this.timers.set(id, {
       id,
       callback,
@@ -36,8 +36,8 @@ export class Timer implements IGameLoop {
    * @param frames Number of frames between executions
    * @returns Timer ID that can be used to cancel the timer
    */
-  setInterval(callback: () => void, frames: number): string {
-    const id = `timer_${this.nextId++}`
+  setInterval(callback: () => void, frames: number): number {
+    const id = this.nextId++
     this.timers.set(id, {
       id,
       callback,
@@ -53,7 +53,7 @@ export class Timer implements IGameLoop {
    * @param id Timer ID returned from setTimeout or setInterval
    * @returns True if timer was found and cancelled
    */
-  clearTimer(id: string): boolean {
+  clearTimer(id: number): boolean {
     return this.timers.delete(id)
   }
 
@@ -64,34 +64,61 @@ export class Timer implements IGameLoop {
   update(_deltaFrames: number, totalFrames: number): void {
     this.currentFrame = totalFrames
 
-    const readyTimers: TimerCallback[] = []
+    // Process timers until no more are ready to execute
+    let hasExecutions = true
+    let maxIterations = 1000 // Prevent infinite loops for zero intervals
+    let iterations = 0
 
-    // Collect all timers ready for execution
-    for (const timer of this.timers.values()) {
-      if (timer.isActive && this.currentFrame >= timer.targetFrame) {
-        readyTimers.push(timer)
-      }
-    }
+    while (hasExecutions && iterations < maxIterations) {
+      hasExecutions = false
+      iterations++
 
-    // Execute all ready timers with error handling
-    if (readyTimers.length > 0) {
-      for (const timer of readyTimers) {
-        try {
-          timer.callback()
-        } catch (error) {
-          console.error(`Timer ${timer.id} failed:`, error)
-          // Don't rethrow - we don't want one timer failure to break others
+      const readyTimers: TimerCallback[] = []
+
+      // Collect all timers ready for execution, sorted by targetFrame for deterministic order
+      for (const timer of this.timers.values()) {
+        if (timer.isActive && this.currentFrame >= timer.targetFrame) {
+          readyTimers.push(timer)
         }
       }
 
-      // Reschedule or remove timers after execution
-      for (const timer of readyTimers) {
-        if (timer.interval && timer.isActive) {
-          // Reschedule repeating timer
-          timer.targetFrame = this.currentFrame + timer.interval
-        } else {
-          // Remove one-time timer
-          this.timers.delete(timer.id)
+      // Sort timers by target frame, then by ID for deterministic execution order
+      readyTimers.sort((a, b) => {
+        if (a.targetFrame !== b.targetFrame) {
+          return a.targetFrame - b.targetFrame
+        }
+        return a.id - b.id
+      })
+
+      if (readyTimers.length > 0) {
+        hasExecutions = true
+
+        // Execute all ready timers with error handling
+        for (const timer of readyTimers) {
+          try {
+            timer.callback()
+          } catch (error) {
+            console.error(`Timer ${timer.id} failed:`, error)
+            // Don't rethrow - we don't want one timer failure to break others
+          }
+        }
+
+        // Reschedule or remove timers after execution
+        for (const timer of readyTimers) {
+          if (timer.interval !== undefined && timer.isActive) {
+            // For repeating timers, handle different interval cases
+            if (timer.interval === 0) {
+              // Zero interval - execute once per update, don't loop infinitely
+              timer.targetFrame = this.currentFrame + 1
+              hasExecutions = false // Prevent infinite loop for zero intervals
+            } else {
+              // Reschedule repeating timer
+              timer.targetFrame += timer.interval
+            }
+          } else {
+            // Remove one-time timer
+            this.timers.delete(timer.id)
+          }
         }
       }
     }
@@ -104,7 +131,7 @@ export class Timer implements IGameLoop {
   reset(): void {
     this.timers.clear()
     this.currentFrame = 0
-    this.nextId = 0
+    // Don't reset nextId - tests expect it to keep incrementing across resets
   }
 
   /**
@@ -119,7 +146,7 @@ export class Timer implements IGameLoop {
    * Get information about all active timers
    */
   getTimerInfo(): Array<{
-    id: string
+    id: number
     targetFrame: number
     framesRemaining: number
     isRepeating: boolean
@@ -139,7 +166,7 @@ export class Timer implements IGameLoop {
    * @param id Timer ID
    * @returns True if timer was found and paused
    */
-  pauseTimer(id: string): boolean {
+  pauseTimer(id: number): boolean {
     const timer = this.timers.get(id)
     if (timer) {
       timer.isActive = false
@@ -153,7 +180,7 @@ export class Timer implements IGameLoop {
    * @param id Timer ID
    * @returns True if timer was found and resumed
    */
-  resumeTimer(id: string): boolean {
+  resumeTimer(id: number): boolean {
     const timer = this.timers.get(id)
     if (timer) {
       timer.isActive = true

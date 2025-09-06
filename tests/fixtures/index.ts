@@ -1,3 +1,6 @@
-export { TestEnemy } from "./TestEnemy"
 export { TestGameEngine } from "./TestGameEngine"
 export { TestPlayer } from "./TestPlayer"
+export { TestEnemy } from "./TestEnemy"
+export { TestProjectile } from "./TestProjectile"
+export { TestPowerUp, type PowerUpType } from "./TestPowerUp"
+export { ComplexTestEngine } from "./ComplexTestEngine"
