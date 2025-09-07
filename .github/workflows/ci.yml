@@ -29,7 +29,7 @@ jobs:
       run: bun test --coverage
 
     - name: Build demo
-      run: bun run demo:build
+      run: cd demo && bun i && bun run build
 
     - name: Upload coverage to Coveralls
       uses: coverallsapp/github-action@v2

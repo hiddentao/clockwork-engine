@@ -34,7 +34,7 @@ jobs:
       run: bun run build
 
     - name: Build demo
-      run: bun run demo:build
+      run: cd demo && bun i && bun run build
 
     - name: Setup Pages
       uses: actions/configure-pages@v4

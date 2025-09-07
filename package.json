@@ -1,10 +1,13 @@
 {
-  "name": "clockwork-engine",
+  "name": "@hiddentao/clockwork-engine",
   "version": "1.0.0",
   "description": "A TypeScript game engine for deterministic, replayable games",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "engineStrict": true,
   "engines": {
     "node": ">=22.0.0"

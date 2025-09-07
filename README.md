@@ -2,9 +2,9 @@
 
 # Clockwork Game Engine
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/username/clockwork-engine/ci.yml?branch=main)](https://github.com/username/clockwork-engine/actions)
-[![NPM Version](https://img.shields.io/npm/v/clockwork-engine.svg)](https://www.npmjs.com/package/clockwork-engine)
-[![License](https://img.shields.io/npm/l/clockwork-engine.svg)](https://github.com/username/clockwork-engine/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/hiddentao/clockwork/ci.yml?branch=main)](https://github.com/hiddentao/clockwork/actions)
+[![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
+[![License](https://img.shields.io/npm/l/@hiddentao/clockwork-engine.svg)](https://github.com/hiddentao/clockwork/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
 **A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.**
@@ -17,7 +17,7 @@
 
 ## 🎮 Live Demo
 
-**[Try the Interactive Demo →](https://hiddentao.github.io/clockwork-engine)**
+**[Try the Interactive Demo →](https://hiddentao.github.io/clockwork)**
 
 ## ✨ Features
 
@@ -35,15 +35,15 @@
 ### Installation
 
 ```bash
-npm install clockwork-engine
+npm install @hiddentao/clockwork-engine
 # or
-bun add clockwork-engine
+bun add @hiddentao/clockwork-engine
 ```
 
 ### Basic Usage
 
 ```typescript
-import { GameEngine, GameObject, Vector2D } from 'clockwork-engine'
+import { GameEngine, GameObject, Vector2D } from '@hiddentao/clockwork-engine'
 import * as PIXI from 'pixi.js'
 
 class MyGame extends GameEngine {
@@ -81,8 +81,8 @@ Comprehensive documentation is available in the [docs](./docs) directory:
 
 ```bash
 # Clone the repository
-git clone https://github.com/username/clockwork-engine.git
-cd clockwork-engine
+git clone https://github.com/hiddentao/clockwork.git
+cd clockwork
 
 # Install dependencies
 bun install
@@ -121,7 +121,9 @@ bun run format
 
 ```bash
 # Run the demo (from project root)
-bun run demo
+cd demo
+bun i 
+bun run dev
 ```
 
 ## 📄 License
