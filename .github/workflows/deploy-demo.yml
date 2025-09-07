@@ -26,8 +26,10 @@ jobs:
     - name: Build main project
       run: bun run build
 
-    - name: Install gh-pages
-      run: bun add -g gh-pages
+    - name: Configure Git
+      run: |
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Actions"
 
     - name: Build demo
       run: cd demo && bun i && bun run build
