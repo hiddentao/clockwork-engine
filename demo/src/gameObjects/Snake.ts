@@ -1,5 +1,8 @@
-import type { GameEngineInterface, GameObjectEvents } from "clockwork"
-import { GameObject, Vector2D } from "clockwork"
+import type {
+  GameEngineInterface,
+  GameObjectEvents,
+} from "@hiddentao/clockwork-engine"
+import { GameObject, Vector2D } from "@hiddentao/clockwork-engine"
 import { DIRECTION_VECTORS, Direction, GAME_CONFIG } from "../utils/constants"
 
 interface SnakeSegment {

@@ -1,4 +1,4 @@
-import { GameEngine, GameState, Vector2D } from "clockwork"
+import { GameEngine, GameState, Vector2D } from "@hiddentao/clockwork-engine"
 import { Apple, Snake, Wall } from "../gameObjects"
 import { Direction, GAME_CONFIG } from "../utils/constants"
 

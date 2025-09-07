@@ -1,4 +1,4 @@
-import { GameState } from "clockwork"
+import { GameState } from "@hiddentao/clockwork-engine"
 
 export interface UIStatus {
   state: GameState

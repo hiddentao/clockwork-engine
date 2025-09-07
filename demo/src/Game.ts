@@ -4,7 +4,7 @@ import {
   GameState,
   ReplayManager,
   UserInputEventSource,
-} from "clockwork"
+} from "@hiddentao/clockwork-engine"
 import * as PIXI from "pixi.js"
 import { Renderer } from "./Renderer"
 import { UI } from "./UI"

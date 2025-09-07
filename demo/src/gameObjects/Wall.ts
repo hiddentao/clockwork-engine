@@ -1,5 +1,5 @@
-import type { GameEngineInterface } from "clockwork"
-import { GameObject, Vector2D } from "clockwork"
+import type { GameEngineInterface } from "@hiddentao/clockwork-engine"
+import { GameObject, Vector2D } from "@hiddentao/clockwork-engine"
 
 export class Wall extends GameObject {
   constructor(id: string, position: Vector2D, engine?: GameEngineInterface) {

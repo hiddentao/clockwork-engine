@@ -12,7 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "clockwork": "file:..",
+    "@hiddentao/clockwork-engine": "file:..",
     "pixi.js": "^8.6.6",
     "pixi-viewport": "^6.0.3"
   },
