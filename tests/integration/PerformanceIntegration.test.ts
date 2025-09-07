@@ -315,6 +315,7 @@ describe("Performance Integration Tests", () => {
         new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", engine)
       }
 
+      engine.setGameRecorder(recorder)
       recorder.startRecording(engine.getEventManager(), "recording-perf-test")
       engine.start()
 
@@ -342,10 +343,10 @@ describe("Performance Integration Tests", () => {
 
       // Recording should be successful
       expect(recording).toBeDefined()
-      expect(recording!.events.length).toBeGreaterThan(0)
+      expect(recording!.deltaFrames.length).toBeGreaterThan(0)
 
       console.log(`Recording overhead: ${overhead.toFixed(1)}%`)
-      console.log(`Events recorded: ${recording!.events.length}`)
+      console.log(`Frames recorded: ${recording!.deltaFrames.length}`)
     })
 
     test("should handle serialization performance", async () => {
