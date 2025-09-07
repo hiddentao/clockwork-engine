@@ -4,16 +4,23 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
@@ -26,17 +33,17 @@ jobs:
     - name: Build main project
       run: bun run build
 
-    - name: Configure Git
-      run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "GitHub Actions"
-
     - name: Build demo
       run: cd demo && bun i && bun run build
 
-    - name: Deploy to gh-pages branch
-      run: |
-        git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        bunx gh-pages -d demo/dist
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload demo dist
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./demo/dist
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
