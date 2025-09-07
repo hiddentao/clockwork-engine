@@ -37,7 +37,7 @@ jobs:
       run: cd demo && bun i && bun run build
 
     - name: Create tar of demo dist
-      run: tar -cf github-pages.tar -C demo/dist .
+      run: tar -cvf github-pages.tar -C demo/dist .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
