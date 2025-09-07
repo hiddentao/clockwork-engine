@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Test
+coverage
+lcov.info
+
 # Build info
 tsconfig.tsbuildinfo
 tsconfig.declarations.tsbuildinfo
