@@ -411,7 +411,7 @@ describe("Performance Integration Tests", () => {
       expect(deserializeTime).toBeLessThan(1000) // Under 1 second
 
       // Data integrity check
-      expect(deserialized.metadata.version).toBe(1)
+      expect(deserialized.metadata.version).toBe("1.0.0")
       expect(deserialized.objects).toHaveLength(500)
       expect(deserialized.matrices).toHaveLength(50)
 
