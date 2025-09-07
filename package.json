@@ -32,7 +32,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm tsconfig.tsbuildinfo && tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "coverage": "bun test --coverage --coverage-reporter=lcov && ./scripts/sanitize-lcov.sh",
@@ -43,7 +43,7 @@
     "format": "biome format --write .",
     "demo": "cd demo && bun run dev",
     "demo:build": "cd demo && bun run build",
-    "prepare": "husky",
+    "prepare": "bun run husky",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
