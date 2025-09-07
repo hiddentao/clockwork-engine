@@ -43,7 +43,8 @@
     "format": "biome format --write .",
     "demo": "cd demo && bun run dev",
     "demo:build": "cd demo && bun run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "alea": "^1.0.1"
