@@ -4,7 +4,7 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/hiddentao/clockwork-engine/ci.yml?branch=main)](https://github.com/hiddentao/clockwork-engine/actions)
 [![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
-[![License](https://img.shields.io/npm/l/@hiddentao/clockwork-engine.svg)](https://github.com/hiddentao/clockwork/blob/main/LICENSE)
+[![License](https://img.shields.io/npm/l/@hiddentao/clockwork-engine.svg)](https://github.com/hiddentao/clockwork-engine/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
 **A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.**
@@ -17,7 +17,7 @@
 
 ## 🎮 Live Demo
 
-**[Try the Interactive Demo →](https://hiddentao.github.io/clockwork)**
+**[Try the Interactive Demo →](https://hiddentao.github.io/clockwork-engine)**
 
 ## ✨ Features
 
@@ -81,8 +81,8 @@ Comprehensive documentation is available in the [docs](./docs) directory:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hiddentao/clockwork.git
-cd clockwork
+git clone https://github.com/hiddentao/clockwork-engine.git
+cd clockwork-engine
 
 # Install dependencies
 bun install

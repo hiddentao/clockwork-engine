@@ -2,6 +2,25 @@
   "name": "@hiddentao/clockwork-engine",
   "version": "1.0.0",
   "description": "A TypeScript game engine for deterministic, replayable games",
+  "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
+  "license": "MIT",
+  "homepage": "https://github.com/hiddentao/clockwork-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/clockwork-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hiddentao/clockwork-engine/issues"
+  },
+  "keywords": [
+    "game-engine",
+    "typescript",
+    "deterministic",
+    "replay",
+    "recording",
+    "pixi",
+    "collision-detection"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
