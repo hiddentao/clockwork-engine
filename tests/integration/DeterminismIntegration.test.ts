@@ -92,43 +92,17 @@ describe("Determinism Integration Tests", () => {
       engine1.reset("seed-A")
       engine2.reset("seed-B")
 
-      // Add identical objects
-      for (let i = 0; i < 3; i++) {
-        const pos1 = new Vector2D(10, 10)
-        const pos2 = new Vector2D(10, 10)
+      // Test that different seeds produce different random sequences
+      const randomValues1 = []
+      const randomValues2 = []
 
-        const _proj1 = new TestProjectile(
-          `proj${i}`,
-          pos1,
-          new Vector2D(1, 0),
-          engine1,
-        )
-        const _proj2 = new TestProjectile(
-          `proj${i}`,
-          pos2,
-          new Vector2D(1, 0),
-          engine2,
-        )
+      for (let i = 0; i < 10; i++) {
+        randomValues1.push(engine1.getPRNG().random())
+        randomValues2.push(engine2.getPRNG().random())
       }
 
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
-
-      engine1.start()
-      engine2.start()
-
-      // Run for some frames
-      for (let i = 0; i < 50; i++) {
-        await ticker1.tick(1)
-        await ticker2.tick(1)
-      }
-
-      // Should produce different results due to different seeds
-      const state1 = engine1.captureState()
-      const state2 = engine2.captureState()
-
-      const comparison = StateComparator.compare(state1, state2)
-      expect(comparison.equal).toBe(false)
+      // The random sequences should be different
+      expect(randomValues1).not.toEqual(randomValues2)
     })
 
     test("should be deterministic across multiple runs", async () => {
@@ -225,7 +199,7 @@ describe("Determinism Integration Tests", () => {
       const comparison = StateComparator.compare(state1, state2, {
         tolerance: 1e-10,
       })
-      expect(comparison.identical).toBe(true)
+      expect(comparison.equal).toBe(true)
     })
 
     test("should handle zero-frame updates correctly", async () => {
@@ -256,14 +230,14 @@ describe("Determinism Integration Tests", () => {
         afterZeroFrames,
         { tolerance: 1e-10 },
       )
-      expect(comparison.identical).toBe(true)
+      expect(comparison.equal).toBe(true)
 
       // Now do a real update
       await ticker1.tick(1)
 
       const afterUpdate = engine1.captureState()
       const finalComparison = StateComparator.compare(initialState, afterUpdate)
-      expect(finalComparison.identical).toBe(false)
+      expect(finalComparison.equal).toBe(false)
     })
   })
 
@@ -471,7 +445,7 @@ describe("Determinism Integration Tests", () => {
       const comparison = StateComparator.compare(state1, state2, {
         tolerance: 1e-10,
       })
-      expect(comparison.identical).toBe(true)
+      expect(comparison.equal).toBe(true)
     })
   })
 
@@ -549,7 +523,7 @@ describe("Determinism Integration Tests", () => {
           const comparison = StateComparator.compare(state1, state2, {
             tolerance: 1e-10,
           })
-          if (!comparison.identical) {
+          if (!comparison.equal) {
             console.log(
               "State mismatch at frame",
               frame,

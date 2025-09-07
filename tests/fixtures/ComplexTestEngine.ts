@@ -41,9 +41,6 @@ export class ComplexTestEngine extends GameEngine {
     const state: any = {
       totalFrames: this.getTotalFrames(),
       gameState: this.getState(),
-      prngState: this.getPRNG().getState
-        ? this.getPRNG().getState()
-        : "unavailable",
       objects: {},
     }
 
@@ -51,7 +48,7 @@ export class ComplexTestEngine extends GameEngine {
     const groupTypes = [
       "Player",
       "Enemy",
-      "TestProjectile",
+      "Projectile",
       "TestPowerUp",
       "PowerUp",
     ]

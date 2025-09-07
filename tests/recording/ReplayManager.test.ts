@@ -203,20 +203,22 @@ describe("ReplayManager", () => {
     it("should stop replay when all deltaFrames processed", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      // Process one deltaFrame at a time to see what happens
+      // Process frames one at a time
       replayManager.update(1) // Should process deltaFrames[0] = 1
-      replayManager.update(1) // Should process deltaFrames[1] = 1
-      replayManager.update(1) // Should process deltaFrames[2] = 1
-      replayManager.update(1) // Should process deltaFrames[3] = 1
-      replayManager.update(1) // Should process deltaFrames[4] = 1
-
-      // The replay should still be running after processing all frames
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
-      expect(replayManager.getCurrentFrame()).toBe(5)
 
-      // One more update should trigger the auto-stop
-      replayManager.update(1)
+      replayManager.update(1) // Should process deltaFrames[1] = 1
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      replayManager.update(1) // Should process deltaFrames[2] = 1
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      replayManager.update(1) // Should process deltaFrames[3] = 1
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      replayManager.update(1) // Should process deltaFrames[4] = 1 and auto-stop
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.getCurrentFrame()).toBe(5)
     })
 
     it("should not process frames when not replaying", () => {
@@ -249,12 +251,12 @@ describe("ReplayManager", () => {
 
       replayManager.stopReplay()
 
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentFrame()).toBe(3) // Frame count preserved after stop
 
       const progress = replayManager.getReplayProgress()
       expect(progress.isReplaying).toBe(false)
-      expect(progress.progress).toBe(0)
-      expect(progress.hasMoreFrames).toBe(false)
+      expect(progress.progress).toBe(0.6) // 3/5 frames completed
+      expect(progress.hasMoreFrames).toBe(true) // Still has deltaFrames[3] and deltaFrames[4] remaining
     })
 
     it("should handle stop when not replaying", () => {
@@ -349,13 +351,9 @@ describe("ReplayManager", () => {
       replayManager.update(20) // Should process second frame (20) with 5 remaining
       expect(replayManager.getCurrentFrame()).toBe(30)
 
-      replayManager.update(35) // Should process third frame (30)
+      replayManager.update(35) // Should process third frame (30) and auto-stop
       expect(replayManager.getCurrentFrame()).toBe(60)
-      expect(replayManager.isCurrentlyReplaying()).toBe(true)
-
-      // One more update should trigger auto-stop
-      replayManager.update(1)
-      expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.isCurrentlyReplaying()).toBe(false) // Auto-stopped after all frames processed
     })
   })
 
@@ -375,13 +373,17 @@ describe("ReplayManager", () => {
       // Create a test player
       const player = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
+      // Set recorder on engine before starting recording
+      engine.setGameRecorder(recorder)
       // Record a session
       recorder.startRecording(eventManager, "integration-test")
 
+      // Start the engine so it processes frames
+      engine.start()
+
       // Simulate game events
       inputSource.queueInput("move", { direction: "right" })
-      eventManager.update(1, 1)
-      recorder.recordFrameUpdate(1, 1)
+      engine.update(1) // This will call recorder.recordFrameUpdate and eventManager.update
 
       // Create object update event manually (simulating game logic)
       player.setPosition(new Vector2D(10, 0))
@@ -396,8 +398,7 @@ describe("ReplayManager", () => {
       } as ObjectUpdateEvent)
 
       inputSource.queueInput("move", { direction: "up" })
-      eventManager.update(1, 2)
-      recorder.recordFrameUpdate(1, 2)
+      engine.update(1) // This will call recorder.recordFrameUpdate and eventManager.update
 
       player.setPosition(new Vector2D(10, 10))
       recorder.recordEvent({
@@ -413,16 +414,15 @@ describe("ReplayManager", () => {
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()!
 
-      // Reset engine and create new player for replay
-      engine.reset("integration-test") // Same seed
+      // Replay the session (this will reset the engine)
+      replayManager.replay(recording)
+
+      // Create new player for replay AFTER replay starts (engine is already reset by replay())
       const replayPlayer = engine.createTestPlayer(
         "player1",
         new Vector2D(0, 0),
       )
       expect(replayPlayer.getPosition()).toEqual(new Vector2D(0, 0))
-
-      // Replay the session
-      replayManager.replay(recording)
 
       // Process the replay
       replayManager.update(1) // Frame 1
@@ -431,6 +431,8 @@ describe("ReplayManager", () => {
       replayManager.update(1) // Frame 2
       expect(replayPlayer.getPosition()).toEqual(new Vector2D(10, 10))
 
+      // One more update should trigger auto-stop
+      replayManager.update(1)
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
@@ -513,18 +515,14 @@ describe("ReplayManager", () => {
 
       replayManager.replay(longRecording)
 
-      // Process all frames
+      // Process all frames - should auto-stop immediately
       replayManager.update(1000)
 
       const endTime = performance.now()
       const processingTime = endTime - startTime
 
       expect(replayManager.getCurrentFrame()).toBe(1000)
-      expect(replayManager.isCurrentlyReplaying()).toBe(true)
-
-      // One more update should trigger auto-stop
-      replayManager.update(1)
-      expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.isCurrentlyReplaying()).toBe(false) // Auto-stopped after all frames processed
       expect(processingTime).toBeLessThan(1000) // Should complete within 1 second
     })
 
@@ -539,14 +537,12 @@ describe("ReplayManager", () => {
 
       for (let cycle = 0; cycle < 100; cycle++) {
         replayManager.replay(quickRecording)
-        replayManager.update(0.3)
-        expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-        // One more update should trigger auto-stop
-        replayManager.update(0.1)
+        // Process all deltaFrames at once (0.1 + 0.1 + 0.1 = 0.3) - should auto-stop
+        replayManager.update(0.3)
         expect(replayManager.isCurrentlyReplaying()).toBe(false)
 
-        // Ensure clean state for next cycle
+        // Ensure clean state for next cycle (though stopReplay should be idempotent)
         replayManager.stopReplay()
       }
     })
@@ -563,16 +559,15 @@ describe("ReplayManager", () => {
       replayManager.replay(irregularRecording)
 
       // Process with various update sizes
-      replayManager.update(0.5) // Should handle tiny first frame
-      replayManager.update(15) // Should handle large frame and more
-      replayManager.update(2) // Should process remaining frames
-
+      replayManager.update(0.5) // Should process 0.001, still replaying
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
-      expect(replayManager.getCurrentFrame()).toBeCloseTo(17.111, 3)
 
-      // One more update should trigger auto-stop
-      replayManager.update(1)
+      replayManager.update(15) // Should process 10, 0.1, 5, still replaying
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      replayManager.update(2) // Should process 0.01, 2 and auto-stop
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.getCurrentFrame()).toBeCloseTo(17.111, 3)
     })
   })
 
@@ -638,7 +633,7 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentFrame()).toBe(2)
 
       replayManager.stopReplay()
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentFrame()).toBe(2) // Frame count preserved after stop
 
       // Restart
       replayManager.replay(sampleRecording)
@@ -671,16 +666,11 @@ describe("ReplayManager", () => {
       progress = replayManager.getReplayProgress()
       expect(progress.progress).toBeCloseTo(0.5, 2) // 5/10
 
-      replayManager.update(5) // Process final deltaFrame (5 frames)
+      replayManager.update(5) // Process final deltaFrame (5 frames) and auto-stop
       progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(1.0) // 10/10
       expect(progress.hasMoreFrames).toBe(false)
-      expect(progress.isReplaying).toBe(true) // Still replaying until next update
-
-      // One more update should trigger auto-stop
-      replayManager.update(1)
-      progress = replayManager.getReplayProgress()
-      expect(progress.isReplaying).toBe(false) // Should have stopped
+      expect(progress.isReplaying).toBe(false) // Auto-stopped after all frames processed
     })
 
     it("should clamp progress to 1.0 maximum", () => {

@@ -56,14 +56,13 @@ export class ReplayManager {
 
     this.isReplaying = false
 
-    // Pause the engine
+    // Pause the engine when replay stops
     if (this.engine.getState() === GameState.PLAYING) {
       this.engine.pause()
     }
 
-    // Reset playback state
+    // Reset playback state (preserve currentReplayFrame for inspection)
     this.deltaFramesIndex = 0
-    this.currentReplayFrame = 0
     this.accumulatedFrames = 0
   }
 
@@ -90,12 +89,6 @@ export class ReplayManager {
       return
     }
 
-    // Check if replay is complete
-    if (this.deltaFramesIndex >= this.recording.deltaFrames.length) {
-      this.stopReplay()
-      return
-    }
-
     // Accumulate incoming frames
     this.accumulatedFrames += deltaFrames
 
@@ -104,7 +97,7 @@ export class ReplayManager {
       this.isReplaying && // Check again in case stopReplay was called
       this.deltaFramesIndex < this.recording.deltaFrames.length &&
       this.accumulatedFrames >=
-        this.recording.deltaFrames[this.deltaFramesIndex]
+        this.recording.deltaFrames[this.deltaFramesIndex] - 1e-10 // Add tolerance for floating point precision
     ) {
       const recordedDeltaFrames =
         this.recording.deltaFrames[this.deltaFramesIndex]
@@ -118,8 +111,14 @@ export class ReplayManager {
 
       // Track current frame
       this.currentReplayFrame += recordedDeltaFrames
+    }
 
-      // Don't auto-stop here - let the main check at the beginning handle completion
+    // Check if replay is complete after processing (moved from beginning)
+    if (
+      this.isReplaying &&
+      this.deltaFramesIndex >= this.recording.deltaFrames.length
+    ) {
+      this.stopReplay()
     }
   }
 
@@ -131,14 +130,16 @@ export class ReplayManager {
     progress: number
     hasMoreFrames: boolean
   } {
-    if (!this.isReplaying || !this.recording) {
+    if (!this.recording) {
       return { isReplaying: false, progress: 0, hasMoreFrames: false }
     }
 
     const totalFrames = this.recording.totalFrames
     const progress = totalFrames > 0 ? this.currentReplayFrame / totalFrames : 0
-    const hasMoreFrames =
-      this.deltaFramesIndex < this.recording.deltaFrames.length
+    // If replay is active, check deltaFramesIndex; if stopped, check if replay was completed
+    const hasMoreFrames = this.isReplaying
+      ? this.deltaFramesIndex < this.recording.deltaFrames.length
+      : progress < 1.0
 
     return {
       isReplaying: this.isReplaying,
