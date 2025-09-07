@@ -32,7 +32,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "rm tsconfig.tsbuildinfo && tsc",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "coverage": "bun test --coverage --coverage-reporter=lcov && ./scripts/sanitize-lcov.sh",
