@@ -517,7 +517,7 @@ describe("Performance Integration Tests", () => {
       expect(engine.getTotalFrames()).toBe(20)
 
       const activeObjects =
-        engine.getGameObjectGroup("TestProjectile")?.getAll() || []
+        engine.getGameObjectGroup("Projectile")?.getAll() || []
       expect(activeObjects.length).toBe(objectCount)
 
       console.log(
