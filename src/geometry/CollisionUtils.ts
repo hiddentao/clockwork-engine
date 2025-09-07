@@ -1,4 +1,5 @@
 import { EventEmitter } from "../EventEmitter"
+import { COLLISION_CONSTANTS } from "../constants"
 import type { Vector2D } from "./Vector2D"
 
 /**
@@ -47,29 +48,34 @@ interface SpatialNode {
  */
 export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   private points: CollisionPoint[] = []
+  private pointIndex: Map<string, number> = new Map() // Fast lookup for removal
   private root: SpatialNode | null = null
-  private readonly maxPointsPerNode = 10
-  private readonly maxDepth = 8
+  private readonly maxPointsPerNode = COLLISION_CONSTANTS.MAX_POINTS_PER_NODE
+  private readonly maxDepth = COLLISION_CONSTANTS.MAX_TREE_DEPTH
   private deferRebuild = false
   private needsRebuild = false
 
   constructor(initialPoints: CollisionPoint[] = []) {
     super()
     this.points = [...initialPoints]
+    this.rebuildPointIndex()
     if (initialPoints.length > 0) {
       this.rebuildTree()
     }
   }
 
   /**
-   * Begin batch mode - defer tree rebuilding until endBatch() is called
+   * Begin batch mode to optimize multiple collision operations
+   * Defers expensive tree rebuilding until endBatch() is called
+   * Use for bulk add/remove operations to improve performance
    */
   public beginBatch(): void {
     this.deferRebuild = true
   }
 
   /**
-   * End batch mode - rebuild tree if needed and emit events
+   * End batch mode and apply deferred tree rebuilding
+   * Rebuilds spatial tree if changes occurred during batch and emits events
    */
   public endBatch(): void {
     this.deferRebuild = false
@@ -81,11 +87,16 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   }
 
   /**
-   * Add a point to the collision grid
+   * Add a collision point to the spatial partitioning tree
+   * Updates internal index for O(1) removal operations
+   * @param point 2D coordinates of the collision point
+   * @param source Object that owns this collision point
    */
   public add(point: Vector2D, source: ICollisionSource): void {
-    // console.log(`add point`, point.x, point.y, source.getCollisionSourceId())
-    this.points.push({ point, source })
+    const collisionPoint = { point, source }
+    const key = this.createCollisionPointKey(collisionPoint)
+    this.pointIndex.set(key, this.points.length)
+    this.points.push(collisionPoint)
     if (this.deferRebuild) {
       this.needsRebuild = true
     } else {
@@ -95,17 +106,24 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   }
 
   /**
-   * Remove a point from the collision grid
+   * Remove a specific collision point from the tree
+   * Uses optimized lookup for O(1) performance
+   * @param point 2D coordinates to remove
+   * @param source Owner of the collision point
+   * @returns True if point was found and removed, false otherwise
    */
   public remove(point: Vector2D, source: ICollisionSource): boolean {
-    const index = this.points.findIndex(
-      (cp) =>
-        cp.point.x === point.x &&
-        cp.point.y === point.y &&
-        cp.source.getCollisionSourceId() === source.getCollisionSourceId(),
-    )
-    if (index !== -1) {
+    const key = this.createCollisionPointKey({ point, source })
+    const index = this.pointIndex.get(key)
+
+    if (index !== undefined && index < this.points.length) {
+      // Remove from points array
       this.points.splice(index, 1)
+      this.pointIndex.delete(key)
+
+      // Update indices after removal
+      this.rebuildPointIndex()
+
       if (this.deferRebuild) {
         this.needsRebuild = true
       } else {
@@ -137,8 +155,8 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
    * Set all points in the collision grid (replaces existing points)
    */
   public setAll(points: Vector2D[], source: ICollisionSource): void {
-    // console.log(`set all points`, source.getCollisionSourceId())
     this.points = points.map((point) => ({ point, source }))
+    this.rebuildPointIndex()
     if (this.deferRebuild) {
       this.needsRebuild = true
     } else {
@@ -151,7 +169,6 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
    * Remove all points associated with a specific collision source
    */
   public removeSource(source: ICollisionSource): boolean {
-    // console.log(`removed source`, source.getCollisionSourceId())
     const sourceId = source.getCollisionSourceId()
     const initialLength = this.points.length
 
@@ -163,6 +180,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
     const removed = this.points.length !== initialLength
 
     if (removed) {
+      this.rebuildPointIndex()
       if (this.deferRebuild) {
         this.needsRebuild = true
       } else {
@@ -196,6 +214,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
    */
   public clear(): void {
     this.points = []
+    this.pointIndex.clear()
     this.root = null
     this.emit("pointsChanged")
   }
@@ -205,6 +224,24 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
    */
   private createPointKey(point: Vector2D): string {
     return `${point.x},${point.y}`
+  }
+
+  /**
+   * Create a unique key for collision point including source ID for efficient lookups
+   */
+  private createCollisionPointKey(collisionPoint: CollisionPoint): string {
+    return `${collisionPoint.point.x},${collisionPoint.point.y},${collisionPoint.source.getCollisionSourceId()}`
+  }
+
+  /**
+   * Rebuild the point index map for fast lookups
+   */
+  private rebuildPointIndex(): void {
+    this.pointIndex.clear()
+    for (let i = 0; i < this.points.length; i++) {
+      const key = this.createCollisionPointKey(this.points[i])
+      this.pointIndex.set(key, i)
+    }
   }
 
   /**

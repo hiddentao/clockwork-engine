@@ -1,22 +1,22 @@
-// Core game object and utilities
+// Base game object system and engine interface
 
-// Event system
+// Event emitter and listener infrastructure
 export * from "./EventEmitter"
-// Types and enums
+// Core type definitions and game state enums
 export * from "./types"
 export * from "./GameEngine"
-// Game events and recording
+// Recording and replay system for deterministic playback
 export * from "./GameObject"
 export * from "./GameObjectGroup"
 export * from "./GameRecorder"
-// Geometry utilities
+// Vector math and spatial collision detection
 export * from "./geometry"
 export * from "./IGameLoop"
 export * from "./GameEventManager"
-// Event management
+// Game event processing and input handling
 export * from "./EventSource"
 export * from "./UserInputEventSource"
-// Core services
+// Engine services and timing systems
 export * from "./PRNG"
 export * from "./RecordedEventSource"
 export * from "./ReplayManager"

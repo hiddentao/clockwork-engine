@@ -1,5 +1,6 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
+import { REPLAY_CONSTANTS } from "./constants"
 import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
@@ -16,16 +17,18 @@ export class ReplayManager {
   }
 
   /**
-   * Start replaying a recorded game session
-   * @param recording The game recording to replay
+   * Start replaying a recorded game session with full validation
+   * Validates recording structure, resets engine state, and begins deterministic replay
+   * @param recording Complete game recording with events, deltaFrames, and metadata
+   * @throws Error if already replaying or recording is invalid
    */
   replay(recording: GameRecording): void {
     if (this.isReplaying) {
       throw new Error("Already replaying. Stop current replay first.")
     }
 
-    // Handle corrupted recordings gracefully - let RecordedEventSource deal with null events
-    // The test expects this specific error, so don't prevent it here
+    // Ensure recording integrity before replay begins
+    this.validateRecording(recording)
 
     this.isReplaying = true
     this.recording = recording
@@ -33,21 +36,22 @@ export class ReplayManager {
     this.currentReplayFrame = 0
     this.accumulatedFrames = 0
 
-    // 1. Initialize engine with recording seed
+    // Initialize engine with deterministic seed
     this.engine.reset(recording.seed)
 
-    // 2. Set input source to recorded events
+    // Configure event source for recorded input
     const recordedSource = new RecordedEventSource(
       recording.events as AnyGameEvent[],
     )
     this.engine.getEventManager().setSource(recordedSource)
 
-    // 3. Start engine
+    // Begin game execution
     this.engine.start()
   }
 
   /**
-   * Stop the current replay
+   * Stop the current replay and pause the engine
+   * Preserves current frame position for inspection
    */
   stopReplay(): void {
     if (!this.isReplaying) {
@@ -56,7 +60,7 @@ export class ReplayManager {
 
     this.isReplaying = false
 
-    // Pause the engine when replay stops
+    // Pause engine to preserve final state
     if (this.engine.getState() === GameState.PLAYING) {
       this.engine.pause()
     }
@@ -67,7 +71,8 @@ export class ReplayManager {
   }
 
   /**
-   * Check if currently replaying
+   * Check if currently replaying a recording
+   * @returns True if replay is active, false otherwise
    */
   isCurrentlyReplaying(): boolean {
     return this.isReplaying
@@ -75,14 +80,17 @@ export class ReplayManager {
 
   /**
    * Get the current frame number during replay
+   * @returns Current replay frame position
    */
   getCurrentFrame(): number {
     return this.currentReplayFrame
   }
 
   /**
-   * Update method to be called by PIXI ticker during replay
-   * Accumulates deltaFrames and processes recorded frames when ready
+   * Update method to be called by game loop during replay
+   * Accumulates incoming frames and processes recorded frames deterministically
+   * Maintains frame-accurate timing with floating-point tolerance
+   * @param deltaFrames Number of frames elapsed since last update
    */
   update(deltaFrames: number): void {
     if (!this.isReplaying || !this.recording) {
@@ -97,7 +105,8 @@ export class ReplayManager {
       this.isReplaying && // Check again in case stopReplay was called
       this.deltaFramesIndex < this.recording.deltaFrames.length &&
       this.accumulatedFrames >=
-        this.recording.deltaFrames[this.deltaFramesIndex] - 1e-10 // Add tolerance for floating point precision
+        this.recording.deltaFrames[this.deltaFramesIndex] -
+          REPLAY_CONSTANTS.FLOATING_POINT_TOLERANCE
     ) {
       const recordedDeltaFrames =
         this.recording.deltaFrames[this.deltaFramesIndex]
@@ -123,7 +132,9 @@ export class ReplayManager {
   }
 
   /**
-   * Get replay progress information based on current frame vs total frames
+   * Get comprehensive replay progress information
+   * Provides completion percentage and remaining frame status
+   * @returns Object containing replay state, progress (0-1), and frame availability
    */
   getReplayProgress(): {
     isReplaying: boolean
@@ -145,6 +156,69 @@ export class ReplayManager {
       isReplaying: this.isReplaying,
       progress: Math.min(1, progress), // Clamp to 1.0 maximum
       hasMoreFrames,
+    }
+  }
+
+  /**
+   * Validate recording structure to ensure it's safe and complete for replay
+   * @param recording The recording to validate
+   */
+  private validateRecording(recording: GameRecording): void {
+    if (!recording) {
+      throw new Error("Invalid recording: recording is null or undefined")
+    }
+
+    // Validate seed
+    if (!recording.seed || typeof recording.seed !== "string") {
+      throw new Error("Invalid recording: missing or invalid seed")
+    }
+
+    // Validate events array
+    if (!Array.isArray(recording.events)) {
+      throw new Error("Invalid recording: events must be an array")
+    }
+
+    // Validate deltaFrames array
+    if (!Array.isArray(recording.deltaFrames)) {
+      throw new Error("Invalid recording: deltaFrames must be an array")
+    }
+
+    // Validate totalFrames
+    if (
+      typeof recording.totalFrames !== "number" ||
+      recording.totalFrames < 0
+    ) {
+      throw new Error(
+        "Invalid recording: totalFrames must be a non-negative number",
+      )
+    }
+
+    // Validate that all deltaFrames are positive numbers
+    for (let i = 0; i < recording.deltaFrames.length; i++) {
+      const deltaFrame = recording.deltaFrames[i]
+      if (typeof deltaFrame !== "number" || deltaFrame <= 0) {
+        throw new Error(
+          `Invalid recording: deltaFrames[${i}] must be a positive number, got ${deltaFrame}`,
+        )
+      }
+    }
+
+    // Validate events structure
+    for (let i = 0; i < recording.events.length; i++) {
+      const event = recording.events[i]
+      if (!event || typeof event !== "object") {
+        throw new Error(`Invalid recording: events[${i}] must be an object`)
+      }
+
+      if (!event.type || typeof event.type !== "string") {
+        throw new Error(`Invalid recording: events[${i}].type must be a string`)
+      }
+
+      if (typeof event.frame !== "number" || event.frame < 0) {
+        throw new Error(
+          `Invalid recording: events[${i}].frame must be a non-negative number`,
+        )
+      }
     }
   }
 }

@@ -296,21 +296,15 @@ describe("ReplayManager", () => {
             params: {},
           } as UserInputEvent,
         ],
-        deltaFrames: [0, 1, 0, 1],
+        deltaFrames: [0, 1, 0, 1], // Zero deltaFrames are invalid
         totalFrames: 2,
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(zeroFrameRecording)
-
-      replayManager.update(0.5) // Should process first zero frame
-      expect(replayManager.getCurrentFrame()).toBe(0)
-
-      replayManager.update(0.5) // Should process 1 frame
-      expect(replayManager.getCurrentFrame()).toBe(1)
-
-      replayManager.update(1) // Should process zero + 1 frame
-      expect(replayManager.getCurrentFrame()).toBe(2)
+      // Should throw validation error for zero deltaFrames
+      expect(() => replayManager.replay(zeroFrameRecording)).toThrow(
+        "Invalid recording: deltaFrames[0] must be a positive number, got 0",
+      )
     })
 
     it("should handle fractional deltaFrames in recording", () => {
@@ -581,9 +575,9 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       } as any
 
-      // Should throw the specific error we expect
+      // Should throw validation error for invalid events array
       expect(() => replayManager.replay(corruptedRecording)).toThrow(
-        "null is not an object (evaluating 'events.map')",
+        "Invalid recording: events must be an array",
       )
     })
 
@@ -620,10 +614,10 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(negativeFramesRecording)
-
-      const progress = replayManager.getReplayProgress()
-      expect(progress.progress).toBeGreaterThanOrEqual(0) // Should not be negative
+      // Should throw validation error for negative totalFrames
+      expect(() => replayManager.replay(negativeFramesRecording)).toThrow(
+        "Invalid recording: totalFrames must be a non-negative number",
+      )
     })
 
     it("should handle stop/start during frame processing", () => {

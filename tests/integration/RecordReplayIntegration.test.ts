@@ -477,7 +477,7 @@ describe("Record-Replay Integration Tests", () => {
           // Missing required fields
           { type: GameEventType.USER_INPUT, frame: 0, timestamp: Date.now() },
         ],
-        deltaFrames: [1, 2, null, 4], // Invalid frame count
+        deltaFrames: [1, 2, null, 4], // Invalid frame count with null
         totalFrames: 100, // Doesn't match deltaFrames sum
         metadata: {
           version: "999.0.0", // Unsupported version
@@ -485,8 +485,10 @@ describe("Record-Replay Integration Tests", () => {
         },
       } as any
 
-      // Should not crash but may not replay correctly
-      expect(() => replayManager.replay(corruptedRecording)).not.toThrow()
+      // Should throw validation error for null in deltaFrames
+      expect(() => replayManager.replay(corruptedRecording)).toThrow(
+        "Invalid recording: deltaFrames[2] must be a positive number, got null",
+      )
     })
 
     test("should handle recording interruption", async () => {

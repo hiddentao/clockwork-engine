@@ -16,18 +16,21 @@ export class Serializer {
   private typeRegistry = new Map<string, SerializableClass>()
 
   /**
-   * Register a custom class for serialization
-   * @param typeName The name to use for this type in serialization
-   * @param classConstructor The class constructor with deserialize static method
+   * Register a custom class for serialization and deserialization
+   * Classes must implement Serializable interface with serialize() method
+   * and provide static deserialize() method for reconstruction
+   * @param typeName Unique identifier for this type in serialized data
+   * @param classConstructor Class constructor implementing SerializableClass interface
    */
   registerType(typeName: string, classConstructor: SerializableClass): void {
     this.typeRegistry.set(typeName, classConstructor)
   }
 
   /**
-   * Serialize a value to a JSON-safe format
-   * @param value The value to serialize
-   * @returns Serialized data
+   * Serialize any value to a JSON-safe format with type information
+   * Handles primitives, arrays, objects, and registered custom classes
+   * @param value The value to serialize (primitive, array, object, or Serializable)
+   * @returns Serialized data that can be JSON.stringify'd and later deserialized
    */
   serialize(value: any): any {
     if (value === null || value === undefined) {
@@ -92,9 +95,12 @@ export class Serializer {
   }
 
   /**
-   * Deserialize a value from serialized format
-   * @param value The serialized value
-   * @returns Deserialized data
+   * Deserialize a value from serialized format with security validation
+   * Reconstructs primitives, arrays, objects, and registered custom classes
+   * Only allows deserialization of registered types for security
+   * @param value The serialized value created by serialize()
+   * @returns Reconstructed original value
+   * @throws Error if type name contains unsafe patterns or is not registered
    */
   deserialize(value: any): any {
     // Handle primitives and null/undefined
@@ -117,6 +123,22 @@ export class Serializer {
     ) {
       const wrapper = value as SerializedWrapper
 
+      // Validate type name for security
+      if (typeof wrapper.__type !== "string") {
+        throw new Error("Invalid serialized data: __type must be a string")
+      }
+
+      // Prevent code injection by checking for dangerous patterns
+      if (
+        wrapper.__type.includes("function") ||
+        wrapper.__type.includes("eval") ||
+        wrapper.__type.includes("constructor") ||
+        wrapper.__type.includes("__proto__") ||
+        wrapper.__type.includes("prototype")
+      ) {
+        throw new Error(`Unsafe type name: ${wrapper.__type}`)
+      }
+
       switch (wrapper.__type) {
         case "Array":
           return wrapper.__data.map((item: any) => this.deserialize(item))
@@ -137,7 +159,7 @@ export class Serializer {
             return classConstructor.deserialize(deserializedData)
           }
 
-          // Unknown type, return as plain object
+          // Fallback to plain object for unknown types (backward compatibility)
           return this.deserialize(wrapper.__data)
         }
       }

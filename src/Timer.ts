@@ -1,4 +1,5 @@
 import type { IGameLoop } from "./IGameLoop"
+import { TIMER_CONSTANTS } from "./constants"
 
 interface TimerCallback {
   id: number
@@ -78,7 +79,7 @@ export class Timer implements IGameLoop {
 
     // Process timers until no more are ready to execute
     let hasExecutions = true
-    let maxIterations = 1000 // Prevent infinite loops for zero intervals
+    let maxIterations = TIMER_CONSTANTS.MAX_ITERATIONS
     let iterations = 0
 
     while (hasExecutions && iterations < maxIterations) {

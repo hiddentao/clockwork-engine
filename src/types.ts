@@ -1,4 +1,4 @@
-// Game state enum - used across engine and UI
+// Game execution states for engine lifecycle management
 export enum GameState {
   READY = "READY",
   PLAYING = "PLAYING",
@@ -6,13 +6,13 @@ export enum GameState {
   ENDED = "ENDED",
 }
 
-// Event type enum - used across event system
+// Event classification for game event processing
 export enum GameEventType {
   USER_INPUT = "USER_INPUT",
   OBJECT_UPDATE = "OBJECT_UPDATE",
 }
 
-// Game event interfaces
+// Event data structures for game state recording
 export interface GameEvent {
   type: GameEventType
   frame: number

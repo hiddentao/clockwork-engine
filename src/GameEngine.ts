@@ -48,7 +48,8 @@ export abstract class GameEngine
 
   /**
    * Reset the game engine to initial state
-   * Sets state to READY, recreates PRNG, resets frame counter, and calls setup()
+   * Clears all game objects, resets frame counter, and prepares for new game
+   * @param seed Optional random seed for deterministic gameplay. If not provided, uses existing seed
    */
   reset(seed?: string): void {
     if (seed !== undefined) {
@@ -65,14 +66,16 @@ export abstract class GameEngine
   }
 
   /**
-   * Abstract method for game-specific setup
-   * Override in subclasses to create initial game objects
+   * Abstract method for game-specific initialization
+   * Override in subclasses to create initial game objects and configure game state
+   * Called automatically during reset() to set up the game world
    */
   abstract setup(): void
 
   /**
    * Start the game by transitioning from READY to PLAYING state
-   * Only allowed when engine is in READY state
+   * Enables game loop processing and begins gameplay
+   * @throws Error if engine is not in READY state
    */
   start(): void {
     if (this.state !== GameState.READY) {
@@ -85,7 +88,8 @@ export abstract class GameEngine
 
   /**
    * Pause the game by transitioning from PLAYING to PAUSED state
-   * Only allowed when engine is in PLAYING state
+   * Stops game loop processing while maintaining current state
+   * @throws Error if engine is not in PLAYING state
    */
   pause(): void {
     if (this.state !== GameState.PLAYING) {
@@ -98,7 +102,8 @@ export abstract class GameEngine
 
   /**
    * Resume the game by transitioning from PAUSED to PLAYING state
-   * Only allowed when engine is in PAUSED state
+   * Restarts game loop processing from paused state
+   * @throws Error if engine is not in PAUSED state
    */
   resume(): void {
     if (this.state !== GameState.PAUSED) {
@@ -111,7 +116,8 @@ export abstract class GameEngine
 
   /**
    * End the game by transitioning to ENDED state
-   * Only allowed from PLAYING or PAUSED states
+   * Stops all game processing and marks game as finished
+   * @throws Error if engine is not in PLAYING or PAUSED state
    */
   end(): void {
     if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) {
@@ -124,28 +130,29 @@ export abstract class GameEngine
 
   /**
    * Update the game state for the current frame
-   * Only processes updates when state is PLAYING
+   * Processes inputs, timers, and game objects in deterministic order
+   * @param deltaFrames Number of frames to advance the simulation
    */
   update(deltaFrames: number): void {
     if (this.state !== GameState.PLAYING) {
       return
     }
 
-    // 1. Increment frame counter FIRST
+    // Update frame counter to maintain deterministic timing
     this.totalFrames += deltaFrames
 
-    // 2. Record frame update if recorder is set
+    // Record frame progression for replay system
     if (this.recorder) {
       this.recorder.recordFrameUpdate(deltaFrames, this.totalFrames)
     }
 
-    // 3. Process events with updated frame count
+    // Process queued events at current frame
     this.eventManager.update(deltaFrames, this.totalFrames)
 
-    // 4. Update timer system
+    // Execute scheduled timer callbacks
     this.timer.update(deltaFrames, this.totalFrames)
 
-    // 5. Update all game object groups
+    // Update all registered game objects by type
     for (const [_type, group] of this.gameObjectGroups) {
       group.update(deltaFrames, this.totalFrames)
     }
