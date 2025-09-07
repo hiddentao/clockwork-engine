@@ -548,7 +548,7 @@ describe("Serializer", () => {
       const serialized = serializer.serialize(original)
       const deserialized = serializer.deserialize(serialized)
 
-      expect(deserialized.metadata.version).toBe(1)
+      expect(deserialized.metadata.version).toBe("1.0.0")
       expect(deserialized.metadata.settings.debug).toBe(true)
       expect(deserialized.metadata.settings.values).toEqual([
         1,

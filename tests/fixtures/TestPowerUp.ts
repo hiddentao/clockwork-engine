@@ -16,6 +16,7 @@ export class TestPowerUp extends GameObject {
   private respawnTime: number
   private isActive: boolean = true
   private timeSincePickup: number = 0
+  private frameCounter: number = 0
 
   constructor(
     id: string,
@@ -48,8 +49,9 @@ export class TestPowerUp extends GameObject {
       }
     }
 
-    // Simple floating animation
-    const time = Date.now() * 0.001
+    // Simple floating animation using deterministic frame-based time
+    this.frameCounter += deltaFrames
+    const time = this.frameCounter * 0.016 // ~60fps frame time
     const offset = Math.sin(time * 2) * 2
     this.setPosition(
       this.getPosition().add(new Vector2D(0, offset * deltaFrames * 0.1)),
@@ -172,6 +174,7 @@ export class TestPowerUp extends GameObject {
       respawnTime: this.respawnTime,
       isActive: this.isActive,
       timeSincePickup: this.timeSincePickup,
+      frameCounter: this.frameCounter,
     }
   }
 
@@ -188,6 +191,7 @@ export class TestPowerUp extends GameObject {
     // Restore state
     powerUp.isActive = data.isActive
     powerUp.timeSincePickup = data.timeSincePickup
+    powerUp.frameCounter = data.frameCounter || 0
 
     // Restore base GameObject state
     powerUp.setHealth(data.health)

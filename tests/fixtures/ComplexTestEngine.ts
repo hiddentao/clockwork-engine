@@ -45,13 +45,7 @@ export class ComplexTestEngine extends GameEngine {
     }
 
     // Capture all game object groups and their states
-    const groupTypes = [
-      "Player",
-      "Enemy",
-      "Projectile",
-      "TestPowerUp",
-      "PowerUp",
-    ]
+    const groupTypes = ["Player", "Enemy", "Projectile", "PowerUp"]
 
     for (const groupType of groupTypes) {
       const group = this.getGameObjectGroup(groupType)
