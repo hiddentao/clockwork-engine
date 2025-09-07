@@ -4,7 +4,6 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/hiddentao/clockwork-engine/ci.yml?branch=main)](https://github.com/hiddentao/clockwork-engine/actions)
 [![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
-[![License](https://img.shields.io/npm/l/@hiddentao/clockwork-engine.svg)](https://github.com/hiddentao/clockwork-engine/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
 **A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.**
