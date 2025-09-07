@@ -162,182 +162,19 @@ describe("Record-Replay Integration Tests", () => {
     test("should handle complex object interactions in replay", async () => {
       const seed = "complex-interaction-test"
 
-      // Setup with many interacting objects
+      // Setup with many interacting objects using configuration
+      originalEngine.setSetupConfig({
+        projectileGrid: { width: 5, height: 5, spacing: 15 },
+        powerUpCount: 5,
+        dynamicInteractions: true,
+      })
+
       originalEngine.reset(seed)
       originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
-
-      const objects: (TestProjectile | TestPowerUp)[] = []
-
-      // Create grid of projectiles
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const pos = new Vector2D(x * 15, y * 15)
-          const velocity = new Vector2D(
-            (originalEngine.getPRNG().random() - 0.5) * 4,
-            (originalEngine.getPRNG().random() - 0.5) * 4,
-          )
-          objects.push(
-            new TestProjectile(
-              `proj_${x}_${y}`,
-              pos,
-              velocity,
-              10,
-              100,
-              "",
-              originalEngine,
-            ),
-          )
-        }
-      }
-
-      // Add some power-ups
-      for (let i = 0; i < 5; i++) {
-        const pos = new Vector2D(
-          originalEngine.getPRNG().random() * 75,
-          originalEngine.getPRNG().random() * 75,
-        )
-        objects.push(
-          new TestPowerUp(`power${i}`, pos, "health", 50, 0, 0, originalEngine),
-        )
-      }
 
       originalEngine.setGameRecorder(recorder)
       recorder.startRecording(originalEngine.getEventManager(), seed)
       originalEngine.start()
-
-      // Schedule dynamic interactions using engine timers
-      // Every 20 frames, destroy some objects and create new ones
-      originalEngine.setTimeout(() => {
-        // Destroy some objects at frame 20
-        let destroyCount = 0
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.8) {
-            obj.destroy()
-            destroyCount++
-            if (destroyCount >= 3) break
-          }
-        }
-        // Create new objects at frame 20
-        for (let i = 0; i < 2; i++) {
-          const pos = new Vector2D(
-            originalEngine.getPRNG().random() * 80,
-            originalEngine.getPRNG().random() * 80,
-          )
-          const velocity = new Vector2D(
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-          )
-          new TestProjectile(
-            `new_20_${i}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            originalEngine,
-          )
-        }
-      }, 20)
-
-      originalEngine.setTimeout(() => {
-        // Destroy some objects at frame 40
-        let destroyCount = 0
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.8) {
-            obj.destroy()
-            destroyCount++
-            if (destroyCount >= 3) break
-          }
-        }
-        // Create new objects at frame 40
-        for (let i = 0; i < 2; i++) {
-          const pos = new Vector2D(
-            originalEngine.getPRNG().random() * 80,
-            originalEngine.getPRNG().random() * 80,
-          )
-          const velocity = new Vector2D(
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-          )
-          new TestProjectile(
-            `new_40_${i}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            originalEngine,
-          )
-        }
-      }, 40)
-
-      originalEngine.setTimeout(() => {
-        // Destroy some objects at frame 60
-        let destroyCount = 0
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.8) {
-            obj.destroy()
-            destroyCount++
-            if (destroyCount >= 3) break
-          }
-        }
-        // Create new objects at frame 60
-        for (let i = 0; i < 2; i++) {
-          const pos = new Vector2D(
-            originalEngine.getPRNG().random() * 80,
-            originalEngine.getPRNG().random() * 80,
-          )
-          const velocity = new Vector2D(
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-          )
-          new TestProjectile(
-            `new_60_${i}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            originalEngine,
-          )
-        }
-      }, 60)
-
-      originalEngine.setTimeout(() => {
-        // Destroy some objects at frame 80
-        let destroyCount = 0
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.8) {
-            obj.destroy()
-            destroyCount++
-            if (destroyCount >= 3) break
-          }
-        }
-        // Create new objects at frame 80
-        for (let i = 0; i < 2; i++) {
-          const pos = new Vector2D(
-            originalEngine.getPRNG().random() * 80,
-            originalEngine.getPRNG().random() * 80,
-          )
-          const velocity = new Vector2D(
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-            (originalEngine.getPRNG().random() - 0.5) * 3,
-          )
-          new TestProjectile(
-            `new_80_${i}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            originalEngine,
-          )
-        }
-      }, 80)
 
       // Run simulation
       const checkpoints: { frame: number; state: any }[] = []
@@ -357,38 +194,15 @@ describe("Record-Replay Integration Tests", () => {
       const recording = recorder.getCurrentRecording()
       expect(recording).not.toBeNull()
 
+      // Setup replay engine with same configuration
+      replayEngine.setSetupConfig({
+        projectileGrid: { width: 5, height: 5, spacing: 15 },
+        powerUpCount: 5,
+        dynamicInteractions: true,
+      })
+
       // Replay and verify checkpoints
       replayManager.replay(recording!)
-
-      // Create the same initial objects in replay engine after reset
-      // Create grid of projectiles (same as original)
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const pos = new Vector2D(x * 15, y * 15)
-          const velocity = new Vector2D(
-            (replayEngine.getPRNG().random() - 0.5) * 4,
-            (replayEngine.getPRNG().random() - 0.5) * 4,
-          )
-          new TestProjectile(
-            `proj_${x}_${y}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            replayEngine,
-          )
-        }
-      }
-
-      // Add power-ups (same as original)
-      for (let i = 0; i < 5; i++) {
-        const pos = new Vector2D(
-          replayEngine.getPRNG().random() * 75,
-          replayEngine.getPRNG().random() * 75,
-        )
-        new TestPowerUp(`power${i}`, pos, "health", 50, 0, 0, replayEngine)
-      }
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []
@@ -887,104 +701,18 @@ describe("Record-Replay Integration Tests", () => {
     test("should handle extended simulations accurately", async () => {
       const seed = "long-sim-test"
 
+      // Setup extended simulation using configuration
+      originalEngine.setSetupConfig({
+        extendedProjectiles: { count: 10, xSpacing: 8, ySpacing: 6 },
+        velocityModifications: true,
+      })
+
       originalEngine.reset(seed)
       originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
-
-      // Create initial objects
-      const objects: TestProjectile[] = []
-      for (let i = 0; i < 10; i++) {
-        const pos = new Vector2D(i * 8, i * 6)
-        const velocity = new Vector2D(
-          (originalEngine.getPRNG().random() - 0.5) * 2,
-          (originalEngine.getPRNG().random() - 0.5) * 2,
-        )
-        objects.push(
-          new TestProjectile(
-            `long_${i}`,
-            pos,
-            velocity,
-            10,
-            100,
-            "",
-            originalEngine,
-          ),
-        )
-      }
 
       originalEngine.setGameRecorder(recorder)
       recorder.startRecording(originalEngine.getEventManager(), seed)
       originalEngine.start()
-
-      // Schedule velocity modifications using engine timers
-      originalEngine.setTimeout(() => {
-        // Modify velocities at frame 50
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.7) {
-            const newVel = new Vector2D(
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-            )
-            obj.setVelocity(newVel)
-          }
-        }
-      }, 50)
-
-      originalEngine.setTimeout(() => {
-        // Modify velocities at frame 100
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.7) {
-            const newVel = new Vector2D(
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-            )
-            obj.setVelocity(newVel)
-          }
-        }
-      }, 100)
-
-      originalEngine.setTimeout(() => {
-        // Modify velocities at frame 150
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.7) {
-            const newVel = new Vector2D(
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-            )
-            obj.setVelocity(newVel)
-          }
-        }
-      }, 150)
-
-      originalEngine.setTimeout(() => {
-        // Modify velocities at frame 200
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.7) {
-            const newVel = new Vector2D(
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-            )
-            obj.setVelocity(newVel)
-          }
-        }
-      }, 200)
-
-      originalEngine.setTimeout(() => {
-        // Modify velocities at frame 250
-        const activeProjectiles = originalEngine.getAllProjectiles()
-        for (const obj of activeProjectiles) {
-          if (!obj.isDestroyed() && originalEngine.getPRNG().random() > 0.7) {
-            const newVel = new Vector2D(
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-              (originalEngine.getPRNG().random() - 0.5) * 3,
-            )
-            obj.setVelocity(newVel)
-          }
-        }
-      }, 250)
 
       // Run for many frames with periodic state checks
       const checkpoints: { frame: number; state: any }[] = []
@@ -1010,26 +738,14 @@ describe("Record-Replay Integration Tests", () => {
       expect(recording!.totalFrames).toBe(totalFrames)
       expect(recording!.deltaFrames.length).toBe(totalFrames)
 
+      // Setup replay engine with same configuration
+      replayEngine.setSetupConfig({
+        extendedProjectiles: { count: 10, xSpacing: 8, ySpacing: 6 },
+        velocityModifications: true,
+      })
+
       // Replay and verify checkpoints
       replayManager.replay(recording!)
-
-      // Create the same initial objects in replay engine (after reset)
-      for (let i = 0; i < 10; i++) {
-        const pos = new Vector2D(i * 8, i * 6)
-        const velocity = new Vector2D(
-          (replayEngine.getPRNG().random() - 0.5) * 2,
-          (replayEngine.getPRNG().random() - 0.5) * 2,
-        )
-        new TestProjectile(
-          `long_${i}`,
-          pos,
-          velocity,
-          10,
-          100,
-          "",
-          replayEngine,
-        )
-      }
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []

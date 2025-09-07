@@ -6,12 +6,21 @@ import { TestPlayer } from "./TestPlayer"
 import { type PowerUpType, TestPowerUp } from "./TestPowerUp"
 import { TestProjectile } from "./TestProjectile"
 
+export interface SetupConfig {
+  projectileGrid?: { width: number; height: number; spacing: number }
+  powerUpCount?: number
+  dynamicInteractions?: boolean
+  extendedProjectiles?: { count: number; xSpacing: number; ySpacing: number }
+  velocityModifications?: boolean
+}
+
 export class ComplexTestEngine extends GameEngine {
   private projectileIdCounter = 0
   private powerUpIdCounter = 0
   private enemyIdCounter = 0
   private playerIdCounter = 0
   private serializer: Serializer
+  private setupConfig: SetupConfig = {}
 
   constructor() {
     super()
@@ -21,7 +30,56 @@ export class ComplexTestEngine extends GameEngine {
 
   setup(): void {
     // Engine setup is called automatically on reset
-    // We don't create any objects by default to allow tests full control
+    // Create objects based on setupConfig
+
+    // Create projectile grid if configured
+    if (this.setupConfig.projectileGrid) {
+      const { width, height, spacing } = this.setupConfig.projectileGrid
+      for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+          const pos = new Vector2D(x * spacing, y * spacing)
+          const velocity = new Vector2D(
+            (this.getPRNG().random() - 0.5) * 4,
+            (this.getPRNG().random() - 0.5) * 4,
+          )
+          new TestProjectile(`proj_${x}_${y}`, pos, velocity, 10, 100, "", this)
+        }
+      }
+    }
+
+    // Create power-ups if configured
+    if (this.setupConfig.powerUpCount) {
+      for (let i = 0; i < this.setupConfig.powerUpCount; i++) {
+        const pos = new Vector2D(
+          this.getPRNG().random() * 75,
+          this.getPRNG().random() * 75,
+        )
+        new TestPowerUp(`power${i}`, pos, "health", 50, 0, 0, this)
+      }
+    }
+
+    // Create extended simulation projectiles if configured
+    if (this.setupConfig.extendedProjectiles) {
+      const { count, xSpacing, ySpacing } = this.setupConfig.extendedProjectiles
+      for (let i = 0; i < count; i++) {
+        const pos = new Vector2D(i * xSpacing, i * ySpacing)
+        const velocity = new Vector2D(
+          (this.getPRNG().random() - 0.5) * 2,
+          (this.getPRNG().random() - 0.5) * 2,
+        )
+        new TestProjectile(`long_${i}`, pos, velocity, 10, 100, "", this)
+      }
+    }
+
+    // Schedule dynamic interactions if configured
+    if (this.setupConfig.dynamicInteractions) {
+      this.scheduleDynamicInteractions()
+    }
+
+    // Schedule velocity modifications if configured
+    if (this.setupConfig.velocityModifications) {
+      this.scheduleVelocityModifications()
+    }
   }
 
   private registerSerializationTypes(): void {
@@ -34,6 +92,10 @@ export class ComplexTestEngine extends GameEngine {
 
   getSerializer(): Serializer {
     return this.serializer
+  }
+
+  setSetupConfig(config: SetupConfig): void {
+    this.setupConfig = { ...config }
   }
 
   // Capture current engine state for comparison
@@ -383,6 +445,106 @@ export class ComplexTestEngine extends GameEngine {
 
     // Start spawning after 5 seconds
     this.setTimeout(spawnPowerUp, 300)
+  }
+
+  private scheduleDynamicInteractions(): void {
+    // Schedule dynamic interactions using engine timers
+    // Every 20 frames, destroy some objects and create new ones
+    this.setTimeout(() => {
+      // Destroy some objects at frame 20
+      let destroyCount = 0
+      const activeProjectiles = this.getAllProjectiles()
+      for (const obj of activeProjectiles) {
+        if (!obj.isDestroyed() && this.getPRNG().random() > 0.8) {
+          obj.destroy()
+          destroyCount++
+          if (destroyCount >= 3) break
+        }
+      }
+      // Create new objects at frame 20
+      for (let i = 0; i < 2; i++) {
+        const pos = new Vector2D(
+          this.getPRNG().random() * 80,
+          this.getPRNG().random() * 80,
+        )
+        const velocity = new Vector2D(
+          (this.getPRNG().random() - 0.5) * 3,
+          (this.getPRNG().random() - 0.5) * 3,
+        )
+        new TestProjectile(`new_20_${i}`, pos, velocity, 10, 100, "", this)
+      }
+    }, 20)
+
+    this.setTimeout(() => {
+      // Destroy some objects at frame 40
+      let destroyCount = 0
+      const activeProjectiles = this.getAllProjectiles()
+      for (const obj of activeProjectiles) {
+        if (!obj.isDestroyed() && this.getPRNG().random() > 0.8) {
+          obj.destroy()
+          destroyCount++
+          if (destroyCount >= 3) break
+        }
+      }
+      // Create new objects at frame 40
+      for (let i = 0; i < 2; i++) {
+        const pos = new Vector2D(
+          this.getPRNG().random() * 80,
+          this.getPRNG().random() * 80,
+        )
+        const velocity = new Vector2D(
+          (this.getPRNG().random() - 0.5) * 3,
+          (this.getPRNG().random() - 0.5) * 3,
+        )
+        new TestProjectile(`new_40_${i}`, pos, velocity, 10, 100, "", this)
+      }
+    }, 40)
+
+    this.setTimeout(() => {
+      // Destroy some objects at frame 60
+      let destroyCount = 0
+      const activeProjectiles = this.getAllProjectiles()
+      for (const obj of activeProjectiles) {
+        if (!obj.isDestroyed() && this.getPRNG().random() > 0.8) {
+          obj.destroy()
+          destroyCount++
+          if (destroyCount >= 3) break
+        }
+      }
+      // Create new objects at frame 60
+      for (let i = 0; i < 2; i++) {
+        const pos = new Vector2D(
+          this.getPRNG().random() * 80,
+          this.getPRNG().random() * 80,
+        )
+        const velocity = new Vector2D(
+          (this.getPRNG().random() - 0.5) * 3,
+          (this.getPRNG().random() - 0.5) * 3,
+        )
+        new TestProjectile(`new_60_${i}`, pos, velocity, 10, 100, "", this)
+      }
+    }, 60)
+  }
+
+  private scheduleVelocityModifications(): void {
+    // Schedule velocity modifications using engine timers for extended simulation
+    const frames = [50, 100, 150, 200, 250]
+
+    for (const frame of frames) {
+      this.setTimeout(() => {
+        // Modify velocities at this frame
+        const activeProjectiles = this.getAllProjectiles()
+        for (const obj of activeProjectiles) {
+          if (!obj.isDestroyed() && this.getPRNG().random() > 0.7) {
+            const newVel = new Vector2D(
+              (this.getPRNG().random() - 0.5) * 3,
+              (this.getPRNG().random() - 0.5) * 3,
+            )
+            obj.setVelocity(newVel)
+          }
+        }
+      }, frame)
+    }
   }
 
   // Utility methods
