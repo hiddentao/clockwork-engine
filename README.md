@@ -1,91 +1,130 @@
+<div align="center">
+
 # Clockwork Game Engine
 
-A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.
+[![Build Status](https://img.shields.io/github/actions/workflow/status/username/clockwork-engine/ci.yml?branch=main)](https://github.com/username/clockwork-engine/actions)
+[![NPM Version](https://img.shields.io/npm/v/clockwork-engine.svg)](https://www.npmjs.com/package/clockwork-engine)
+[![License](https://img.shields.io/npm/l/clockwork-engine.svg)](https://github.com/username/clockwork-engine/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
-## Overview
+**A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.**
 
-This package provides the core foundation for building games, including game objects, event systems, game loops, and geometry utilities.
+[Documentation](./docs) • [API Reference](./docs/api.md)
 
-## Features
+</div>
 
-### Geometry Utilities
-- **Vector2D**: 2D vector math operations
-- **GeometryUtils**: Line intersection, angle calculations, collision detection
-- **CollisionUtils**: Efficient spatial partitioning for collision detection
-- **IPositionable**: Interface for objects with position and size
+---
 
-### Game Objects
-- **GameObject**: Abstract base class for game entities with position, health, and movement
-- **SerializedGameObject**: Interface for object serialization
+## 🎮 Live Demo
 
-### Core Systems
-- **GameLoop**: Main game loop implementation
-- **Events**: Event system for game communication
+**[Try the Interactive Demo →](https://hiddentao.github.io/clockwork-engine)**
 
-## Usage
+## ✨ Features
 
-### Creating Game Objects
+- 🎯 **Deterministic Gameplay** - Frame-based updates with seeded PRNG for perfect reproducibility
+- 📹 **Record & Replay** - Built-in recording system for gameplay sessions with frame-accurate playback
+- 🎮 **Game Object System** - Type-safe game entities with automatic grouping and lifecycle management
+- 🏃‍♂️ **High-Performance Collision Detection** - Spatial partitioning with BSP trees for efficient collision queries
+- ⚡ **Event-Driven Architecture** - Flexible event system with custom event sources and managers
+- 🔄 **Universal Serialization** - Automatic serialization for all game data with custom type support
+- ⏱️ **Frame-Based Timers** - Deterministic timing system replacing JavaScript's native timers
+- 🔧 **TypeScript First** - Full type safety with comprehensive interfaces and generics
 
-```typescript
-import { GameObject, Vector2D } from 'clockwork'
+## 🚀 Quick Start
 
-class MyGameObject extends GameObject {
-  constructor(position: Vector2D, size: Vector2D) {
-    super(position, size, 100) // 100 health
-  }
-
-  getId(): string {
-    return this.id
-  }
-
-  getType(): string {
-    return 'MyGameObject'
-  }
-
-  serialize() {
-    return {
-      position: { x: this.position.x, y: this.position.y },
-      size: { x: this.size.x, y: this.size.y },
-      velocity: { x: this.velocity.x, y: this.velocity.y },
-      rotation: this.rotation,
-      health: this.health,
-      maxHealth: this.maxHealth,
-      isDestroyed: this.destroyed,
-    }
-  }
-}
-```
-
-## API Reference
-
-### Geometry
-- `Vector2D`: 2D vector operations
-- `GeometryUtils`: Static utility methods for geometric calculations
-- `CollisionUtils`: Spatial partitioning for efficient collision detection
-- `IPositionable`: Interface for objects with position and size
-
-### Game Objects
-- `GameObject`: Abstract base class for game entities
-- `SerializedGameObject`: Serialization interface
-
-### Core Systems
-- `GameLoop`: Main game loop
-- `Events`: Event system
-
-## Dependencies
-
-- **pixi.js**: ^8.6.6 - 2D rendering library
-- **pixi-viewport**: ^6.0.3 - Viewport management for Pixi.js
-
-## Development
+### Installation
 
 ```bash
-# Build the package
+npm install clockwork-engine
+# or
+bun add clockwork-engine
+```
+
+### Basic Usage
+
+```typescript
+import { GameEngine, GameObject, Vector2D } from 'clockwork-engine'
+import * as PIXI from 'pixi.js'
+
+class MyGame extends GameEngine {
+  setup() {
+    // Initialize your game world
+    const player = new Player(new Vector2D(100, 100))
+    this.registerGameObject(player)
+  }
+}
+
+const game = new MyGame()
+game.reset("my-seed")
+game.start()
+
+// Perfect integration with Pixi.js ticker
+const ticker = PIXI.Ticker.shared
+ticker.add((deltaTime) => {
+  game.update(deltaTime) // deltaTime maps directly to deltaFrames
+})
+ticker.start()
+```
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [docs](./docs) directory:
+
+## 🛠️ Development
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) >= 1.0
+- Node.js >= 22.0
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/username/clockwork-engine.git
+cd clockwork-engine
+
+# Install dependencies
+bun install
+
+# Build the project
 bun run build
 
-# Watch for changes
+# Run in watch mode
 bun run dev
-
-# Clean build artifacts
-bun run clean
 ```
+
+### Testing
+
+```bash
+# Run all tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+```
+
+### Code Quality
+
+```bash
+# Lint and type check
+bun run lint
+
+# Fix linting issues
+bun run lint:fix
+
+# Format code
+bun run format
+```
+
+### Demo Application
+
+```bash
+# Run the demo (from project root)
+bun run demo
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
