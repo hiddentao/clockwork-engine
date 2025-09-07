@@ -36,17 +36,17 @@ jobs:
     - name: Build demo
       run: cd demo && bun i && bun run build
 
-    - name: Create tar gzip of demo dist
+    - name: Create tar of demo dist
       run: |
         cd demo/dist
-        tar -czf ../../github-pages.tar.gz .
+        tar -cf ../../github-pages.tar .
         cd ../..
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: github-pages
-        path: github-pages.tar.gz
+        path: github-pages.tar
         retention-days: 1
 
     - name: Setup Pages
