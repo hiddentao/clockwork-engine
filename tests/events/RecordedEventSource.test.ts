@@ -357,8 +357,8 @@ describe("RecordedEventSource", () => {
       const events = duplicateSource.getNextEvents(1)
 
       expect(events).toHaveLength(2)
-      expect(events[0].inputType).toBe("input1")
-      expect(events[1].inputType).toBe("input2")
+      expect((events[0] as UserInputEvent).inputType).toBe("input1")
+      expect((events[1] as UserInputEvent).inputType).toBe("input2")
     })
 
     it("should handle unsorted events according to sequential processing", () => {
@@ -396,9 +396,9 @@ describe("RecordedEventSource", () => {
       // Asking for frame 3 returns all events because all are <= frame 3
       const frame3 = unsortedSource.getNextEvents(3)
       expect(frame3).toHaveLength(3) // All events returned
-      expect(frame3[0].inputType).toBe("frame3") // First event in array
-      expect(frame3[1].inputType).toBe("frame1") // Second event in array
-      expect(frame3[2].inputType).toBe("frame2") // Third event in array
+      expect((frame3[0] as UserInputEvent).inputType).toBe("frame3") // First event in array
+      expect((frame3[1] as UserInputEvent).inputType).toBe("frame1") // Second event in array
+      expect((frame3[2] as UserInputEvent).inputType).toBe("frame2") // Third event in array
 
       // No more events after processing all
       expect(unsortedSource.hasMoreEvents()).toBe(false)
@@ -449,8 +449,8 @@ describe("RecordedEventSource", () => {
       // Should handle negative frames
       const events = negativeFrameSource.getNextEvents(0)
       expect(events).toHaveLength(2)
-      expect(events[0].inputType).toBe("negative")
-      expect(events[1].inputType).toBe("zero")
+      expect((events[0] as UserInputEvent).inputType).toBe("negative")
+      expect((events[1] as UserInputEvent).inputType).toBe("zero")
     })
   })
 

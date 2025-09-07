@@ -5,6 +5,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "strict": true,
+    "downlevelIteration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,

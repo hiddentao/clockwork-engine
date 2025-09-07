@@ -68,13 +68,6 @@ export class TestPowerUp extends GameObject {
         if (typeof target.heal === "function") {
           target.heal(this.value)
           applied = true
-        } else if (typeof target.setHealth === "function") {
-          const newHealth = Math.min(
-            target.getHealth() + this.value,
-            target.getMaxHealth(),
-          )
-          target.setHealth(newHealth)
-          applied = true
         }
         break
 

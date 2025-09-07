@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test"
 import { UserInputEventSource } from "../../src/UserInputEventSource"
-import { GameEventType } from "../../src/types"
+import { GameEventType, type UserInputEvent } from "../../src/types"
 
 describe("UserInputEventSource", () => {
   let inputSource: UserInputEventSource
@@ -47,14 +47,14 @@ describe("UserInputEventSource", () => {
       // Check first event
       expect(events[0].type).toBe(GameEventType.USER_INPUT)
       expect(events[0].frame).toBe(currentFrame)
-      expect(events[0].inputType).toBe("direction")
+      expect((events[0] as UserInputEvent).inputType).toBe("direction")
       expect(events[0].params).toEqual({ x: 1, y: 0 })
       expect(typeof events[0].timestamp).toBe("number")
 
       // Check second event
       expect(events[1].type).toBe(GameEventType.USER_INPUT)
       expect(events[1].frame).toBe(currentFrame)
-      expect(events[1].inputType).toBe("button")
+      expect((events[1] as UserInputEvent).inputType).toBe("button")
       expect(events[1].params).toEqual({ action: "jump" })
       expect(typeof events[1].timestamp).toBe("number")
     })
@@ -111,7 +111,7 @@ describe("UserInputEventSource", () => {
       expect(queuedData).toEqual([{ value: 1 }, { value: 2 }, { value: 3 }])
 
       // Modifying returned array should not affect internal queue
-      queuedData.push({ value: 4 })
+      ;(queuedData as any[]).push({ value: 4 })
       expect(inputSource.getQueueLength()).toBe(3)
     })
 
@@ -233,7 +233,7 @@ describe("UserInputEventSource", () => {
 
       expect(events).toHaveLength(4)
 
-      const inputTypes = events.map((e) => e.inputType)
+      const inputTypes = events.map((e) => (e as UserInputEvent).inputType)
       expect(inputTypes).toEqual(["keyboard", "mouse", "gamepad", "touch"])
 
       expect(events[0].params).toEqual({ key: "W", pressed: true })
@@ -333,8 +333,8 @@ describe("UserInputEventSource", () => {
       const events = inputSource.getNextEvents(10)
 
       expect(events).toHaveLength(2)
-      expect(events[0].inputType).toBe("")
-      expect(events[1].inputType).toBe(" ")
+      expect((events[0] as UserInputEvent).inputType).toBe("")
+      expect((events[1] as UserInputEvent).inputType).toBe(" ")
     })
 
     it("should handle concurrent operations", async () => {

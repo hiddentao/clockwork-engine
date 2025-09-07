@@ -525,8 +525,9 @@ describe("Serializer", () => {
 
       const original = {
         metadata: {
-          version: 1,
+          version: "1.0.0",
           timestamp: Date.now(),
+          createdAt: Date.now(),
           settings: {
             debug: true,
             values: [1, 2, 3, null, "test"],

@@ -118,3 +118,4 @@ Tests use Bun's built-in test runner. Run specific test files with `bun test pat
 - never bypass pre-commit hooks when doing a git commit
 - always check for package.json for lint and format commands and use the commands defined in there
 - don't ever run the demo server
+- use "bun run lint" to lint, "bun run lint:fix" to fix lint errors, and "bun run format" to format code, look in package.json for other scripts

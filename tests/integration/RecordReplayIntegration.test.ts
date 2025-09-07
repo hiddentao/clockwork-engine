@@ -50,17 +50,27 @@ describe("Record-Replay Integration Tests", () => {
         "proj1",
         new Vector2D(10, 10),
         new Vector2D(2, 1),
+        10,
+        100,
+        "",
         originalEngine,
       )
       const _projectile2 = new TestProjectile(
         "proj2",
         new Vector2D(20, 15),
         new Vector2D(-1, 2),
+        10,
+        100,
+        "",
         originalEngine,
       )
       const _powerup = new TestPowerUp(
         "power1",
         new Vector2D(30, 20),
+        "health",
+        50,
+        0,
+        0,
         originalEngine,
       )
 
@@ -82,14 +92,14 @@ describe("Record-Replay Integration Tests", () => {
       expect(recording).toBeDefined()
 
       // Validate recording
-      const validation = RecordingValidator.validate(recording)
+      const validation = RecordingValidator.validate(recording!)
       expect(validation.valid).toBe(true)
 
       // Setup replay
       const replayStates: any[] = []
 
       // Start replay
-      replayManager.replay(recording)
+      replayManager.replay(recording!)
       replayTicker.add((deltaFrames) => {
         replayStates.push(replayEngine.captureState())
         replayManager.update(deltaFrames)
@@ -113,7 +123,7 @@ describe("Record-Replay Integration Tests", () => {
           replayStates[i],
           { tolerance: 1e-10 },
         )
-        if (!comparison.identical) {
+        if (!comparison.equal) {
           console.log(`State mismatch at frame ${i}:`, comparison.differences)
         }
         expect(comparison.equal).toBe(true)
@@ -138,7 +148,15 @@ describe("Record-Replay Integration Tests", () => {
             (originalEngine.getPRNG().random() - 0.5) * 4,
           )
           objects.push(
-            new TestProjectile(`proj_${x}_${y}`, pos, velocity, originalEngine),
+            new TestProjectile(
+              `proj_${x}_${y}`,
+              pos,
+              velocity,
+              10,
+              100,
+              "",
+              originalEngine,
+            ),
           )
         }
       }
@@ -149,7 +167,9 @@ describe("Record-Replay Integration Tests", () => {
           originalEngine.getPRNG().random() * 75,
           originalEngine.getPRNG().random() * 75,
         )
-        objects.push(new TestPowerUp(`power${i}`, pos, originalEngine))
+        objects.push(
+          new TestPowerUp(`power${i}`, pos, "health", 50, 0, 0, originalEngine),
+        )
       }
 
       originalEngine.setGameRecorder(recorder)
@@ -186,6 +206,9 @@ describe("Record-Replay Integration Tests", () => {
                 `new_${frame}_${i}`,
                 pos,
                 velocity,
+                10,
+                100,
+                "",
                 originalEngine,
               ),
             )
@@ -205,9 +228,10 @@ describe("Record-Replay Integration Tests", () => {
 
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
+      expect(recording).not.toBeNull()
 
       // Replay and verify checkpoints
-      replayManager.replay(recording)
+      replayManager.replay(recording!)
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []
@@ -240,7 +264,7 @@ describe("Record-Replay Integration Tests", () => {
           replayed.state,
           { tolerance: 1e-10 },
         )
-        if (!comparison.identical) {
+        if (!comparison.equal) {
           console.log(
             `Checkpoint mismatch at frame ${original.frame}:`,
             comparison.differences,
@@ -267,6 +291,9 @@ describe("Record-Replay Integration Tests", () => {
         "player",
         new Vector2D(50, 50),
         new Vector2D(0, 0),
+        10,
+        100,
+        "",
         originalEngine,
       )
 
@@ -321,15 +348,16 @@ describe("Record-Replay Integration Tests", () => {
 
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
+      expect(recording).not.toBeNull()
 
       // Verify input events were recorded
-      const userInputEvents = recording.events.filter(
+      const userInputEvents = recording!.events.filter(
         (e) => e.type === GameEventType.USER_INPUT,
       )
       expect(userInputEvents.length).toBe(inputEvents.length)
 
       // Replay and compare
-      replayManager.replay(recording)
+      replayManager.replay(recording!)
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       const replayStates: any[] = []
@@ -367,6 +395,9 @@ describe("Record-Replay Integration Tests", () => {
         "player",
         new Vector2D(25, 25),
         new Vector2D(0, 0),
+        10,
+        100,
+        "",
         originalEngine,
       )
 
@@ -396,9 +427,10 @@ describe("Record-Replay Integration Tests", () => {
       const originalFinalState = originalEngine.captureState()
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
+      expect(recording).not.toBeNull()
 
       // Replay
-      replayManager.replay(recording)
+      replayManager.replay(recording!)
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       for (let frame = 0; frame < 50; frame++) {
@@ -427,8 +459,9 @@ describe("Record-Replay Integration Tests", () => {
         deltaFrames: [],
         totalFrames: 0,
         metadata: {
-          version: 1,
+          version: "1.0.0",
           timestamp: Date.now(),
+          createdAt: Date.now(),
         },
       }
 
@@ -447,16 +480,17 @@ describe("Record-Replay Integration Tests", () => {
         seed: "corrupt-test",
         events: [
           // Invalid event structure
-          { type: "INVALID_TYPE", frame: 0 },
+          { type: "INVALID_TYPE" as any, frame: 0, timestamp: Date.now() },
           // Missing required fields
-          { type: GameEventType.USER_INPUT },
+          { type: GameEventType.USER_INPUT, frame: 0, timestamp: Date.now() },
         ],
         deltaFrames: [1, 2, null, 4], // Invalid frame count
         totalFrames: 100, // Doesn't match deltaFrames sum
         metadata: {
-          version: 999, // Unsupported version
+          version: "999.0.0", // Unsupported version
+          createdAt: Date.now(),
         },
-      }
+      } as any
 
       // Should not crash but may not replay correctly
       expect(() => replayManager.replay(corruptedRecording)).not.toThrow()
@@ -474,6 +508,9 @@ describe("Record-Replay Integration Tests", () => {
         "test",
         new Vector2D(10, 10),
         new Vector2D(1, 1),
+        10,
+        100,
+        "",
         originalEngine,
       )
 
@@ -493,14 +530,15 @@ describe("Record-Replay Integration Tests", () => {
       // Interrupt by stopping recording early
       recorder.stopRecording()
       const partialRecording = recorder.getCurrentRecording()
+      expect(partialRecording).not.toBeNull()
 
       // Should still be a valid recording
-      expect(partialRecording.events.length).toBeGreaterThan(0)
-      expect(partialRecording.deltaFrames.length).toBe(10)
-      expect(partialRecording.totalFrames).toBe(10)
+      expect(partialRecording!.events.length).toBeGreaterThan(0)
+      expect(partialRecording!.deltaFrames.length).toBe(10)
+      expect(partialRecording!.totalFrames).toBe(10)
 
       // Should be replayable
-      replayManager.replay(partialRecording)
+      replayManager.replay(partialRecording!)
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       let replayFrames = 0
@@ -526,6 +564,9 @@ describe("Record-Replay Integration Tests", () => {
         "speed_test",
         new Vector2D(0, 0),
         new Vector2D(2, 2),
+        10,
+        100,
+        "",
         originalEngine,
       )
 
@@ -540,6 +581,7 @@ describe("Record-Replay Integration Tests", () => {
       const _originalFinalPos = originalProjectile.getPosition()
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
+      expect(recording).not.toBeNull()
 
       // Replay at different "speeds" (different deltaFrames per tick)
       const speeds = [1, 2, 3, 5]
@@ -549,7 +591,7 @@ describe("Record-Replay Integration Tests", () => {
         const testReplay = new ReplayManager(testEngine)
         const testTicker = new MockTicker()
 
-        testReplay.replay(recording)
+        testReplay.replay(recording!)
         testTicker.add((deltaFrames) => testReplay.update(deltaFrames))
 
         let totalFramesProcessed = 0
@@ -586,11 +628,18 @@ describe("Record-Replay Integration Tests", () => {
         "serialize_proj",
         new Vector2D(15, 25),
         new Vector2D(3, -1),
+        10,
+        100,
+        "",
         originalEngine,
       )
       const _powerup = new TestPowerUp(
         "serialize_power",
         new Vector2D(40, 30),
+        "health",
+        50,
+        0,
+        0,
         originalEngine,
       )
 
@@ -617,37 +666,38 @@ describe("Record-Replay Integration Tests", () => {
 
       recorder.stopRecording()
       const originalRecording = recorder.getCurrentRecording()
+      expect(originalRecording).not.toBeNull()
 
       // Serialize the recording
-      const serialized = serializer.serialize(originalRecording)
+      const serialized = serializer.serialize(originalRecording!)
 
       // Deserialize the recording
       const deserializedRecording = serializer.deserialize(serialized)
 
       // Verify serialization integrity
-      expect(deserializedRecording.seed).toBe(originalRecording.seed)
+      expect(deserializedRecording.seed).toBe(originalRecording!.seed)
       expect(deserializedRecording.events.length).toBe(
-        originalRecording.events.length,
+        originalRecording!.events.length,
       )
       expect(deserializedRecording.deltaFrames.length).toBe(
-        originalRecording.deltaFrames.length,
+        originalRecording!.deltaFrames.length,
       )
       expect(deserializedRecording.totalFrames).toBe(
-        originalRecording.totalFrames,
+        originalRecording!.totalFrames,
       )
 
       // Verify events are preserved
-      for (let i = 0; i < originalRecording.events.length; i++) {
-        const original = originalRecording.events[i]
+      for (let i = 0; i < originalRecording!.events.length; i++) {
+        const original = originalRecording!.events[i]
         const deserialized = deserializedRecording.events[i]
         expect(deserialized.type).toBe(original.type)
         expect(deserialized.frame).toBe(original.frame)
       }
 
       // Verify deltaFrames are preserved
-      for (let i = 0; i < originalRecording.deltaFrames.length; i++) {
+      for (let i = 0; i < originalRecording!.deltaFrames.length; i++) {
         expect(deserializedRecording.deltaFrames[i]).toBeCloseTo(
-          originalRecording.deltaFrames[i],
+          originalRecording!.deltaFrames[i],
           10,
         )
       }
@@ -670,7 +720,15 @@ describe("Record-Replay Integration Tests", () => {
           (originalEngine.getPRNG().random() - 0.5) * 2,
         )
         objects.push(
-          new TestProjectile(`long_${i}`, pos, velocity, originalEngine),
+          new TestProjectile(
+            `long_${i}`,
+            pos,
+            velocity,
+            10,
+            100,
+            "",
+            originalEngine,
+          ),
         )
       }
 
@@ -710,13 +768,14 @@ describe("Record-Replay Integration Tests", () => {
 
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
+      expect(recording).not.toBeNull()
 
       // Verify recording integrity
-      expect(recording.totalFrames).toBe(totalFrames)
-      expect(recording.deltaFrames.length).toBe(totalFrames)
+      expect(recording!.totalFrames).toBe(totalFrames)
+      expect(recording!.deltaFrames.length).toBe(totalFrames)
 
       // Replay and verify checkpoints
-      replayManager.replay(recording)
+      replayManager.replay(recording!)
       replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []
@@ -748,7 +807,7 @@ describe("Record-Replay Integration Tests", () => {
           replayed.state,
           { tolerance: 1e-10 },
         )
-        if (!comparison.identical) {
+        if (!comparison.equal) {
           console.log(
             `Long simulation checkpoint mismatch at frame ${original.frame}`,
           )

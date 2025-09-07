@@ -7,7 +7,8 @@ interface TestEvents {
   numberEvent: (num: number) => void
   multiParamEvent: (a: string, b: number, c: boolean) => void
   noParamEvent: () => void
-  asyncEvent: (data: any) => Promise<void>
+  asyncEvent: (data: any) => void | Promise<void>
+  [key: string]: (...args: any[]) => void | Promise<void>
 }
 
 describe("EventEmitter", () => {
@@ -26,7 +27,7 @@ describe("EventEmitter", () => {
       })
 
       emitter.emit("testEvent", "hello")
-      expect(received).toBe("hello")
+      expect(received as any).toBe("hello")
     })
 
     it("should register and emit events with multiple parameters", () => {
@@ -37,7 +38,7 @@ describe("EventEmitter", () => {
       })
 
       emitter.emit("multiParamEvent", "test", 42, true)
-      expect(receivedParams).toEqual(["test", 42, true])
+      expect(receivedParams as any).toEqual(["test", 42, true])
     })
 
     it("should handle events with no parameters", () => {

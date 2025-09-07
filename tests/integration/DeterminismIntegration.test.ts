@@ -37,16 +37,22 @@ describe("Determinism Integration Tests", () => {
         const pos1 = new Vector2D(i * 10, i * 5)
         const pos2 = new Vector2D(i * 10, i * 5)
 
-        const _proj1 = new TestProjectile(
+        new TestProjectile(
           `proj${i}`,
           pos1,
           new Vector2D(2, 1),
+          10,
+          100,
+          "",
           engine1,
         )
-        const _proj2 = new TestProjectile(
+        new TestProjectile(
           `proj${i}`,
           pos2,
           new Vector2D(2, 1),
+          10,
+          100,
+          "",
           engine2,
         )
       }
@@ -125,6 +131,9 @@ describe("Determinism Integration Tests", () => {
             `proj${i}`,
             pos,
             new Vector2D(1, 1),
+            10,
+            100,
+            "",
             engine,
           )
         }
@@ -163,12 +172,18 @@ describe("Determinism Integration Tests", () => {
         "proj1",
         new Vector2D(0, 0),
         new Vector2D(2, 1),
+        10,
+        100,
+        "",
         engine1,
       )
       const _proj2 = new TestProjectile(
         "proj1",
         new Vector2D(0, 0),
         new Vector2D(2, 1),
+        10,
+        100,
+        "",
         engine2,
       )
 
@@ -210,6 +225,9 @@ describe("Determinism Integration Tests", () => {
         "proj",
         new Vector2D(5, 5),
         new Vector2D(1, 0),
+        10,
+        100,
+        "",
         engine1,
       )
       ticker1.add((deltaFrames) => engine1.update(deltaFrames))
@@ -269,12 +287,18 @@ describe("Determinism Integration Tests", () => {
             `obj${frame}`,
             pos,
             new Vector2D(1, 0),
+            10,
+            100,
+            "",
             engine1,
           )
           const obj2 = new TestProjectile(
             `obj${frame}`,
             pos,
             new Vector2D(1, 0),
+            10,
+            100,
+            "",
             engine2,
           )
           createdObjects1.push(obj1)
@@ -324,6 +348,9 @@ describe("Determinism Integration Tests", () => {
           `frame${frame}`,
           newPos,
           new Vector2D(1, 1),
+          10,
+          100,
+          "",
           engine1,
         )
         objects.push(newObj)
@@ -391,6 +418,9 @@ describe("Determinism Integration Tests", () => {
           `random${i}`,
           pos,
           new Vector2D(1, 0),
+          10,
+          100,
+          "",
           engine1,
         )
 
@@ -425,6 +455,9 @@ describe("Determinism Integration Tests", () => {
           `random${i}`,
           pos,
           new Vector2D(1, 0),
+          10,
+          100,
+          "",
           engine2,
         )
 
@@ -472,8 +505,24 @@ describe("Determinism Integration Tests", () => {
           Math.sin(angle + Math.PI) * 2,
         )
 
-        const proj1 = new TestProjectile(`proj${i}`, pos, velocity, engine1)
-        const proj2 = new TestProjectile(`proj${i}`, pos, velocity, engine2)
+        const proj1 = new TestProjectile(
+          `proj${i}`,
+          pos,
+          velocity,
+          10,
+          100,
+          "",
+          engine1,
+        )
+        const proj2 = new TestProjectile(
+          `proj${i}`,
+          pos,
+          velocity,
+          10,
+          100,
+          "",
+          engine2,
+        )
 
         projectiles1.push(proj1)
         projectiles2.push(proj2)

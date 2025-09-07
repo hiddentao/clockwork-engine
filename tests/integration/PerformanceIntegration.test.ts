@@ -28,7 +28,7 @@ describe("Performance Integration Tests", () => {
       ticker.add((deltaFrames) => engine.update(deltaFrames))
 
       const startTime = performance.now()
-      profiler.startProfiling()
+      profiler.start()
 
       // Create many objects
       const objects: TestProjectile[] = []
@@ -38,18 +38,24 @@ describe("Performance Integration Tests", () => {
           (engine.getPRNG().random() - 0.5) * 4,
           (engine.getPRNG().random() - 0.5) * 4,
         )
-        objects.push(new TestProjectile(`obj${i}`, pos, velocity, engine))
+        objects.push(
+          new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", engine),
+        )
       }
 
       engine.start()
+      profiler.takeSnapshot() // Take snapshot after setup
 
       // Run simulation
       for (let frame = 0; frame < 100; frame++) {
         await ticker.tick(1)
+        if (frame % 25 === 0) {
+          profiler.takeSnapshot() // Periodic snapshots
+        }
       }
 
       const endTime = performance.now()
-      const profile = profiler.endProfiling()
+      const profile = profiler.stop()
 
       const totalTime = endTime - startTime
       const avgFrameTime = totalTime / 100
@@ -75,7 +81,7 @@ describe("Performance Integration Tests", () => {
       for (let i = 0; i < 200; i++) {
         const pos = new Vector2D(i * 2, i * 1.5)
         const velocity = new Vector2D(1, 0.5)
-        new TestProjectile(`obj${i}`, pos, velocity, engine)
+        new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", engine)
       }
 
       engine.start()
@@ -128,7 +134,7 @@ describe("Performance Integration Tests", () => {
         for (let i = 0; i < count; i++) {
           const pos = new Vector2D(i % 20, Math.floor(i / 20))
           const velocity = new Vector2D(1, 1)
-          new TestProjectile(`obj${i}`, pos, velocity, testEngine)
+          new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", testEngine)
         }
 
         testEngine.start()
@@ -167,8 +173,9 @@ describe("Performance Integration Tests", () => {
       engine.reset("memory-test")
       ticker.add((deltaFrames) => engine.update(deltaFrames))
 
-      profiler.startProfiling()
+      profiler.start()
       engine.start()
+      profiler.takeSnapshot() // Take snapshot after setup
 
       const objects: TestProjectile[] = []
 
@@ -181,6 +188,9 @@ describe("Performance Integration Tests", () => {
             `cycle${cycle}_obj${i}`,
             pos,
             new Vector2D(1, 0),
+            10,
+            100,
+            "",
             engine,
           )
           objects.push(obj)
@@ -205,9 +215,12 @@ describe("Performance Integration Tests", () => {
         if (global.gc) {
           global.gc()
         }
+        if (cycle % 3 === 0) {
+          profiler.takeSnapshot() // Periodic snapshots
+        }
       }
 
-      const profile = profiler.endProfiling()
+      const profile = profiler.stop()
 
       // Memory growth should be reasonable
       expect(profile.memoryGrowth).toBeLessThan(50 * 1024 * 1024) // Less than 50MB
@@ -221,8 +234,9 @@ describe("Performance Integration Tests", () => {
       engine.reset("rapid-memory-test")
       ticker.add((deltaFrames) => engine.update(deltaFrames))
 
-      profiler.startProfiling()
+      profiler.start()
       engine.start()
+      profiler.takeSnapshot() // Take snapshot after setup
 
       // Rapid create/destroy cycle
       for (let frame = 0; frame < 100; frame++) {
@@ -235,6 +249,9 @@ describe("Performance Integration Tests", () => {
             `frame${frame}_obj${i}`,
             pos,
             new Vector2D(1, 1),
+            10,
+            100,
+            "",
             engine,
           )
           objects.push(obj)
@@ -250,10 +267,11 @@ describe("Performance Integration Tests", () => {
         // Force GC occasionally
         if (frame % 20 === 0 && global.gc) {
           global.gc()
+          profiler.takeSnapshot() // Snapshot during GC cycles
         }
       }
 
-      const profile = profiler.endProfiling()
+      const profile = profiler.stop()
 
       // Should not accumulate too much memory
       expect(profile.memoryGrowth).toBeLessThan(30 * 1024 * 1024) // Less than 30MB
@@ -275,7 +293,7 @@ describe("Performance Integration Tests", () => {
       for (let i = 0; i < 300; i++) {
         const pos = new Vector2D(i % 30, Math.floor(i / 30))
         const velocity = new Vector2D(1, 0.5)
-        new TestProjectile(`obj${i}`, pos, velocity, engine)
+        new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", engine)
       }
 
       engine.start()
@@ -294,10 +312,10 @@ describe("Performance Integration Tests", () => {
       for (let i = 0; i < 300; i++) {
         const pos = new Vector2D(i % 30, Math.floor(i / 30))
         const velocity = new Vector2D(1, 0.5)
-        new TestProjectile(`obj${i}`, pos, velocity, engine)
+        new TestProjectile(`obj${i}`, pos, velocity, 10, 100, "", engine)
       }
 
-      recorder.startRecording(engine)
+      recorder.startRecording(engine.getEventManager(), "recording-perf-test")
       engine.start()
 
       const recordingTimes: number[] = []
@@ -324,25 +342,26 @@ describe("Performance Integration Tests", () => {
 
       // Recording should be successful
       expect(recording).toBeDefined()
-      expect(recording.events.length).toBeGreaterThan(0)
+      expect(recording!.events.length).toBeGreaterThan(0)
 
       console.log(`Recording overhead: ${overhead.toFixed(1)}%`)
-      console.log(`Events recorded: ${recording.events.length}`)
+      console.log(`Events recorded: ${recording!.events.length}`)
     })
 
     test("should handle serialization performance", async () => {
       // Create complex nested structure
       const complexData = {
         metadata: {
-          version: 1,
+          version: "1.0.0",
           timestamp: Date.now(),
+          createdAt: Date.now(),
           settings: {
             quality: "high",
             features: ["physics", "graphics", "audio"],
           },
         },
         objects: [] as any[],
-        matrices: [] as number[][],
+        matrices: [] as number[][][],
       }
 
       // Add many objects with Vector2D positions
@@ -421,7 +440,15 @@ describe("Performance Integration Tests", () => {
             (engine.getPRNG().random() - 0.5) * 2,
             (engine.getPRNG().random() - 0.5) * 2,
           )
-          new TestProjectile(`grid_${x}_${y}`, pos, velocity, engine)
+          new TestProjectile(
+            `grid_${x}_${y}`,
+            pos,
+            velocity,
+            10,
+            100,
+            "",
+            engine,
+          )
         }
       }
 
@@ -449,7 +476,8 @@ describe("Performance Integration Tests", () => {
       engine.reset("stress-test")
       ticker.add((deltaFrames) => engine.update(deltaFrames))
 
-      profiler.startProfiling()
+      profiler.start()
+      profiler.takeSnapshot() // Take snapshot after setup
 
       // Create very large number of objects
       const objectCount = 2000
@@ -459,20 +487,24 @@ describe("Performance Integration Tests", () => {
           engine.getPRNG().random() * 4 - 2,
           engine.getPRNG().random() * 4 - 2,
         )
-        new TestProjectile(`stress${i}`, pos, velocity, engine)
+        new TestProjectile(`stress${i}`, pos, velocity, 10, 100, "", engine)
       }
 
       engine.start()
+      profiler.takeSnapshot() // Take snapshot after engine start
 
       const frameStart = performance.now()
 
       // Run for fewer frames due to object count
       for (let frame = 0; frame < 20; frame++) {
         await ticker.tick(1)
+        if (frame % 5 === 0) {
+          profiler.takeSnapshot() // Periodic snapshots
+        }
       }
 
       const frameEnd = performance.now()
-      const profile = profiler.endProfiling()
+      const profile = profiler.stop()
 
       const avgFrameTime = (frameEnd - frameStart) / 20
 

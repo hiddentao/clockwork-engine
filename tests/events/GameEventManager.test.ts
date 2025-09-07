@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test"
 import { GameEventManager } from "../../src/GameEventManager"
+import { GameRecorder } from "../../src/GameRecorder"
 import { RecordedEventSource } from "../../src/RecordedEventSource"
 import { UserInputEventSource } from "../../src/UserInputEventSource"
 import { Vector2D } from "../../src/geometry/Vector2D"
@@ -12,10 +13,11 @@ import {
 import { ComplexTestEngine } from "../fixtures"
 
 // Mock GameRecorder for testing
-class MockGameRecorder {
+class MockGameRecorder extends GameRecorder {
   public recordedEvents: AnyGameEvent[] = []
 
   recordEvent(event: AnyGameEvent): void {
+    super.recordEvent(event)
     this.recordedEvents.push({ ...event })
   }
 
@@ -443,8 +445,8 @@ describe("GameEventManager", () => {
       eventManager.update(1, 3)
 
       expect(events).toHaveLength(2)
-      expect(events[0].inputType).toBe("move")
-      expect(events[1].inputType).toBe("action")
+      expect((events[0] as UserInputEvent).inputType).toBe("move")
+      expect((events[1] as UserInputEvent).inputType).toBe("action")
       expect(player.getPosition()).toEqual(new Vector2D(10, 10))
     })
 
@@ -463,7 +465,7 @@ describe("GameEventManager", () => {
 
       const processedEvents: string[] = []
       eventManager.onUserInput = (event) => {
-        processedEvents.push(event.inputType)
+        processedEvents.push((event as UserInputEvent).inputType)
       }
 
       // Switch sources rapidly
@@ -486,7 +488,7 @@ describe("GameEventManager", () => {
       const processedEvents: string[] = []
 
       eventManager.onUserInput = (event) => {
-        processedEvents.push(`input:${event.inputType}`)
+        processedEvents.push(`input:${(event as UserInputEvent).inputType}`)
       }
 
       // Create complex recording with events across multiple frames

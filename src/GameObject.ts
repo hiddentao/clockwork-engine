@@ -110,6 +110,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     return this.size
   }
 
+  public setSize(size: Vector2D): void {
+    this.size = size
+  }
+
   public getVelocity(): Vector2D {
     return this.velocity
   }
@@ -132,6 +136,18 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
 
   public getMaxHealth(): number {
     return this.maxHealth
+  }
+
+  public setHealth(health: number): void {
+    const oldHealth = this.health
+    this.health = Math.max(0, Math.min(this.maxHealth, health))
+    if (this.health !== oldHealth) {
+      ;(this.emit as any)("healthChanged", this, this.health, this.maxHealth)
+    }
+    if (this.health === 0) {
+      this.destroyed = true
+      ;(this.emit as any)("destroyed", this)
+    }
   }
 
   public takeDamage(amount: number): void {
