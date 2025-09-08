@@ -7,6 +7,8 @@ export class DemoGameEngine extends GameEngine {
   private wallsSpawned: number = 0
   private gameWon: boolean = false
   private gameLost: boolean = false
+  private appleCounter: number = 0
+  private lastAppleSpawnFrame: number = -1
 
   setup(): void {
     // Set up input handling
@@ -72,6 +74,11 @@ export class DemoGameEngine extends GameEngine {
     this.setInterval(() => {
       this.cleanupExpiredApples()
     }, 30)
+
+    // Destroyed objects cleanup timer - every 60 frames
+    this.setInterval(() => {
+      this.clearDestroyed()
+    }, 60)
   }
 
   private moveSnake() {
@@ -156,15 +163,23 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private spawnApple(): void {
+    const currentFrame = this.getTotalFrames()
+
+    // Prevent multiple apple spawns in the same frame
+    if (this.lastAppleSpawnFrame === currentFrame) {
+      return
+    }
+
     const position = this.findEmptyPosition()
     if (position) {
       const apple = new Apple(
-        `apple-${Date.now()}`,
+        `apple-${this.appleCounter++}`,
         position,
         GAME_CONFIG.APPLE_TIMEOUT,
         this,
       )
-      apple.setSpawnFrame(this.getTotalFrames())
+      apple.setSpawnFrame(currentFrame)
+      this.lastAppleSpawnFrame = currentFrame
 
       // Add apple to collision tree
       this.getCollisionTree().add(position, apple)
@@ -317,6 +332,8 @@ export class DemoGameEngine extends GameEngine {
     this.wallsSpawned = 0
     this.gameWon = false
     this.gameLost = false
+    this.appleCounter = 0
+    this.lastAppleSpawnFrame = -1
   }
 
   public reset(seed?: string): void {
