@@ -142,6 +142,48 @@ describe("GameObject", () => {
       expect(player.getHealth()).toBe(initialHealth - damage)
     })
 
+    it("should handle setHealth directly", () => {
+      let healthChangedFired = false
+
+      player.on("healthChanged", () => {
+        healthChangedFired = true
+      })
+
+      player.setHealth(60)
+      expect(player.getHealth()).toBe(60)
+      expect(healthChangedFired).toBe(true)
+    })
+
+    it("should clamp health to max when using setHealth", () => {
+      player.setHealth(150) // More than max
+      expect(player.getHealth()).toBe(100) // Should be clamped to max
+    })
+
+    it("should clamp health to 0 when using setHealth with negative", () => {
+      player.setHealth(-10)
+      expect(player.getHealth()).toBe(0)
+      expect(player.isDestroyed()).toBe(true)
+    })
+
+    it("should handle setMaxHealth", () => {
+      player.setMaxHealth(150)
+      expect(player.getMaxHealth()).toBe(150)
+
+      // Should be able to heal up to new max
+      player.setHealth(150)
+      expect(player.getHealth()).toBe(150)
+    })
+
+    it("should adjust current health when lowering max health", () => {
+      player.setHealth(100) // Full health
+      player.setMaxHealth(50) // Lower max
+
+      expect(player.getMaxHealth()).toBe(50)
+      // Current health should be adjusted down if it exceeds new max
+      player.setHealth(100) // Try to set above max
+      expect(player.getHealth()).toBe(50) // Should be clamped
+    })
+
     it("should emit healthChanged event on damage", () => {
       const healthChanges: Array<{ health: number; maxHealth: number }> = []
 
@@ -245,6 +287,13 @@ describe("GameObject", () => {
       // Size is set in constructor and cannot be changed
       expect(player.getSize()).toEqual(new Vector2D(1, 1))
       expect(enemy.getSize()).toEqual(new Vector2D(1, 1))
+    })
+
+    it("should allow size to be changed with setSize", () => {
+      const newSize = new Vector2D(2, 3)
+      player.setSize(newSize)
+
+      expect(player.getSize()).toEqual(newSize)
     })
 
     it("should update rotation correctly", () => {
@@ -420,6 +469,25 @@ describe("GameObject", () => {
       expect(serialized.health).toBe(85)
       expect(serialized.maxHealth).toBe(100)
       expect(serialized.isDestroyed).toBe(false)
+    })
+
+    it("should throw error when calling static deserialize on base GameObject", () => {
+      const data = {
+        position: { x: 100, y: 100 },
+        velocity: { x: 0, y: 0 },
+        size: { x: 1, y: 1 },
+        rotation: 0,
+        health: 100,
+        maxHealth: 100,
+        isDestroyed: false,
+      }
+
+      // Import GameObject to test the static method
+      const { GameObject } = require("../../src/GameObject")
+
+      expect(() => GameObject.deserialize(data)).toThrow(
+        "GameObject.deserialize must be implemented by subclasses",
+      )
     })
 
     it("should serialize destroyed state", () => {

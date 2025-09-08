@@ -138,6 +138,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     return this.maxHealth
   }
 
+  public setMaxHealth(maxHealth: number): void {
+    this.maxHealth = maxHealth
+  }
+
   public setHealth(health: number): void {
     const oldHealth = this.health
     this.health = Math.max(0, Math.min(this.maxHealth, health))

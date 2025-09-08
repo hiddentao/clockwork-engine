@@ -657,4 +657,172 @@ describe("Timer", () => {
       expect(result3).toEqual([2, 5])
     })
   })
+
+  describe("Utility Methods", () => {
+    it("should track active timer count correctly", () => {
+      expect(timer.getActiveTimerCount()).toBe(0)
+
+      const id1 = timer.setTimeout(() => {
+        /* no-op */
+      }, 5)
+      const _id2 = timer.setTimeout(() => {
+        /* no-op */
+      }, 10)
+      timer.setInterval(() => {
+        /* no-op */
+      }, 3)
+
+      expect(timer.getActiveTimerCount()).toBe(3)
+
+      timer.clearTimer(id1)
+      expect(timer.getActiveTimerCount()).toBe(2)
+
+      timer.update(10, 10)
+      expect(timer.getActiveTimerCount()).toBe(1) // Only interval remains
+    })
+
+    it("should track total timer count including inactive", () => {
+      expect(timer.getTotalTimerCount()).toBe(0)
+
+      timer.setTimeout(() => {
+        /* no-op */
+      }, 5)
+      timer.setInterval(() => {
+        /* no-op */
+      }, 3)
+
+      expect(timer.getTotalTimerCount()).toBe(2)
+
+      timer.update(5, 5)
+      expect(timer.getTotalTimerCount()).toBe(1) // Timeout executed and removed
+    })
+
+    it("should get timer info correctly", () => {
+      const id1 = timer.setTimeout(() => {
+        /* no-op */
+      }, 5)
+      const id2 = timer.setInterval(() => {
+        /* no-op */
+      }, 3)
+
+      const info = timer.getTimerInfo()
+
+      expect(info).toHaveLength(2)
+
+      const timeoutInfo = info.find((t) => t.id === id1)
+      expect(timeoutInfo).toBeDefined()
+      expect(timeoutInfo!.targetFrame).toBe(5)
+      expect(timeoutInfo!.framesRemaining).toBe(5)
+      expect(timeoutInfo!.isRepeating).toBe(false)
+      expect(timeoutInfo!.isActive).toBe(true)
+
+      const intervalInfo = info.find((t) => t.id === id2)
+      expect(intervalInfo).toBeDefined()
+      expect(intervalInfo!.targetFrame).toBe(3)
+      expect(intervalInfo!.framesRemaining).toBe(3)
+      expect(intervalInfo!.isRepeating).toBe(true)
+      expect(intervalInfo!.isActive).toBe(true)
+
+      timer.update(2, 2)
+      const updatedInfo = timer.getTimerInfo()
+
+      const updatedTimeoutInfo = updatedInfo.find((t) => t.id === id1)
+      expect(updatedTimeoutInfo!.framesRemaining).toBe(3)
+
+      const updatedIntervalInfo = updatedInfo.find((t) => t.id === id2)
+      expect(updatedIntervalInfo!.framesRemaining).toBe(1)
+    })
+
+    it("should pause and resume timers", () => {
+      let executed = false
+      const id = timer.setTimeout(() => {
+        executed = true
+      }, 5)
+
+      expect(timer.pauseTimer(id)).toBe(true)
+
+      timer.update(5, 5)
+      expect(executed).toBe(false) // Should not execute while paused
+
+      expect(timer.resumeTimer(id)).toBe(true)
+
+      timer.update(0, 5) // Same frame, but resumed
+      expect(executed).toBe(true) // Should execute after resume
+    })
+
+    it("should handle pause/resume of non-existent timers", () => {
+      expect(timer.pauseTimer(999)).toBe(false)
+      expect(timer.resumeTimer(999)).toBe(false)
+    })
+
+    it("should pause and resume interval timers", () => {
+      let execCount = 0
+      const id = timer.setInterval(() => {
+        execCount++
+      }, 2)
+
+      timer.update(2, 2)
+      expect(execCount).toBe(1)
+
+      timer.pauseTimer(id)
+      timer.update(2, 4)
+      expect(execCount).toBe(1) // Should not execute while paused
+
+      timer.resumeTimer(id)
+      timer.update(2, 6)
+      expect(execCount).toBe(3) // Should resume execution (was ready at 4, now at 6)
+    })
+
+    it("should track paused timers in info", () => {
+      const id = timer.setTimeout(() => {
+        /* no-op */
+      }, 5)
+
+      timer.pauseTimer(id)
+
+      const info = timer.getTimerInfo()
+      const timerInfo = info.find((t) => t.id === id)
+
+      expect(timerInfo).toBeDefined()
+      expect(timerInfo!.isActive).toBe(false)
+    })
+
+    it("should handle multiple pause/resume cycles", () => {
+      let executed = false
+      const id = timer.setTimeout(() => {
+        executed = true
+      }, 10)
+
+      timer.pauseTimer(id)
+      timer.pauseTimer(id) // Pause again
+      expect(timer.pauseTimer(id)).toBe(true) // Should still return true
+
+      timer.resumeTimer(id)
+      timer.resumeTimer(id) // Resume again
+      expect(timer.resumeTimer(id)).toBe(true) // Should still return true
+
+      timer.update(10, 10)
+      expect(executed).toBe(true)
+    })
+
+    it("should correctly count active timers with paused ones", () => {
+      const id1 = timer.setTimeout(() => {
+        /* no-op */
+      }, 5)
+      const id2 = timer.setTimeout(() => {
+        /* no-op */
+      }, 10)
+      timer.setInterval(() => {
+        /* no-op */
+      }, 3)
+
+      expect(timer.getActiveTimerCount()).toBe(3)
+
+      timer.pauseTimer(id1)
+      expect(timer.getActiveTimerCount()).toBe(2) // One paused
+
+      timer.pauseTimer(id2)
+      expect(timer.getActiveTimerCount()).toBe(1) // Two paused
+    })
+  })
 })

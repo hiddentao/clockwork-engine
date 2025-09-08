@@ -74,6 +74,16 @@ describe("GameObjectGroup", () => {
       expect(group.has(players[1])).toBe(false)
     })
 
+    it("should check if object ID exists using hasId", () => {
+      group.add(players[0])
+      group.add(players[1])
+
+      expect(group.hasId("player1")).toBe(true)
+      expect(group.hasId("player2")).toBe(true)
+      expect(group.hasId("player3")).toBe(false)
+      expect(group.hasId("nonexistent")).toBe(false)
+    })
+
     it("should remove objects correctly", () => {
       players.forEach((player) => group.add(player))
 

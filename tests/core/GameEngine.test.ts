@@ -188,6 +188,32 @@ describe("GameEngine", () => {
     })
   })
 
+  describe("Getter Methods", () => {
+    beforeEach(() => {
+      engine.reset("getter-test")
+    })
+
+    it("should return timer instance via getTimer", () => {
+      const timer = engine.getTimer()
+
+      expect(timer).toBeDefined()
+      expect(timer.constructor.name).toBe("Timer")
+
+      // Should be able to use timer methods
+      const timerId = timer.setTimeout(() => {
+        /* no-op */
+      }, 10)
+      expect(timer.clearTimer(timerId)).toBe(true)
+    })
+
+    it("should return collision tree via getCollisionTree", () => {
+      const collisionTree = engine.getCollisionTree()
+
+      expect(collisionTree).toBeDefined()
+      expect(collisionTree.constructor.name).toBe("CollisionBspTree")
+    })
+  })
+
   describe("GameObject Registry", () => {
     beforeEach(() => {
       engine.reset("registry-test")
