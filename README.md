@@ -3,6 +3,7 @@
 # Clockwork Game Engine
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/hiddentao/clockwork-engine/ci.yml?branch=main)](https://github.com/hiddentao/clockwork-engine/actions)
+[![Coverage Status](https://coveralls.io/repos/github/hiddentao/clockwork-engine/badge.svg?branch=main)](https://coveralls.io/github/hiddentao/clockwork-engine?branch=main)
 [![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 

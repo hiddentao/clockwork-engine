@@ -1,6 +1,6 @@
 {
   "name": "@hiddentao/clockwork-engine",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A TypeScript game engine for deterministic, replayable games",
   "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
   "license": "MIT",
@@ -24,6 +24,14 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "LICENSE.md",
+    "README.md",
+    "docs/",
+    "package.json",
+    "bun.lock"
+  ],
   "publishConfig": {
     "access": "public"
   },
