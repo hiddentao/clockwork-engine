@@ -38,8 +38,8 @@ export class TestPowerUp extends GameObject {
     return "PowerUp"
   }
 
-  update(deltaFrames: number): void {
-    super.update(deltaFrames)
+  update(deltaFrames: number, totalFrames: number): void {
+    super.update(deltaFrames, totalFrames)
 
     // Handle respawn timer if power-up was picked up
     if (!this.isActive) {

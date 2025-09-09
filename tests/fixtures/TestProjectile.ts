@@ -31,8 +31,8 @@ export class TestProjectile extends GameObject {
     return "Projectile"
   }
 
-  update(deltaFrames: number): void {
-    super.update(deltaFrames)
+  update(deltaFrames: number, totalFrames: number): void {
+    super.update(deltaFrames, totalFrames)
     this.age += deltaFrames
 
     // Destroy projectile when it reaches lifespan

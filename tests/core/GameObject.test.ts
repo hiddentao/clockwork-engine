@@ -87,7 +87,7 @@ describe("GameObject", () => {
       expect(player.getVelocity()).toEqual(velocity)
 
       const initialPos = player.getPosition()
-      player.update(1) // 1 frame
+      player.update(1, 1) // 1 frame
 
       const expectedPos = initialPos.add(velocity)
       expect(player.getPosition()).toEqual(expectedPos)
@@ -100,13 +100,13 @@ describe("GameObject", () => {
       const initialPos = player.getPosition()
 
       // Test with delta = 0.5
-      player.update(0.5)
+      player.update(0.5, 0.5)
       let expectedPos = initialPos.add(velocity.scale(0.5))
       expect(player.getPosition()).toEqual(expectedPos)
 
       // Test with delta = 2
       const currentPos = player.getPosition()
-      player.update(2)
+      player.update(2, 2)
       expectedPos = currentPos.add(velocity.scale(2))
       expect(player.getPosition()).toEqual(expectedPos)
     })
@@ -115,7 +115,7 @@ describe("GameObject", () => {
       player.setVelocity(new Vector2D(0, 0))
       const initialPos = player.getPosition()
 
-      player.update(5)
+      player.update(5, 5)
 
       expect(player.getPosition()).toEqual(initialPos)
     })
@@ -125,7 +125,7 @@ describe("GameObject", () => {
       player.setVelocity(velocity)
 
       const initialPos = player.getPosition()
-      player.update(1)
+      player.update(1, 1)
 
       const expectedPos = initialPos.add(velocity)
       expect(player.getPosition()).toEqual(expectedPos)
@@ -765,7 +765,7 @@ describe("GameObject", () => {
       player.setVelocity(new Vector2D(1, 1))
       const initialPos = player.getPosition()
 
-      player.update(0.000001)
+      player.update(0.000001, 0.000001)
 
       const newPos = player.getPosition()
       expect(newPos.x).toBeCloseTo(initialPos.x + 0.000001)
@@ -800,7 +800,7 @@ describe("GameObject", () => {
           player.heal(5)
         }
 
-        player.update(0.1)
+        player.update(0.1, 0.1)
         player.setRotation(i * 0.01)
       }
 
