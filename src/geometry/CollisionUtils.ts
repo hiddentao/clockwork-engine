@@ -58,7 +58,6 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   constructor(initialPoints: CollisionPoint[] = []) {
     super()
     this.points = [...initialPoints]
-    this.rebuildPointIndex()
     if (initialPoints.length > 0) {
       this.rebuildTree()
     }
@@ -121,9 +120,6 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
       this.points.splice(index, 1)
       this.pointIndex.delete(key)
 
-      // Update indices after removal
-      this.rebuildPointIndex()
-
       if (this.deferRebuild) {
         this.needsRebuild = true
       } else {
@@ -156,7 +152,6 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
    */
   public setAll(points: Vector2D[], source: ICollisionSource): void {
     this.points = points.map((point) => ({ point, source }))
-    this.rebuildPointIndex()
     if (this.deferRebuild) {
       this.needsRebuild = true
     } else {
@@ -180,7 +175,6 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
     const removed = this.points.length !== initialLength
 
     if (removed) {
-      this.rebuildPointIndex()
       if (this.deferRebuild) {
         this.needsRebuild = true
       } else {
@@ -234,51 +228,38 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   }
 
   /**
-   * Rebuild the point index map for fast lookups
-   */
-  protected rebuildPointIndex(): void {
-    this.pointIndex.clear()
-    for (let i = 0; i < this.points.length; i++) {
-      const key = this.createCollisionPointKey(this.points[i])
-      this.pointIndex.set(key, i)
-    }
-  }
-
-  /**
    * Rebuild the spatial partitioning tree
    */
   protected rebuildTree(): void {
+    this.pointIndex.clear()
+
     if (this.points.length === 0) {
       this.root = null
       return
     }
 
-    // Calculate bounds
-    const bounds = this.calculateBounds(this.points)
-    this.root = this.buildNode(this.points, bounds, 0)
-  }
+    // Single loop to rebuild index and calculate bounds
+    let minX = this.points[0].point.x
+    let maxX = this.points[0].point.x
+    let minY = this.points[0].point.y
+    let maxY = this.points[0].point.y
 
-  /**
-   * Calculate the bounding box for a set of collision points
-   */
-  protected calculateBounds(points: CollisionPoint[]): SpatialNode["bounds"] {
-    if (points.length === 0) {
-      return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
-    }
+    for (let i = 0; i < this.points.length; i++) {
+      const collisionPoint = this.points[i]
 
-    let minX = points[0].point.x
-    let maxX = points[0].point.x
-    let minY = points[0].point.y
-    let maxY = points[0].point.y
+      // Rebuild point index
+      const key = this.createCollisionPointKey(collisionPoint)
+      this.pointIndex.set(key, i)
 
-    for (const collisionPoint of points) {
+      // Update bounds
       minX = Math.min(minX, collisionPoint.point.x)
       maxX = Math.max(maxX, collisionPoint.point.x)
       minY = Math.min(minY, collisionPoint.point.y)
       maxY = Math.max(maxY, collisionPoint.point.y)
     }
 
-    return { minX, maxX, minY, maxY }
+    const bounds = { minX, maxX, minY, maxY }
+    this.root = this.buildNode(this.points, bounds, 0)
   }
 
   /**
