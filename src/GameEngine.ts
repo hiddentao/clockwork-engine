@@ -223,7 +223,7 @@ export abstract class GameEngine
    * Clear all destroyed GameObjects from all groups
    * @returns Total number of destroyed objects removed
    */
-  clearDestroyed(): number {
+  clearDestroyedGameObjects(): number {
     let totalRemoved = 0
     for (const group of this.gameObjectGroups.values()) {
       totalRemoved += group.clearDestroyed()

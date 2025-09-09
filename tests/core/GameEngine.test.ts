@@ -281,7 +281,7 @@ describe("GameEngine", () => {
       expect(playerGroup.size()).toBe(1) // Still in group
       expect(playerGroup.activeSize()).toBe(0) // Not active
 
-      const removedCount = engine.clearDestroyed()
+      const removedCount = engine.clearDestroyedGameObjects()
       expect(removedCount).toBe(1)
       expect(playerGroup.size()).toBe(0) // Removed from group
     })
@@ -569,7 +569,7 @@ describe("GameEngine", () => {
             // Periodically clean up
             player.destroy()
             enemy.destroy()
-            engine.clearDestroyed()
+            engine.clearDestroyedGameObjects()
           }
         }
 
@@ -593,7 +593,7 @@ describe("GameEngine", () => {
       objects.forEach((obj) => obj.destroy())
       expect(engine.getTotalObjectCount()).toBe(0) // Should not count destroyed
 
-      const removedCount = engine.clearDestroyed()
+      const removedCount = engine.clearDestroyedGameObjects()
       expect(removedCount).toBe(3)
       expect(engine.getTotalObjectCount()).toBe(0)
     })
@@ -870,7 +870,7 @@ describe("GameEngine", () => {
       expect(targetableGroup.getById("player-0")).toBe(player)
     })
 
-    it("should work with clearDestroyed across multiple groups", () => {
+    it("should work with clearDestroyedGameObjects across multiple groups", () => {
       const player = engine.createAutoPlayer(new Vector2D(0, 0))
       engine.registerGameObject(player, "Targetable")
       engine.registerGameObject(player, "Damageable")
@@ -891,7 +891,7 @@ describe("GameEngine", () => {
       expect(damageableGroup.activeSize()).toBe(0)
 
       // Clear destroyed should remove from all groups
-      const removedCount = engine.clearDestroyed()
+      const removedCount = engine.clearDestroyedGameObjects()
       expect(removedCount).toBe(3) // Removed from 3 groups
       expect(playerGroup.size()).toBe(0)
       expect(targetableGroup.size()).toBe(0)

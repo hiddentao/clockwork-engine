@@ -77,7 +77,7 @@ export class DemoGameEngine extends GameEngine {
 
     // Destroyed objects cleanup timer - every 60 frames
     this.setInterval(() => {
-      this.clearDestroyed()
+      this.clearDestroyedGameObjects()
     }, 60)
   }
 

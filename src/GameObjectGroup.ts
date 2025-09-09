@@ -1,13 +1,36 @@
+import { EventEmitter } from "./EventEmitter"
 import type { GameObject } from "./GameObject"
 import type { IGameLoop } from "./IGameLoop"
+
+export enum GameObjectGroupEventType {
+  ITEM_ADDED = "itemAdded",
+  ITEM_REMOVED = "itemRemoved",
+  LIST_CLEARED = "listCleared",
+  DESTROYED_ITEMS_CLEARED = "destroyedItemsCleared",
+}
+
+export interface GameObjectGroupEvents
+  extends Record<string, (...args: any[]) => void> {
+  [GameObjectGroupEventType.ITEM_ADDED]: (gameObject: GameObject) => void
+  [GameObjectGroupEventType.ITEM_REMOVED]: (gameObjectId: string) => void
+  [GameObjectGroupEventType.LIST_CLEARED]: () => void
+  [GameObjectGroupEventType.DESTROYED_ITEMS_CLEARED]: (
+    gameObjects: GameObject[],
+  ) => void
+}
 
 /**
  * A group/collection manager for GameObjects
  */
 export class GameObjectGroup<T extends GameObject = GameObject>
+  extends EventEmitter<GameObjectGroupEvents>
   implements IGameLoop
 {
   protected gameObjects: Map<string, T> = new Map()
+
+  constructor() {
+    super()
+  }
 
   /**
    * Add a GameObject to the group
@@ -15,7 +38,12 @@ export class GameObjectGroup<T extends GameObject = GameObject>
    * @returns The same GameObject that was added
    */
   public add(gameObject: T): T {
-    this.gameObjects.set(gameObject.getId(), gameObject)
+    const id = gameObject.getId()
+    const isNew = !this.gameObjects.has(id)
+    this.gameObjects.set(id, gameObject)
+    if (isNew) {
+      this.emit(GameObjectGroupEventType.ITEM_ADDED, gameObject)
+    }
     return gameObject
   }
 
@@ -25,7 +53,12 @@ export class GameObjectGroup<T extends GameObject = GameObject>
    * @returns True if the GameObject was removed, false if it wasn't in the group
    */
   public remove(gameObject: T): boolean {
-    return this.gameObjects.delete(gameObject.getId())
+    const gameObjectId = gameObject.getId()
+    const wasRemoved = this.gameObjects.delete(gameObjectId)
+    if (wasRemoved) {
+      this.emit(GameObjectGroupEventType.ITEM_REMOVED, gameObjectId)
+    }
+    return wasRemoved
   }
 
   /**
@@ -86,6 +119,7 @@ export class GameObjectGroup<T extends GameObject = GameObject>
    */
   public clear(): void {
     this.gameObjects.clear()
+    this.emit(GameObjectGroupEventType.LIST_CLEARED)
   }
 
   /**
@@ -93,14 +127,20 @@ export class GameObjectGroup<T extends GameObject = GameObject>
    * @returns Number of destroyed GameObjects that were removed
    */
   public clearDestroyed(): number {
-    let removedCount = 0
+    const destroyedObjects: T[] = []
     for (const [id, gameObject] of this.gameObjects) {
       if (gameObject.isDestroyed()) {
+        destroyedObjects.push(gameObject)
         this.gameObjects.delete(id)
-        removedCount++
       }
     }
-    return removedCount
+    if (destroyedObjects.length > 0) {
+      this.emit(
+        GameObjectGroupEventType.DESTROYED_ITEMS_CLEARED,
+        destroyedObjects,
+      )
+    }
+    return destroyedObjects.length
   }
 
   /**

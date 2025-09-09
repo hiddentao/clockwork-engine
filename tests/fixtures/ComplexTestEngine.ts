@@ -555,7 +555,7 @@ export class ComplexTestEngine extends GameEngine {
         group.getAll().forEach((obj) => obj.destroy())
       }
     }
-    this.clearDestroyed()
+    this.clearDestroyedGameObjects()
   }
 
   getTotalObjectCount(): number {

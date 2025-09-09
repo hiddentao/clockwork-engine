@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "bun:test"
-import { GameObjectGroup } from "../../src/GameObjectGroup"
+import {
+  GameObjectGroup,
+  GameObjectGroupEventType,
+} from "../../src/GameObjectGroup"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { ComplexTestEngine, TestEnemy, TestPlayer } from "../fixtures"
 
@@ -530,6 +533,281 @@ describe("GameObjectGroup", () => {
 
       group.update(1, 1) // Should not throw
       group.clear() // Should not throw
+    })
+  })
+
+  describe("Event Emissions", () => {
+    let eventLog: Array<{ event: string; data: any }>
+
+    beforeEach(() => {
+      eventLog = []
+
+      // Set up event listeners
+      group.on(GameObjectGroupEventType.ITEM_ADDED, (gameObject) => {
+        eventLog.push({
+          event: "ITEM_ADDED",
+          data: { id: gameObject.getId(), type: gameObject.getType() },
+        })
+      })
+
+      group.on(GameObjectGroupEventType.ITEM_REMOVED, (gameObjectId) => {
+        eventLog.push({ event: "ITEM_REMOVED", data: { id: gameObjectId } })
+      })
+
+      group.on(GameObjectGroupEventType.LIST_CLEARED, () => {
+        eventLog.push({ event: "LIST_CLEARED", data: {} })
+      })
+
+      group.on(
+        GameObjectGroupEventType.DESTROYED_ITEMS_CLEARED,
+        (gameObjects) => {
+          eventLog.push({
+            event: "DESTROYED_ITEMS_CLEARED",
+            data: { objects: gameObjects },
+          })
+        },
+      )
+    })
+
+    describe("ITEM_ADDED Events", () => {
+      it("should emit ITEM_ADDED when add() is called", () => {
+        group.add(players[0])
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "player1", type: "Player" },
+        })
+      })
+
+      it("should emit ITEM_ADDED for each object added", () => {
+        group.add(players[0])
+        group.add(players[1])
+        group.add(enemies[0])
+
+        expect(eventLog).toHaveLength(3)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "player1", type: "Player" },
+        })
+        expect(eventLog[1]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "player2", type: "Player" },
+        })
+        expect(eventLog[2]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "enemy1", type: "Enemy" },
+        })
+      })
+
+      it("should not emit ITEM_ADDED when adding same object multiple times", () => {
+        group.add(players[0])
+        group.add(players[0]) // Add same object again
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "player1", type: "Player" },
+        })
+      })
+    })
+
+    describe("ITEM_REMOVED Events", () => {
+      beforeEach(() => {
+        players.forEach((player) => group.add(player))
+        eventLog = [] // Clear events from setup
+      })
+
+      it("should emit ITEM_REMOVED when remove() returns true", () => {
+        const wasRemoved = group.remove(players[1])
+
+        expect(wasRemoved).toBe(true)
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_REMOVED",
+          data: { id: "player2" },
+        })
+      })
+
+      it("should not emit ITEM_REMOVED when remove() returns false", () => {
+        const nonExistentPlayer = new TestPlayer("nonexistent", { x: 0, y: 0 })
+        const wasRemoved = group.remove(nonExistentPlayer)
+
+        expect(wasRemoved).toBe(false)
+        expect(eventLog).toHaveLength(0)
+      })
+
+      it("should emit ITEM_REMOVED for multiple removals", () => {
+        group.remove(players[0])
+        group.remove(players[2])
+
+        expect(eventLog).toHaveLength(2)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_REMOVED",
+          data: { id: "player1" },
+        })
+        expect(eventLog[1]).toEqual({
+          event: "ITEM_REMOVED",
+          data: { id: "player3" },
+        })
+      })
+    })
+
+    describe("LIST_CLEARED Events", () => {
+      it("should emit LIST_CLEARED when clear() is called", () => {
+        players.forEach((player) => group.add(player))
+        eventLog = [] // Clear events from setup
+
+        group.clear()
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "LIST_CLEARED",
+          data: {},
+        })
+      })
+
+      it("should emit LIST_CLEARED even when group is empty", () => {
+        group.clear()
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "LIST_CLEARED",
+          data: {},
+        })
+      })
+    })
+
+    describe("DESTROYED_ITEMS_CLEARED Events", () => {
+      beforeEach(() => {
+        players.forEach((player) => group.add(player))
+        eventLog = [] // Clear events from setup
+      })
+
+      it("should emit DESTROYED_ITEMS_CLEARED for all destroyed items", () => {
+        players[0].destroy()
+        players[2].destroy()
+
+        group.clearDestroyed()
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "DESTROYED_ITEMS_CLEARED",
+          data: { objects: [players[0], players[2]] },
+        })
+      })
+
+      it("should not emit DESTROYED_ITEMS_CLEARED when no objects are destroyed", () => {
+        group.clearDestroyed()
+
+        expect(eventLog).toHaveLength(0)
+      })
+
+      it("should emit single event with all destroyed items in correct order", () => {
+        players[1].destroy()
+        enemies.forEach((enemy) => group.add(enemy))
+        enemies[0].destroy()
+
+        eventLog = [] // Clear events from setup
+        group.clearDestroyed()
+
+        expect(eventLog).toHaveLength(1)
+        // Single event should contain all destroyed items in the order they appear in the map
+        expect(eventLog[0]).toEqual({
+          event: "DESTROYED_ITEMS_CLEARED",
+          data: { objects: [players[1], enemies[0]] },
+        })
+      })
+
+      it("should emit DESTROYED_ITEMS_CLEARED after objects are deleted from group", () => {
+        players[0].destroy()
+        players[1].destroy()
+
+        // Track whether objects were already deleted when event was emitted
+        const deletionStatuses: Array<{ id: string; wasDeleted: boolean }> = []
+
+        // Set up event listener that checks if objects are still in group
+        group.on(
+          GameObjectGroupEventType.DESTROYED_ITEMS_CLEARED,
+          (gameObjects) => {
+            gameObjects.forEach((gameObject) => {
+              const wasDeleted = group.getById(gameObject.getId()) === undefined
+              deletionStatuses.push({ id: gameObject.getId(), wasDeleted })
+            })
+          },
+        )
+
+        group.clearDestroyed()
+
+        expect(deletionStatuses).toHaveLength(2)
+        expect(deletionStatuses[0]).toEqual({
+          id: "player1",
+          wasDeleted: true,
+        })
+        expect(deletionStatuses[1]).toEqual({
+          id: "player2",
+          wasDeleted: true,
+        })
+      })
+    })
+
+    describe("Multiple Listeners", () => {
+      let secondEventLog: Array<{ event: string; data: any }>
+
+      beforeEach(() => {
+        secondEventLog = []
+
+        // Add a second listener for ITEM_ADDED
+        group.on(GameObjectGroupEventType.ITEM_ADDED, (gameObject) => {
+          secondEventLog.push({
+            event: "ITEM_ADDED_SECOND",
+            data: { id: gameObject.getId() },
+          })
+        })
+      })
+
+      it("should call all listeners for the same event", () => {
+        group.add(players[0])
+
+        expect(eventLog).toHaveLength(1)
+        expect(eventLog[0]).toEqual({
+          event: "ITEM_ADDED",
+          data: { id: "player1", type: "Player" },
+        })
+
+        expect(secondEventLog).toHaveLength(1)
+        expect(secondEventLog[0]).toEqual({
+          event: "ITEM_ADDED_SECOND",
+          data: { id: "player1" },
+        })
+      })
+    })
+
+    describe("Event Order and Timing", () => {
+      it("should emit events in correct sequence during complex operations", () => {
+        // Add objects
+        group.add(players[0])
+        group.add(players[1])
+
+        // Destroy one
+        players[0].destroy()
+
+        // Remove one
+        group.remove(players[1])
+
+        // Clear destroyed
+        group.clearDestroyed()
+
+        // Clear all
+        group.clear()
+
+        expect(eventLog).toHaveLength(5)
+        expect(eventLog[0].event).toBe("ITEM_ADDED") // player1 added
+        expect(eventLog[1].event).toBe("ITEM_ADDED") // player2 added
+        expect(eventLog[2].event).toBe("ITEM_REMOVED") // player2 removed
+        expect(eventLog[3].event).toBe("DESTROYED_ITEMS_CLEARED") // player1 destroyed and cleared
+        expect(eventLog[4].event).toBe("LIST_CLEARED") // all cleared
+      })
     })
   })
 })
