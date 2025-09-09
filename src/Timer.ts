@@ -10,11 +10,11 @@ interface TimerCallback {
 }
 
 export class Timer implements IGameLoop {
-  private timers: Map<number, TimerCallback> = new Map()
-  private nextId: number = 1
-  private currentFrame: number = 0
-  private updateStartFrame: number = 0
-  private isUpdating: boolean = false
+  protected timers: Map<number, TimerCallback> = new Map()
+  protected nextId: number = 1
+  protected currentFrame: number = 0
+  protected updateStartFrame: number = 0
+  protected isUpdating: boolean = false
 
   /**
    * Schedule a one-time callback to execute after the specified number of frames

@@ -25,14 +25,14 @@ export abstract class GameEngine
   extends EventEmitter<GameEngineEvents>
   implements GameEngineInterface
 {
-  private gameObjectGroups: Map<string, GameObjectGroup> = new Map()
-  private totalFrames: number = 0
-  private state: GameState = GameState.READY
-  private seed: string = ""
-  private prng: PRNG = new PRNG()
-  private timer: Timer = new Timer()
-  private eventManager: GameEventManager
-  private recorder: GameRecorder | undefined = undefined
+  protected gameObjectGroups: Map<string, GameObjectGroup> = new Map()
+  protected totalFrames: number = 0
+  protected state: GameState = GameState.READY
+  protected seed: string = ""
+  protected prng: PRNG = new PRNG()
+  protected timer: Timer = new Timer()
+  protected eventManager: GameEventManager
+  protected recorder: GameRecorder | undefined = undefined
   protected collisionTree: CollisionBspTree = new CollisionBspTree()
 
   constructor() {
@@ -40,7 +40,7 @@ export abstract class GameEngine
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
   }
 
-  private setState(newState: GameState): void {
+  protected setState(newState: GameState): void {
     const oldState = this.state
     this.state = newState
     this.emit(GameEngineEventType.STATE_CHANGE, newState, oldState)
@@ -161,9 +161,11 @@ export abstract class GameEngine
   /**
    * Register a GameObject with the engine
    * Automatically creates and manages groups by type
+   * @param gameObject The game object to register
+   * @param overrideType Optional type to use instead of gameObject.getType()
    */
-  registerGameObject(gameObject: GameObject): void {
-    const type = gameObject.getType()
+  registerGameObject(gameObject: GameObject, overrideType?: string): void {
+    const type = overrideType || gameObject.getType()
     let group = this.gameObjectGroups.get(type)
 
     if (!group) {

@@ -579,4 +579,102 @@ describe("GameRecorder", () => {
       expect(recording1).toEqual(recording2)
     })
   })
+
+  describe("Arbitrary Metadata", () => {
+    let recorder: GameRecorder
+    let mockEventManager: MockGameEventManager
+
+    beforeEach(() => {
+      recorder = new GameRecorder()
+      mockEventManager = new MockGameEventManager()
+    })
+
+    it("should accept arbitrary metadata properties as object", () => {
+      recorder.startRecording(mockEventManager as any, "test-seed", {
+        description: "Test recording",
+        gameMode: "survival",
+        difficulty: "hard",
+        playerName: "Alice",
+        customField: { nested: "value" },
+      })
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.description).toBe("Test recording")
+      expect(recording!.metadata?.gameMode).toBe("survival")
+      expect(recording!.metadata?.difficulty).toBe("hard")
+      expect(recording!.metadata?.playerName).toBe("Alice")
+      expect(recording!.metadata?.customField).toEqual({ nested: "value" })
+      expect(recording!.metadata?.version).toBe("1.0.0")
+      expect(typeof recording!.metadata?.createdAt).toBe("number")
+    })
+
+    it("should still support backward compatible string description", () => {
+      recorder.startRecording(
+        mockEventManager as any,
+        "test-seed",
+        "Simple description",
+      )
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.description).toBe("Simple description")
+      expect(recording!.metadata?.version).toBe("1.0.0")
+      expect(typeof recording!.metadata?.createdAt).toBe("number")
+    })
+
+    it("should support description string with additional metadata", () => {
+      recorder.startRecording(
+        mockEventManager as any,
+        "test-seed",
+        "Description",
+        {
+          gameMode: "arcade",
+          score: 1000,
+        },
+      )
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.description).toBe("Description")
+      expect(recording!.metadata?.gameMode).toBe("arcade")
+      expect(recording!.metadata?.score).toBe(1000)
+    })
+
+    it("should override default version if provided in metadata", () => {
+      recorder.startRecording(mockEventManager as any, "test-seed", {
+        version: "2.0.0",
+        customField: "test",
+      })
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.version).toBe("2.0.0")
+      expect(recording!.metadata?.customField).toBe("test")
+    })
+
+    it("should preserve createdAt if provided in metadata", () => {
+      const customTime = Date.now() - 10000
+      recorder.startRecording(mockEventManager as any, "test-seed", {
+        createdAt: customTime,
+        description: "Custom time",
+      })
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.createdAt).toBe(customTime)
+    })
+
+    it("should handle empty metadata object", () => {
+      recorder.startRecording(mockEventManager as any, "test-seed", {})
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.version).toBe("1.0.0")
+      expect(typeof recording!.metadata?.createdAt).toBe("number")
+    })
+
+    it("should handle null and undefined metadata gracefully", () => {
+      recorder.startRecording(mockEventManager as any, "test-seed", undefined)
+
+      const recording = recorder.getCurrentRecording()
+      expect(recording!.metadata?.version).toBe("1.0.0")
+      expect(typeof recording!.metadata?.createdAt).toBe("number")
+      expect(recording!.metadata?.description).toBeUndefined()
+    })
+  })
 })

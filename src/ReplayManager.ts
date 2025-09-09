@@ -5,12 +5,12 @@ import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
 export class ReplayManager {
-  private engine: GameEngine
-  private isReplaying: boolean = false
-  private deltaFramesIndex: number = 0
-  private recording: GameRecording | null = null
-  private currentReplayFrame: number = 0
-  private accumulatedFrames: number = 0
+  protected engine: GameEngine
+  protected isReplaying: boolean = false
+  protected deltaFramesIndex: number = 0
+  protected recording: GameRecording | null = null
+  protected currentReplayFrame: number = 0
+  protected accumulatedFrames: number = 0
 
   constructor(engine: GameEngine) {
     this.engine = engine
@@ -163,7 +163,7 @@ export class ReplayManager {
    * Validate recording structure to ensure it's safe and complete for replay
    * @param recording The recording to validate
    */
-  private validateRecording(recording: GameRecording): void {
+  protected validateRecording(recording: GameRecording): void {
     if (!recording) {
       throw new Error("Invalid recording: recording is null or undefined")
     }

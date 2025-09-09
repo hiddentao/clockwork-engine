@@ -6,9 +6,9 @@ import type { AnyGameEvent, ObjectUpdateEvent, UserInputEvent } from "./types"
 import { GameEventType } from "./types"
 
 export class GameEventManager implements IGameLoop {
-  private source: GameEventSource
-  private engine: GameEngine
-  private recorder?: GameRecorder
+  protected source: GameEventSource
+  protected engine: GameEngine
+  protected recorder?: GameRecorder
 
   constructor(source: GameEventSource, engine: GameEngine) {
     this.source = source
@@ -65,7 +65,7 @@ export class GameEventManager implements IGameLoop {
   /**
    * Process a single game event
    */
-  private processEvent(event: AnyGameEvent): void {
+  protected processEvent(event: AnyGameEvent): void {
     try {
       switch (event.type) {
         case GameEventType.USER_INPUT:
@@ -88,7 +88,7 @@ export class GameEventManager implements IGameLoop {
    * Process a user input event
    * This is where you would typically dispatch input events to game systems
    */
-  private processUserInput(event: UserInputEvent): void {
+  protected processUserInput(event: UserInputEvent): void {
     // This is a placeholder implementation
     // In a real game, you would route input events to the appropriate handlers
     // For example: keyboard handlers, mouse handlers, etc.
@@ -102,7 +102,7 @@ export class GameEventManager implements IGameLoop {
    * Process an object update event
    * Finds the target object and calls the specified method with parameters
    */
-  private processObjectUpdate(event: ObjectUpdateEvent): void {
+  protected processObjectUpdate(event: ObjectUpdateEvent): void {
     const group = this.engine.getGameObjectGroup(event.objectType)
     if (!group) {
       console.warn(`No group found for object type: ${event.objectType}`)

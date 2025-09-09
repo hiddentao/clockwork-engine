@@ -7,7 +7,7 @@ import type { IGameLoop } from "./IGameLoop"
 export class GameObjectGroup<T extends GameObject = GameObject>
   implements IGameLoop
 {
-  private gameObjects: Map<string, T> = new Map()
+  protected gameObjects: Map<string, T> = new Map()
 
   /**
    * Add a GameObject to the group

@@ -60,7 +60,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   protected health: number
   protected maxHealth: number
   protected destroyed: boolean
-  private engine?: GameEngineInterface
+  protected engine?: GameEngineInterface
 
   constructor(
     id: string,

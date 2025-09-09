@@ -1,5 +1,5 @@
 export class EventEmitter<T extends Record<string, (...args: any[]) => void>> {
-  private listeners: { [K in keyof T]?: Set<T[K]> } = {}
+  protected listeners: { [K in keyof T]?: Set<T[K]> } = {}
 
   on<K extends keyof T>(event: K, callback: T[K]): void {
     if (!this.listeners[event]) {

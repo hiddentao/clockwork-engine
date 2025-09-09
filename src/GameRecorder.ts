@@ -2,11 +2,11 @@ import type { GameEventManager } from "./GameEventManager"
 import type { AnyGameEvent, GameRecording } from "./types"
 
 export class GameRecorder {
-  private recording: GameRecording | null = null
-  private isRecording: boolean = false
-  private eventManager: GameEventManager | null = null
-  private deltaFrames: number[] = []
-  private totalFrames: number = 0
+  protected recording: GameRecording | null = null
+  protected isRecording: boolean = false
+  protected eventManager: GameEventManager | null = null
+  protected deltaFrames: number[] = []
+  protected totalFrames: number = 0
 
   /**
    * Start recording a game session
@@ -15,18 +15,39 @@ export class GameRecorder {
   startRecording(
     eventManager: GameEventManager,
     seed: string,
-    description?: string,
+    descriptionOrMetadata?: string | Record<string, any>,
+    additionalMetadata?: Record<string, any>,
   ): void {
+    let metadata: any = {
+      createdAt: Date.now(),
+      version: "1.0.0",
+    }
+
+    if (typeof descriptionOrMetadata === "string") {
+      // Backward compatible: description string
+      if (descriptionOrMetadata) {
+        metadata.description = descriptionOrMetadata
+      }
+      // Merge additional metadata if provided
+      if (additionalMetadata) {
+        metadata = { ...metadata, ...additionalMetadata }
+      }
+    } else if (descriptionOrMetadata) {
+      // New usage: metadata object
+      metadata = {
+        ...metadata,
+        ...descriptionOrMetadata,
+        // Ensure createdAt is always set
+        createdAt: descriptionOrMetadata.createdAt || Date.now(),
+      }
+    }
+
     this.recording = {
       seed,
       events: [],
       deltaFrames: [],
       totalFrames: 0,
-      metadata: {
-        createdAt: Date.now(),
-        description,
-        version: "1.0.0",
-      },
+      metadata,
     }
     this.deltaFrames = []
     this.totalFrames = 0

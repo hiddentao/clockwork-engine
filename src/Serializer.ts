@@ -13,7 +13,7 @@ export interface SerializedWrapper {
 }
 
 export class Serializer {
-  private typeRegistry = new Map<string, SerializableClass>()
+  protected typeRegistry = new Map<string, SerializableClass>()
 
   /**
    * Register a custom class for serialization and deserialization
@@ -181,7 +181,7 @@ export class Serializer {
    * Get the type name for a serializable object
    * Attempts to find the type name in the registry by constructor match
    */
-  private getTypeName(obj: Serializable): string {
+  protected getTypeName(obj: Serializable): string {
     for (const [typeName, classConstructor] of this.typeRegistry) {
       if (obj instanceof classConstructor) {
         return typeName

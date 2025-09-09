@@ -47,13 +47,13 @@ interface SpatialNode {
  * to efficiently detect collisions with a set of points
  */
 export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
-  private points: CollisionPoint[] = []
-  private pointIndex: Map<string, number> = new Map() // Fast lookup for removal
-  private root: SpatialNode | null = null
-  private readonly maxPointsPerNode = COLLISION_CONSTANTS.MAX_POINTS_PER_NODE
-  private readonly maxDepth = COLLISION_CONSTANTS.MAX_TREE_DEPTH
-  private deferRebuild = false
-  private needsRebuild = false
+  protected points: CollisionPoint[] = []
+  protected pointIndex: Map<string, number> = new Map() // Fast lookup for removal
+  protected root: SpatialNode | null = null
+  protected readonly maxPointsPerNode = COLLISION_CONSTANTS.MAX_POINTS_PER_NODE
+  protected readonly maxDepth = COLLISION_CONSTANTS.MAX_TREE_DEPTH
+  protected deferRebuild = false
+  protected needsRebuild = false
 
   constructor(initialPoints: CollisionPoint[] = []) {
     super()
@@ -222,21 +222,21 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Create a string key for hashtable lookup from point coordinates
    */
-  private createPointKey(point: Vector2D): string {
+  protected createPointKey(point: Vector2D): string {
     return `${point.x},${point.y}`
   }
 
   /**
    * Create a unique key for collision point including source ID for efficient lookups
    */
-  private createCollisionPointKey(collisionPoint: CollisionPoint): string {
+  protected createCollisionPointKey(collisionPoint: CollisionPoint): string {
     return `${collisionPoint.point.x},${collisionPoint.point.y},${collisionPoint.source.getCollisionSourceId()}`
   }
 
   /**
    * Rebuild the point index map for fast lookups
    */
-  private rebuildPointIndex(): void {
+  protected rebuildPointIndex(): void {
     this.pointIndex.clear()
     for (let i = 0; i < this.points.length; i++) {
       const key = this.createCollisionPointKey(this.points[i])
@@ -247,7 +247,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Rebuild the spatial partitioning tree
    */
-  private rebuildTree(): void {
+  protected rebuildTree(): void {
     if (this.points.length === 0) {
       this.root = null
       return
@@ -261,7 +261,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Calculate the bounding box for a set of collision points
    */
-  private calculateBounds(points: CollisionPoint[]): SpatialNode["bounds"] {
+  protected calculateBounds(points: CollisionPoint[]): SpatialNode["bounds"] {
     if (points.length === 0) {
       return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
     }
@@ -284,7 +284,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Build a spatial partitioning node
    */
-  private buildNode(
+  protected buildNode(
     points: CollisionPoint[],
     bounds: SpatialNode["bounds"],
     depth: number,
@@ -353,7 +353,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Search for a point in a spatial node
    */
-  private searchNode(node: SpatialNode, point: Vector2D): ICollisionSource[] {
+  protected searchNode(node: SpatialNode, point: Vector2D): ICollisionSource[] {
     // Check if point is within node bounds
     if (
       point.x < node.bounds.minX ||

@@ -1,7 +1,7 @@
 import alea from "alea"
 
 export class PRNG {
-  private rng: () => number
+  protected rng: () => number
 
   constructor(seed?: string) {
     this.rng = alea()

@@ -611,5 +611,46 @@ describe("Serializer", () => {
       expect(deserialized[4]).toBe("string")
       expect(deserialized[5]).toBe(42)
     })
+
+    test("should serialize and deserialize recordings with arbitrary metadata", () => {
+      const recording = {
+        seed: "test-seed",
+        events: [],
+        deltaFrames: [1, 2, 3],
+        totalFrames: 6,
+        metadata: {
+          createdAt: Date.now(),
+          version: "1.0.0",
+          description: "Test",
+          // Arbitrary fields
+          gameMode: "survival",
+          difficulty: "hard",
+          playerStats: {
+            level: 10,
+            score: 5000,
+            achievements: ["first_win", "speed_run"],
+          },
+          customArray: [1, "two", { three: 3 }],
+          booleanFlag: true,
+        },
+      }
+
+      const serialized = serializer.serialize(recording)
+      const deserialized = serializer.deserialize(serialized)
+
+      expect(deserialized.metadata.gameMode).toBe("survival")
+      expect(deserialized.metadata.difficulty).toBe("hard")
+      expect(deserialized.metadata.playerStats.level).toBe(10)
+      expect(deserialized.metadata.playerStats.achievements).toEqual([
+        "first_win",
+        "speed_run",
+      ])
+      expect(deserialized.metadata.customArray).toEqual([
+        1,
+        "two",
+        { three: 3 },
+      ])
+      expect(deserialized.metadata.booleanFlag).toBe(true)
+    })
   })
 })

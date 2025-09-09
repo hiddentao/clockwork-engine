@@ -3,7 +3,7 @@ import type { AnyGameEvent, UserInputEvent } from "./types"
 import { GameEventType } from "./types"
 
 export class UserInputEventSource implements GameEventSource {
-  private dataQueue: Array<{
+  protected dataQueue: Array<{
     inputType: string
     data: any
     timestamp: number

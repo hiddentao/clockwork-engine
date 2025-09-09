@@ -2,8 +2,8 @@ import type { GameEventSource } from "./EventSource"
 import type { AnyGameEvent } from "./types"
 
 export class RecordedEventSource implements GameEventSource {
-  private events: AnyGameEvent[]
-  private currentIndex: number = 0
+  protected events: AnyGameEvent[]
+  protected currentIndex: number = 0
 
   constructor(events: AnyGameEvent[]) {
     // Clone the events array to prevent external modifications

@@ -761,4 +761,141 @@ describe("GameEngine", () => {
       expect(engine.getTotalObjectCount()).toBe(0)
     })
   })
+
+  describe("Override Type Registration", () => {
+    beforeEach(() => {
+      engine.reset("override-test")
+    })
+
+    it("should register objects with default type when no override provided", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+
+      const playerGroup = engine.getGameObjectGroup("Player")
+      expect(playerGroup).toBeDefined()
+      expect(playerGroup!.size()).toBe(1)
+      expect(playerGroup!.getById("player-0")).toBe(player)
+
+      // Should not be in any other group
+      expect(engine.getGameObjectGroup("Targetable")).toBeUndefined()
+    })
+
+    it("should register objects with override type", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+
+      // Register same player to different group
+      engine.registerGameObject(player, "Targetable")
+
+      const playerGroup = engine.getGameObjectGroup("Player")
+      const targetableGroup = engine.getGameObjectGroup("Targetable")
+
+      // Should be in both groups
+      expect(playerGroup!.size()).toBe(1)
+      expect(targetableGroup!.size()).toBe(1)
+      expect(playerGroup!.getById("player-0")).toBe(player)
+      expect(targetableGroup!.getById("player-0")).toBe(player)
+    })
+
+    it("should allow same object in multiple groups", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+
+      // Register to multiple additional groups
+      engine.registerGameObject(player, "Targetable")
+      engine.registerGameObject(player, "Damageable")
+      engine.registerGameObject(player, "Collectible")
+
+      const groups = ["Player", "Targetable", "Damageable", "Collectible"]
+
+      groups.forEach((groupType) => {
+        const group = engine.getGameObjectGroup(groupType)
+        expect(group).toBeDefined()
+        expect(group!.size()).toBe(1)
+        expect(group!.getById("player-0")).toBe(player)
+      })
+
+      // Verify registered types includes all groups
+      const registeredTypes = engine.getRegisteredTypes()
+      groups.forEach((groupType) => {
+        expect(registeredTypes).toContain(groupType)
+      })
+    })
+
+    it("should create new groups for override types", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+
+      expect(engine.getGameObjectGroup("CustomType")).toBeUndefined()
+
+      engine.registerGameObject(player, "CustomType")
+
+      const customGroup = engine.getGameObjectGroup("CustomType")
+      expect(customGroup).toBeDefined()
+      expect(customGroup!.size()).toBe(1)
+      expect(customGroup!.getById("player-0")).toBe(player)
+    })
+
+    it("should handle multiple objects in override groups", () => {
+      const player1 = engine.createAutoPlayer(new Vector2D(0, 0))
+      const player2 = engine.createAutoPlayer(new Vector2D(10, 10))
+
+      // Add both to custom group
+      engine.registerGameObject(player1, "Elite")
+      engine.registerGameObject(player2, "Elite")
+
+      const eliteGroup = engine.getGameObjectGroup("Elite")
+      expect(eliteGroup!.size()).toBe(2)
+      expect(eliteGroup!.getById("player-0")).toBe(player1)
+      expect(eliteGroup!.getById("player-1")).toBe(player2)
+
+      // Should still be in Player group too
+      const playerGroup = engine.getGameObjectGroup("Player")
+      expect(playerGroup!.size()).toBe(2)
+    })
+
+    it("should maintain separate references in each group", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+      engine.registerGameObject(player, "Targetable")
+
+      const playerGroup = engine.getGameObjectGroup("Player")!
+      const targetableGroup = engine.getGameObjectGroup("Targetable")!
+
+      // Both groups should have the same object instance
+      const playerFromPlayerGroup = playerGroup.getById("player-0")!
+      const playerFromTargetableGroup = targetableGroup.getById("player-0")!
+      expect(playerFromPlayerGroup).toBe(playerFromTargetableGroup)
+      expect(playerFromPlayerGroup).toBe(player)
+
+      // Removing from one group shouldn't affect the other
+      playerGroup.remove(player)
+      expect(playerGroup.hasId("player-0")).toBe(false)
+      expect(targetableGroup.hasId("player-0")).toBe(true)
+      expect(targetableGroup.getById("player-0")).toBe(player)
+    })
+
+    it("should work with clearDestroyed across multiple groups", () => {
+      const player = engine.createAutoPlayer(new Vector2D(0, 0))
+      engine.registerGameObject(player, "Targetable")
+      engine.registerGameObject(player, "Damageable")
+
+      // Destroy the player
+      player.destroy()
+
+      const playerGroup = engine.getGameObjectGroup("Player")!
+      const targetableGroup = engine.getGameObjectGroup("Targetable")!
+      const damageableGroup = engine.getGameObjectGroup("Damageable")!
+
+      // All groups should have the destroyed object
+      expect(playerGroup.size()).toBe(1)
+      expect(targetableGroup.size()).toBe(1)
+      expect(damageableGroup.size()).toBe(1)
+      expect(playerGroup.activeSize()).toBe(0)
+      expect(targetableGroup.activeSize()).toBe(0)
+      expect(damageableGroup.activeSize()).toBe(0)
+
+      // Clear destroyed should remove from all groups
+      const removedCount = engine.clearDestroyed()
+      expect(removedCount).toBe(3) // Removed from 3 groups
+      expect(playerGroup.size()).toBe(0)
+      expect(targetableGroup.size()).toBe(0)
+      expect(damageableGroup.size()).toBe(0)
+    })
+  })
 })

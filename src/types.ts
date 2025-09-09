@@ -42,6 +42,7 @@ export interface GameRecording {
     createdAt: number
     version?: string
     description?: string
+    [key: string]: any
   }
 }
 
