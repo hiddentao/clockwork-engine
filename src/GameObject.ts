@@ -90,9 +90,9 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     }
   }
 
-  public update(deltaTime: number): void {
+  public update(deltaFrames: number): void {
     // Move object based on velocity
-    const movement = this.velocity.scale(deltaTime)
+    const movement = this.velocity.scale(deltaFrames)
     this.position = this.position.add(movement)
   }
 

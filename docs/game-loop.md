@@ -226,17 +226,17 @@ Clockwork Engine's `deltaFrames` system is specifically designed to integrate se
 ```typescript
 import * as PIXI from 'pixi.js'
 
-// Pixi.js ticker provides deltaTime that maps directly to deltaFrames
+// Pixi.js ticker provides deltaFrames directly
 const ticker = PIXI.Ticker.shared
 
-ticker.add((deltaTime) => {
-  // deltaTime from Pixi.js:
+ticker.add((deltaFrames) => {
+  // deltaFrames from Pixi.js:
   // - 1.0 = 60fps (perfect frame rate)
   // - 0.5 = 30fps (half speed)
   // - 2.0 = 120fps (double speed)
   // This maps perfectly to Clockwork's deltaFrames concept
   
-  game.update(deltaTime) // Direct mapping!
+  game.update(deltaFrames) // Direct mapping!
   renderer.render() // Update visual representation
 })
 

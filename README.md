@@ -60,8 +60,8 @@ game.start()
 
 // Perfect integration with Pixi.js ticker
 const ticker = PIXI.Ticker.shared
-ticker.add((deltaTime) => {
-  game.update(deltaTime) // deltaTime maps directly to deltaFrames
+ticker.add((deltaFrames) => {
+  game.update(deltaFrames) // deltaFrames from Pixi.js ticker
 })
 ticker.start()
 ```

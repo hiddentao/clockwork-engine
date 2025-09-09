@@ -99,9 +99,8 @@ game.start()
 console.log(game.getState()) // GameState.PLAYING
 
 // Game loop processes while PLAYING
-function gameLoop(deltaTime: number): void {
+function gameLoop(deltaFrames: number): void {
   if (game.getState() === GameState.PLAYING) {
-    const deltaFrames = (deltaTime / 1000) * 60
     game.update(deltaFrames) // Updates all systems
   }
 }
@@ -137,7 +136,7 @@ game.pause()
 console.log(game.getState()) // GameState.PAUSED
 
 // Game loop respects paused state
-function gameLoop(deltaTime: number): void {
+function gameLoop(deltaFrames: number): void {
   if (game.getState() === GameState.PLAYING) {
     game.update(deltaFrames) // Won't execute while paused
   } else if (game.getState() === GameState.PAUSED) {
