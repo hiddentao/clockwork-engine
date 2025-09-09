@@ -91,6 +91,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   }
 
   public update(deltaFrames: number, _totalFrames: number): void {
+    if (this.destroyed) {
+      return
+    }
+
     // Move object based on velocity
     const movement = this.velocity.scale(deltaFrames)
     this.position = this.position.add(movement)

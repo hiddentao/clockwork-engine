@@ -364,6 +364,31 @@ describe("GameObject", () => {
       player.destroy()
       expect(player.isDestroyed()).toBe(true)
     })
+
+    it("should not update when destroyed", () => {
+      const velocity = new Vector2D(5, 3)
+      player.setVelocity(velocity)
+
+      const initialPosition = player.getPosition()
+
+      // Update before destruction - should move
+      player.update(1, 1)
+      const positionAfterUpdate = player.getPosition()
+      expect(positionAfterUpdate).toEqual(initialPosition.add(velocity))
+
+      // Destroy the object
+      player.destroy()
+      expect(player.isDestroyed()).toBe(true)
+
+      // Update after destruction - should not move
+      const positionBeforeDestroyedUpdate = player.getPosition()
+      player.update(2, 2) // Larger delta to make movement obvious if it happens
+      const positionAfterDestroyedUpdate = player.getPosition()
+
+      expect(positionAfterDestroyedUpdate).toEqual(
+        positionBeforeDestroyedUpdate,
+      )
+    })
   })
 
   describe("Engine Integration", () => {
