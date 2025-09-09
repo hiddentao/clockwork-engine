@@ -159,9 +159,9 @@ The release process will:
 
 ## Changelog
 
-See [CHANGELOG](CHANGELOG.md)
+See [CHANGELOG.md](CHANGELOG.md)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
