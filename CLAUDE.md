@@ -59,7 +59,7 @@ Clockwork is a TypeScript game engine focused on deterministic, replayable games
 - GameRecorder only records events - it does not execute commands
 - Must manually call recorder.recordObjectUpdate() for direct object modifications outside input flow
 - All parameters are automatically serialized before recording
-- Serializer requires type registration: serializer.registerType('ClassName', ClassName)
+- Serializer requires type registration using the singleton: `import { serializer } from './src/Serializer'; serializer.registerType('ClassName', ClassName)`
 
 ### State Management
 - Engine enforces strict state transitions with error checking
@@ -77,8 +77,9 @@ The engine processes updates in this specific order each frame:
 
 ### Recording Example
 ```typescript
+import { serializer } from './src/Serializer'
+
 const recorder = new GameRecorder()
-const serializer = new Serializer()
 serializer.registerType('Vector2D', Vector2D)
 
 engine.initialize("seed123")

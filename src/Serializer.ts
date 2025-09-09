@@ -206,3 +206,9 @@ export class Serializer {
     this.typeRegistry.clear()
   }
 }
+
+/**
+ * Singleton instance for global type registration and serialization
+ * Use this for most common cases where you need a shared type registry
+ */
+export const serializer = new Serializer()
