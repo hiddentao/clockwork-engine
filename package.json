@@ -1,6 +1,6 @@
 {
   "name": "@hiddentao/clockwork-engine",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A TypeScript game engine for deterministic, replayable games",
   "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
   "license": "MIT",
@@ -74,6 +74,8 @@
     "typescript": "^5.3.3"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["bun run lint"]
+    "*.{ts,tsx}": [
+      "bun run lint"
+    ]
   }
 }
