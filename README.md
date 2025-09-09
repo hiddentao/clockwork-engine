@@ -126,7 +126,42 @@ bun i
 bun run dev
 ```
 
+### Creating a new release
+
+This project uses [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for automated releases based on conventional commits.
+
+**Automatic version bumping (recommended):**
+```bash
+bun run release
+```
+This analyzes your commits since the last release and automatically determines the appropriate version bump (patch/minor/major), updates the changelog, and publishes to npm.
+
+**Test a release without publishing:**
+```bash
+bun run release:dry-run
+```
+
+**Force specific version bumps:**
+```bash
+bun run release:patch   # 1.1.1 → 1.1.2 (bug fixes)
+bun run release:minor   # 1.1.1 → 1.2.0 (new features)
+bun run release:major   # 1.1.1 → 2.0.0 (breaking changes)
+```
+
+The release process will:
+1. Run linting, tests, and build to ensure everything works
+2. Bump the version in package.json
+3. Generate/update CHANGELOG.md
+4. Commit changes and create a git tag
+5. Push to main with tags
+6. Publish to npm
+7. Automatically create a GitHub release
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG)
+
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.
 

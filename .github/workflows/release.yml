@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build project
+        run: bun run build
+
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Get changelog for this release
+        id: changelog
+        run: |
+          # Extract changelog section for this version
+          VERSION="${{ steps.tag.outputs.tag }}"
+          if [ -f "CHANGELOG.md" ]; then
+            # Get content between this version and next version/end of file
+            awk "/^## \[?${VERSION#v}\]?/ {flag=1; next} /^## / && flag {exit} flag" CHANGELOG.md > release_notes.md
+            if [ -s release_notes.md ]; then
+              echo "HAS_CHANGELOG=true" >> $GITHUB_OUTPUT
+            else
+              echo "HAS_CHANGELOG=false" >> $GITHUB_OUTPUT
+              echo "Automated release for version $VERSION" > release_notes.md
+            fi
+          else
+            echo "HAS_CHANGELOG=false" >> $GITHUB_OUTPUT
+            echo "Automated release for version $VERSION" > release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: ${{ steps.changelog.outputs.HAS_CHANGELOG == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
