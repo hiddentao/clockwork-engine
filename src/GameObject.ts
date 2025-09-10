@@ -8,6 +8,16 @@ export interface GameEngineInterface {
   registerGameObject(gameObject: GameObject): void
 }
 
+export enum GameObjectEventType {
+  POSITION_CHANGED = "positionChanged",
+  HEALTH_CHANGED = "healthChanged",
+  MAX_HEALTH_CHANGED = "maxHealthChanged",
+  DESTROYED = "destroyed",
+  SIZE_CHANGED = "sizeChanged",
+  VELOCITY_CHANGED = "velocityChanged",
+  ROTATION_CHANGED = "rotationChanged",
+}
+
 export interface SerializedGameObject {
   position: {
     x: number
@@ -33,17 +43,22 @@ export interface SerializedGameObject {
  */
 export interface GameObjectEvents
   extends Record<string, (...args: any[]) => void> {
-  positionChanged: (
+  [GameObjectEventType.POSITION_CHANGED]: (
     gameObject: GameObject,
     oldPosition: Vector2D,
     newPosition: Vector2D,
   ) => void
-  healthChanged: (
+  [GameObjectEventType.HEALTH_CHANGED]: (
     gameObject: GameObject,
     health: number,
     maxHealth: number,
   ) => void
-  destroyed: (gameObject: GameObject) => void
+  [GameObjectEventType.MAX_HEALTH_CHANGED]: (
+    gameObject: GameObject,
+    oldMaxHealth: number,
+    newMaxHealth: number,
+  ) => void
+  [GameObjectEventType.DESTROYED]: (gameObject: GameObject) => void
 }
 
 export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
@@ -107,7 +122,12 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   public setPosition(position: Vector2D): void {
     const oldPosition = this.position
     this.position = position
-    ;(this.emit as any)("positionChanged", this, oldPosition, position)
+    ;(this.emit as any)(
+      GameObjectEventType.POSITION_CHANGED,
+      this,
+      oldPosition,
+      position,
+    )
   }
 
   public getSize(): Vector2D {
@@ -143,18 +163,32 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   }
 
   public setMaxHealth(maxHealth: number): void {
+    const oldMaxHealth = this.maxHealth
     this.maxHealth = maxHealth
+    if (this.maxHealth !== oldMaxHealth) {
+      ;(this.emit as any)(
+        GameObjectEventType.MAX_HEALTH_CHANGED,
+        this,
+        oldMaxHealth,
+        maxHealth,
+      )
+    }
   }
 
   public setHealth(health: number): void {
     const oldHealth = this.health
     this.health = Math.max(0, Math.min(this.maxHealth, health))
     if (this.health !== oldHealth) {
-      ;(this.emit as any)("healthChanged", this, this.health, this.maxHealth)
+      ;(this.emit as any)(
+        GameObjectEventType.HEALTH_CHANGED,
+        this,
+        this.health,
+        this.maxHealth,
+      )
     }
     if (this.health === 0) {
       this.destroyed = true
-      ;(this.emit as any)("destroyed", this)
+      ;(this.emit as any)(GameObjectEventType.DESTROYED, this)
     }
   }
 
@@ -162,11 +196,16 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldHealth = this.health
     this.health = Math.max(0, this.health - amount)
     if (this.health !== oldHealth) {
-      ;(this.emit as any)("healthChanged", this, this.health, this.maxHealth)
+      ;(this.emit as any)(
+        GameObjectEventType.HEALTH_CHANGED,
+        this,
+        this.health,
+        this.maxHealth,
+      )
     }
     if (this.health === 0) {
       this.destroyed = true
-      ;(this.emit as any)("destroyed", this)
+      ;(this.emit as any)(GameObjectEventType.DESTROYED, this)
     }
   }
 
@@ -174,7 +213,12 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldHealth = this.health
     this.health = Math.min(this.maxHealth, this.health + amount)
     if (this.health !== oldHealth) {
-      ;(this.emit as any)("healthChanged", this, this.health, this.maxHealth)
+      ;(this.emit as any)(
+        GameObjectEventType.HEALTH_CHANGED,
+        this,
+        this.health,
+        this.maxHealth,
+      )
     }
   }
 
@@ -187,7 +231,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     if (GameObject.debug) {
       // debug: destroy log
     }
-    ;(this.emit as any)("destroyed", this)
+    ;(this.emit as any)(GameObjectEventType.DESTROYED, this)
   }
 
   /**

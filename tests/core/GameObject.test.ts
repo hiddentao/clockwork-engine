@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test"
+import { GameObjectEventType } from "../../src/GameObject"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { ComplexTestEngine, TestEnemy, TestPlayer } from "../fixtures"
 
@@ -65,10 +66,13 @@ describe("GameObject", () => {
     it("should emit positionChanged event", () => {
       const positionChanges: Array<{ old: Vector2D; new: Vector2D }> = []
 
-      player.on("positionChanged", (gameObject, oldPos, newPos) => {
-        expect(gameObject).toBe(player)
-        positionChanges.push({ old: oldPos, new: newPos })
-      })
+      player.on(
+        GameObjectEventType.POSITION_CHANGED,
+        (gameObject, oldPos, newPos) => {
+          expect(gameObject).toBe(player)
+          positionChanges.push({ old: oldPos, new: newPos })
+        },
+      )
 
       const oldPos = player.getPosition()
       const newPos = new Vector2D(200, 300)
@@ -145,7 +149,7 @@ describe("GameObject", () => {
     it("should handle setHealth directly", () => {
       let healthChangedFired = false
 
-      player.on("healthChanged", () => {
+      player.on(GameObjectEventType.HEALTH_CHANGED, () => {
         healthChangedFired = true
       })
 
@@ -174,6 +178,33 @@ describe("GameObject", () => {
       expect(player.getHealth()).toBe(150)
     })
 
+    it("should emit maxHealthChanged event when max health changes", () => {
+      const maxHealthChanges: Array<{
+        oldMaxHealth: number
+        newMaxHealth: number
+      }> = []
+
+      player.on(
+        GameObjectEventType.MAX_HEALTH_CHANGED,
+        (gameObject, oldMaxHealth, newMaxHealth) => {
+          expect(gameObject).toBe(player)
+          maxHealthChanges.push({ oldMaxHealth, newMaxHealth })
+        },
+      )
+
+      player.setMaxHealth(150)
+
+      expect(maxHealthChanges).toHaveLength(1)
+      expect(maxHealthChanges[0]).toEqual({
+        oldMaxHealth: 100,
+        newMaxHealth: 150,
+      })
+
+      // Set to same value - should not emit
+      player.setMaxHealth(150)
+      expect(maxHealthChanges).toHaveLength(1)
+    })
+
     it("should adjust current health when lowering max health", () => {
       player.setHealth(100) // Full health
       player.setMaxHealth(50) // Lower max
@@ -187,10 +218,13 @@ describe("GameObject", () => {
     it("should emit healthChanged event on damage", () => {
       const healthChanges: Array<{ health: number; maxHealth: number }> = []
 
-      player.on("healthChanged", (gameObject, health, maxHealth) => {
-        expect(gameObject).toBe(player)
-        healthChanges.push({ health, maxHealth })
-      })
+      player.on(
+        GameObjectEventType.HEALTH_CHANGED,
+        (gameObject, health, maxHealth) => {
+          expect(gameObject).toBe(player)
+          healthChanges.push({ health, maxHealth })
+        },
+      )
 
       player.takeDamage(50)
 
@@ -239,7 +273,7 @@ describe("GameObject", () => {
     it("should emit healthChanged event on healing", () => {
       let healthChangedFired = false
 
-      player.on("healthChanged", () => {
+      player.on(GameObjectEventType.HEALTH_CHANGED, () => {
         healthChangedFired = true
       })
 
@@ -254,7 +288,7 @@ describe("GameObject", () => {
     it("should not emit healthChanged if health doesn't actually change", () => {
       let healthChangedCount = 0
 
-      player.on("healthChanged", () => {
+      player.on(GameObjectEventType.HEALTH_CHANGED, () => {
         healthChangedCount++
       })
 
@@ -270,7 +304,7 @@ describe("GameObject", () => {
     it("should destroy object when health reaches zero", () => {
       let destroyedEventFired = false
 
-      player.on("destroyed", () => {
+      player.on(GameObjectEventType.DESTROYED, () => {
         destroyedEventFired = true
       })
 
@@ -331,7 +365,7 @@ describe("GameObject", () => {
       let destroyedEventFired = false
       let destroyedObject: any = null
 
-      player.on("destroyed", (gameObject) => {
+      player.on(GameObjectEventType.DESTROYED, (gameObject) => {
         destroyedEventFired = true
         destroyedObject = gameObject
       })
@@ -345,7 +379,7 @@ describe("GameObject", () => {
     it("should handle multiple destroy calls", () => {
       let destroyEventCount = 0
 
-      player.on("destroyed", () => {
+      player.on(GameObjectEventType.DESTROYED, () => {
         destroyEventCount++
       })
 
@@ -447,7 +481,7 @@ describe("GameObject", () => {
         positions.push(newPos)
       }
 
-      player.on("positionChanged", listener)
+      player.on(GameObjectEventType.POSITION_CHANGED, listener)
 
       player.setPosition(new Vector2D(1, 1))
       player.setPosition(new Vector2D(2, 2))
@@ -455,7 +489,7 @@ describe("GameObject", () => {
       expect(positions).toHaveLength(2)
 
       // Remove listener
-      player.off("positionChanged", listener)
+      player.off(GameObjectEventType.POSITION_CHANGED, listener)
 
       player.setPosition(new Vector2D(3, 3))
 
@@ -466,8 +500,12 @@ describe("GameObject", () => {
       const calls1: Vector2D[] = []
       const calls2: Vector2D[] = []
 
-      player.on("positionChanged", (_, _oldPos, newPos) => calls1.push(newPos))
-      player.on("positionChanged", (_, _oldPos, newPos) => calls2.push(newPos))
+      player.on(GameObjectEventType.POSITION_CHANGED, (_, _oldPos, newPos) =>
+        calls1.push(newPos),
+      )
+      player.on(GameObjectEventType.POSITION_CHANGED, (_, _oldPos, newPos) =>
+        calls2.push(newPos),
+      )
 
       player.setPosition(new Vector2D(100, 200))
 
