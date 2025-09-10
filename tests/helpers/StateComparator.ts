@@ -147,7 +147,7 @@ export class StateComparator {
       const group = engine.getGameObjectGroup(type)
       if (!group) continue
 
-      snapshot.objects[type] = group.getAll().map((obj) => ({
+      snapshot.objects[type] = group.getAllActive().map((obj) => ({
         id: obj.getId(),
         type: obj.getType(),
         position: { x: obj.getPosition().x, y: obj.getPosition().y },

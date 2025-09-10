@@ -477,7 +477,7 @@ class CombatSystem {
     // Listen to weapon firing events
     const weaponGroup = this.engine.getGameObjectGroup<Weapon>('Weapon')
     if (weaponGroup) {
-      for (const weapon of weaponGroup.getAll()) {
+      for (const weapon of weaponGroup.getAllActive()) {
         weapon.on('fired', (weapon, direction, damage) => {
           this.createProjectile(weapon, direction, damage)
           this.playFireSound(weapon.getType())
@@ -494,7 +494,7 @@ class CombatSystem {
     // Listen to player damage events
     const playerGroup = this.engine.getGameObjectGroup<Player>('Player')
     if (playerGroup) {
-      for (const player of playerGroup.getAll()) {
+      for (const player of playerGroup.getAllActive()) {
         player.on('healthChanged', (player, health, maxHealth) => {
           if (health < maxHealth) {
             this.createDamageEffect(player.getPosition())

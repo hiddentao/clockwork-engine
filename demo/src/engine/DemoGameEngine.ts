@@ -283,17 +283,17 @@ export class DemoGameEngine extends GameEngine {
   // Getter methods for game objects
   private getSnake(): Snake | undefined {
     const snakeGroup = this.getGameObjectGroup("Snake")
-    return snakeGroup?.getAll()[0] as Snake
+    return snakeGroup?.getAllActive()[0] as Snake
   }
 
   private getApples(): Apple[] {
     const appleGroup = this.getGameObjectGroup("Apple")
-    return (appleGroup?.getAll() as Apple[]) || []
+    return (appleGroup?.getAllActive() as Apple[]) || []
   }
 
   private getWalls(): Wall[] {
     const wallGroup = this.getGameObjectGroup("Wall")
-    return (wallGroup?.getAll() as Wall[]) || []
+    return (wallGroup?.getAllActive() as Wall[]) || []
   }
 
   // Public getters for UI

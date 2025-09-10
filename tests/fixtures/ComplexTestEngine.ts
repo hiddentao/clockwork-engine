@@ -112,7 +112,7 @@ export class ComplexTestEngine extends GameEngine {
     for (const groupType of groupTypes) {
       const group = this.getGameObjectGroup(groupType)
       if (group) {
-        const objects = group.getAll()
+        const objects = group.getAllActive()
         state.objects[groupType] = objects.map((obj) => ({
           id: obj.getId(),
           type: obj.getType(),
@@ -147,7 +147,7 @@ export class ComplexTestEngine extends GameEngine {
 
   getAllPlayers(): TestPlayer[] {
     const group = this.getGameObjectGroup("Player")
-    return group ? (group.getAll() as TestPlayer[]) : []
+    return group ? (group.getAllActive() as TestPlayer[]) : []
   }
 
   getActivePlayers(): TestPlayer[] {
@@ -172,7 +172,7 @@ export class ComplexTestEngine extends GameEngine {
 
   getAllEnemies(): TestEnemy[] {
     const group = this.getGameObjectGroup("Enemy")
-    return group ? (group.getAll() as TestEnemy[]) : []
+    return group ? (group.getAllActive() as TestEnemy[]) : []
   }
 
   getActiveEnemies(): TestEnemy[] {
@@ -236,7 +236,7 @@ export class ComplexTestEngine extends GameEngine {
 
   getAllProjectiles(): TestProjectile[] {
     const group = this.getGameObjectGroup("Projectile")
-    return group ? (group.getAll() as TestProjectile[]) : []
+    return group ? (group.getAllActive() as TestProjectile[]) : []
   }
 
   getActiveProjectiles(): TestProjectile[] {
@@ -288,7 +288,7 @@ export class ComplexTestEngine extends GameEngine {
 
   getAllPowerUps(): TestPowerUp[] {
     const group = this.getGameObjectGroup("PowerUp")
-    return group ? (group.getAll() as TestPowerUp[]) : []
+    return group ? (group.getAllActive() as TestPowerUp[]) : []
   }
 
   getActivePowerUps(): TestPowerUp[] {
@@ -552,7 +552,7 @@ export class ComplexTestEngine extends GameEngine {
     for (const type of this.getRegisteredTypes()) {
       const group = this.getGameObjectGroup(type)
       if (group) {
-        group.getAll().forEach((obj) => obj.destroy())
+        group.getAllActive().forEach((obj) => obj.destroy())
       }
     }
     this.clearDestroyedGameObjects()

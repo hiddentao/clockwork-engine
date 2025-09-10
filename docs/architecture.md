@@ -208,7 +208,7 @@ GameObjectGroups share common behavior across object instances:
 class GameObjectGroup<T extends GameObject> {
   update(deltaFrames: number, totalFrames: number): void {
     // Single update logic applied to all objects of this type
-    for (const obj of this.getAll()) {
+    for (const obj of this.getAllActive()) {
       obj.update(deltaFrames)
     }
   }

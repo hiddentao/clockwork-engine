@@ -242,7 +242,7 @@ const player = playerGroup.getById("player-1")
 Returns all objects in the group.
 
 ```typescript
-const allEnemies = enemyGroup.getAll()
+const allEnemies = enemyGroup.getAllActive()
 ```
 
 ##### `update(deltaFrames: number, totalFrames: number): void`

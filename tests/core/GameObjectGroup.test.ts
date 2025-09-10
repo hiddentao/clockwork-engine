@@ -34,7 +34,7 @@ describe("GameObjectGroup", () => {
     it("should start empty", () => {
       expect(group.size()).toBe(0)
       expect(group.activeSize()).toBe(0)
-      expect(group.getAll()).toEqual([])
+      expect(group.getAllActive()).toEqual([])
     })
 
     it("should add objects correctly", () => {
@@ -42,7 +42,7 @@ describe("GameObjectGroup", () => {
 
       expect(group.size()).toBe(1)
       expect(group.activeSize()).toBe(1)
-      expect(group.getAll()).toContain(players[0])
+      expect(group.getAllActive()).toContain(players[0])
     })
 
     it("should add multiple objects", () => {
@@ -50,7 +50,7 @@ describe("GameObjectGroup", () => {
 
       expect(group.size()).toBe(3)
       expect(group.activeSize()).toBe(3)
-      expect(group.getAll()).toEqual(players)
+      expect(group.getAllActive()).toEqual(players)
     })
 
     it("should handle adding same object multiple times", () => {
@@ -58,7 +58,7 @@ describe("GameObjectGroup", () => {
       group.add(players[0]) // Add same object again
 
       expect(group.size()).toBe(1) // Should not duplicate
-      expect(group.getAll()).toEqual([players[0]])
+      expect(group.getAllActive()).toEqual([players[0]])
     })
 
     it("should retrieve objects by ID", () => {
@@ -94,9 +94,9 @@ describe("GameObjectGroup", () => {
 
       expect(removed).toBe(true)
       expect(group.size()).toBe(2)
-      expect(group.getAll()).not.toContain(players[1])
-      expect(group.getAll()).toContain(players[0])
-      expect(group.getAll()).toContain(players[2])
+      expect(group.getAllActive()).not.toContain(players[1])
+      expect(group.getAllActive()).toContain(players[0])
+      expect(group.getAllActive()).toContain(players[2])
     })
 
     it("should handle removing non-existent objects", () => {
@@ -115,7 +115,7 @@ describe("GameObjectGroup", () => {
 
       expect(group.size()).toBe(0)
       expect(group.activeSize()).toBe(0)
-      expect(group.getAll()).toEqual([])
+      expect(group.getAllActive()).toEqual([])
     })
   })
 
@@ -136,7 +136,7 @@ describe("GameObjectGroup", () => {
       players[1].destroy()
       players[2].destroy()
 
-      const activeObjects = group.getAll()
+      const activeObjects = group.getAllActive()
 
       expect(activeObjects).toHaveLength(1)
       expect(activeObjects).toContain(players[0])
@@ -152,7 +152,7 @@ describe("GameObjectGroup", () => {
       expect(group.activeSize()).toBe(2) // Only active objects
 
       // getAll() should only return active objects
-      const allObjects = group.getAll()
+      const allObjects = group.getAllActive()
       expect(allObjects).toHaveLength(2)
       expect(allObjects).toContain(players[0])
       expect(allObjects).toContain(players[2])
@@ -187,7 +187,7 @@ describe("GameObjectGroup", () => {
 
       expect(removedCount).toBe(2)
       expect(group.size()).toBe(1)
-      expect(group.getAll()).toEqual([players[1]])
+      expect(group.getAllActive()).toEqual([players[1]])
     })
 
     it("should handle clearing when no objects are destroyed", () => {
@@ -305,10 +305,10 @@ describe("GameObjectGroup", () => {
 
     it("should filter objects by type", () => {
       const playerObjects = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Player")
       const enemyObjects = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Enemy")
 
       expect(playerObjects).toHaveLength(3)
@@ -322,10 +322,10 @@ describe("GameObjectGroup", () => {
       // players[0] stays at 100 health
 
       const lowHealthPlayers = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Player" && obj.getHealth() < 60)
       const fullHealthPlayers = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Player" && obj.getHealth() === 100)
 
       expect(lowHealthPlayers).toHaveLength(1)
@@ -335,7 +335,7 @@ describe("GameObjectGroup", () => {
     })
 
     it("should find objects by position range", () => {
-      const nearOrigin = group.getAll().filter((obj) => {
+      const nearOrigin = group.getAllActive().filter((obj) => {
         const pos = obj.getPosition()
         return pos.distance(new Vector2D(0, 0)) < 50
       })
@@ -353,7 +353,7 @@ describe("GameObjectGroup", () => {
       players[2].destroy()
 
       const healthyActivePlayers = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Player" && obj.getHealth() > 80)
 
       expect(healthyActivePlayers).toHaveLength(1)
@@ -362,7 +362,7 @@ describe("GameObjectGroup", () => {
 
     it("should handle empty query results", () => {
       const nonExistentType = group
-        .getAll()
+        .getAllActive()
         .filter((obj) => obj.getType() === "Dragon")
 
       expect(nonExistentType).toEqual([])
@@ -430,7 +430,7 @@ describe("GameObjectGroup", () => {
 
         if (i % 10 === 0 && group.size() > 5) {
           // Remove some objects periodically
-          const toRemove = group.getAll()[0]
+          const toRemove = group.getAllActive()[0]
           group.remove(toRemove)
         }
       }
@@ -477,7 +477,7 @@ describe("GameObjectGroup", () => {
     it("should handle concurrent modifications during iteration", () => {
       players.forEach((player) => group.add(player))
 
-      const allObjects = group.getAll()
+      const allObjects = group.getAllActive()
 
       // Modify group while iterating (in a real scenario this could happen)
       let iterationCount = 0
@@ -508,7 +508,7 @@ describe("GameObjectGroup", () => {
         }
 
         if (i % 7 === 0 && group.size() > 0) {
-          const firstObject = group.getAll()[0]
+          const firstObject = group.getAllActive()[0]
           group.remove(firstObject)
         }
       }
@@ -518,7 +518,7 @@ describe("GameObjectGroup", () => {
       expect(group.activeSize()).toBeLessThanOrEqual(group.size())
 
       // All objects in getAll should not be destroyed (getAll already filters destroyed)
-      group.getAll().forEach((obj) => {
+      group.getAllActive().forEach((obj) => {
         expect(obj.isDestroyed()).toBe(false)
       })
     })
@@ -526,8 +526,8 @@ describe("GameObjectGroup", () => {
     it("should handle empty operations gracefully", () => {
       expect(group.size()).toBe(0)
       expect(group.activeSize()).toBe(0)
-      expect(group.getAll()).toEqual([])
-      expect(group.getAll()).toEqual([])
+      expect(group.getAllActive()).toEqual([])
+      expect(group.getAllActive()).toEqual([])
       expect(group.getById("anything")).toBeUndefined()
       expect(group.clearDestroyed()).toBe(0)
 

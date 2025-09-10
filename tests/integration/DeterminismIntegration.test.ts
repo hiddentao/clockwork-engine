@@ -368,7 +368,7 @@ describe("Determinism Integration Tests", () => {
         // Verify engine is still in consistent state
         expect(engine1.getTotalFrames()).toBe(frame + 1)
         const activeObjects =
-          engine1.getGameObjectGroup("TestProjectile")?.getAll() || []
+          engine1.getGameObjectGroup("TestProjectile")?.getAllActive() || []
         expect(activeObjects.length).toBeLessThanOrEqual(5)
       }
     })

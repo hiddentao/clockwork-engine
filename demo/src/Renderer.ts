@@ -58,7 +58,7 @@ export class Renderer {
 
     // Render snakes
     if (snakeGroup) {
-      const snakes = snakeGroup.getAll()
+      const snakes = snakeGroup.getAllActive()
       for (const snake of snakes) {
         if (snake instanceof Snake) {
           this.renderSnake(snake)
@@ -68,7 +68,7 @@ export class Renderer {
 
     // Render apples
     if (appleGroup) {
-      const apples = appleGroup.getAll()
+      const apples = appleGroup.getAllActive()
       for (const apple of apples) {
         if (apple instanceof Apple) {
           this.renderApple(apple, engine.getTotalFrames())
@@ -78,7 +78,7 @@ export class Renderer {
 
     // Render walls
     if (wallGroup) {
-      const walls = wallGroup.getAll()
+      const walls = wallGroup.getAllActive()
       for (const wall of walls) {
         if (wall instanceof Wall) {
           this.renderWall(wall)

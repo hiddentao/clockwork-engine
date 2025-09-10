@@ -315,8 +315,8 @@ class MyGame extends GameEngine {
     bullets: GameObjectGroup<Bullet>
   ): void {
     // Type-safe access to grouped objects
-    for (const bullet of bullets.getAll()) {
-      for (const enemy of enemies.getAll()) {
+    for (const bullet of bullets.getAllActive()) {
+      for (const enemy of enemies.getAllActive()) {
         if (this.checkCollision(bullet, enemy)) {
           enemy.takeDamage(bullet.getDamage())
           bullet.destroy()
@@ -376,12 +376,12 @@ class GameSaveManager {
     // Serialize each group
     const playerGroup = engine.getGameObjectGroup<Player>("Player")
     if (playerGroup) {
-      gameData.players = playerGroup.getAll().map(p => p.serialize())
+      gameData.players = playerGroup.getAllActive().map(p => p.serialize())
     }
     
     const enemyGroup = engine.getGameObjectGroup<Enemy>("Enemy")  
     if (enemyGroup) {
-      gameData.enemies = enemyGroup.getAll().map(e => e.serialize())
+      gameData.enemies = enemyGroup.getAllActive().map(e => e.serialize())
     }
     
     return JSON.stringify(gameData)
@@ -634,7 +634,7 @@ class Weapon extends GameObject<WeaponEvents> {
 class AI extends GameObject {
   update(deltaFrames: number): void {
     const playerGroup = this.getEngine()?.getGameObjectGroup<Player>("Player")
-    const nearestPlayer = this.findNearestPlayer(playerGroup?.getAll() || [])
+    const nearestPlayer = this.findNearestPlayer(playerGroup?.getAllActive() || [])
     
     if (nearestPlayer) {
       this.moveToward(nearestPlayer.getPosition())

@@ -89,10 +89,10 @@ export class GameObjectGroup<T extends GameObject = GameObject>
   }
 
   /**
-   * Get all non-destroyed GameObjects
-   * @returns Array of non-destroyed GameObjects
+   * Get all active (non-destroyed) GameObjects
+   * @returns Array of active GameObjects
    */
-  public getAll(): T[] {
+  public getAllActive(): T[] {
     return Array.from(this.gameObjects.values()).filter(
       (obj) => !obj.isDestroyed(),
     )
@@ -111,7 +111,7 @@ export class GameObjectGroup<T extends GameObject = GameObject>
    * @returns Count of non-destroyed GameObjects
    */
   public activeSize(): number {
-    return this.getAll().length
+    return this.getAllActive().length
   }
 
   /**

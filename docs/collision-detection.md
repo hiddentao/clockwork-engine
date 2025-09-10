@@ -234,7 +234,7 @@ class CollisionManager {
     
     if (!bulletGroup) return
     
-    for (const bullet of bulletGroup.getAll()) {
+    for (const bullet of bulletGroup.getAllActive()) {
       const colliders = tree.containsPoint(bullet.getPosition())
       
       for (const collider of colliders) {
