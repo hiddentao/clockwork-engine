@@ -28,11 +28,17 @@ jobs:
     - name: Build project
       run: bun run build
 
+    - name: Install demo dependencies
+      run: cd demo && bun i
+
+    - name: Run demo linting and type checking
+      run: cd demo && bun run lint
+
     - name: Run tests with coverage
       run: bun run coverage
 
     - name: Build demo
-      run: cd demo && bun i && bun run build
+      run: cd demo && bun run build
 
     - name: Upload coverage to Coveralls
       uses: coverallsapp/github-action@v2

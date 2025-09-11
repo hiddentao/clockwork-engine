@@ -24,7 +24,7 @@
 - 🎯 **Deterministic Gameplay** - Frame-based updates with seeded PRNG for perfect reproducibility
 - 📹 **Record & Replay** - Built-in recording system for gameplay sessions with frame-accurate playback
 - 🎮 **Game Object System** - Type-safe game entities with automatic grouping and lifecycle management
-- 🎨 **Built-in PIXI.js Renderer** - Buil-tin [pixi.js](https://pixijs.com/) integration with viewport management, event handling, and rendering abstractions
+- 🎨 **Built-in PIXI.js Renderer** - Built-in [pixi.js](https://pixijs.com/) integration with viewport management, event handling, and rendering abstractions
 - 🏃‍♂️ **High-Performance Collision Detection** - Spatial partitioning with BSP trees for efficient collision queries
 - ⚡ **Event-Driven Architecture** - Flexible event system with custom event sources and managers
 - 🔄 **Universal Serialization** - Automatic serialization for all game data with custom type support
