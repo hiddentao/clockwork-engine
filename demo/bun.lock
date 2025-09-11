@@ -6,7 +6,7 @@
       "dependencies": {
         "@hiddentao/clockwork-engine": "file:..",
         "pixi-viewport": "^6.0.3",
-        "pixi.js": "^8.6.6",
+        "pixi.js": "^8.13.2",
       },
       "devDependencies": {
         "typescript": "^5.8.3",
@@ -383,7 +383,7 @@
 
     "pixi-viewport": ["pixi-viewport@6.0.3", "", { "peerDependencies": { "pixi.js": ">=8" } }, "sha512-2+qPJ0/n+8hQYhWvY+795+x9y3MiUrCOWacK0DY53whowWaGdx9iDocy7z1pBwjkZhC52YvrJQuZKK0sdVLtBw=="],
 
-    "pixi.js": ["pixi.js@8.13.1", "", { "dependencies": { "@pixi/colord": "^2.9.6", "@types/css-font-loading-module": "^0.0.12", "@types/earcut": "^3.0.0", "@webgpu/types": "^0.1.40", "@xmldom/xmldom": "^0.8.10", "earcut": "^3.0.2", "eventemitter3": "^5.0.1", "gifuct-js": "^2.1.2", "ismobilejs": "^1.1.1", "parse-svg-path": "^0.1.2", "tiny-lru": "^11.4.5" } }, "sha512-n7lP3FG8noZV00O6ZTUNWQGg2j6xNjK/8TiGviptb4kfyGJvP4zMvF8s6DR0BymZ8P/lix/3Ye5rqilynpl/+g=="],
+    "pixi.js": ["pixi.js@8.13.2", "", { "dependencies": { "@pixi/colord": "^2.9.6", "@types/css-font-loading-module": "^0.0.12", "@types/earcut": "^3.0.0", "@webgpu/types": "^0.1.40", "@xmldom/xmldom": "^0.8.10", "earcut": "^3.0.2", "eventemitter3": "^5.0.1", "gifuct-js": "^2.1.2", "ismobilejs": "^1.1.1", "parse-svg-path": "^0.1.2", "tiny-lru": "^11.4.5" } }, "sha512-9KVGZ4a99TA5SwUEWs9m5gliX6XUCS1aGc/DOPsXxpqLMDRa+FhzpT5ao9z1UwLYJkSvt3rcQs+aZXECBHSSHg=="],
 
     "postcss": ["postcss@8.5.6", "", { "dependencies": { "nanoid": "^3.3.11", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg=="],
 

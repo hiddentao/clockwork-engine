@@ -5,18 +5,16 @@ import {
   ReplayManager,
   UserInputEventSource,
 } from "@hiddentao/clockwork-engine"
-import * as PIXI from "pixi.js"
-import { Renderer } from "./Renderer"
+import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
-import { Direction } from "./utils/constants"
+import { Direction, GAME_CONFIG } from "./utils/constants"
 
 export class Game {
-  private app!: PIXI.Application
+  private canvas!: SnakeGameCanvas
   private playEngine!: DemoGameEngine
   private replayEngine!: DemoGameEngine
   private activeEngine!: DemoGameEngine
-  private renderer!: Renderer
   private ui!: UI
   private recorder!: GameRecorder
   private replayManager!: ReplayManager
@@ -27,21 +25,8 @@ export class Game {
   private replaySpeed = 1
 
   public async initialize(): Promise<void> {
-    // Create PIXI application
-    const canvas = document.createElement("canvas")
-    canvas.id = "game-canvas"
-
     // Calculate responsive canvas size
     const canvasSize = this.calculateCanvasSize()
-
-    this.app = new PIXI.Application()
-    await this.app.init({
-      canvas,
-      width: canvasSize.width,
-      height: canvasSize.height,
-      backgroundColor: 0x1a1a2e,
-      antialias: false,
-    })
 
     // Initialize engines
     this.playEngine = new DemoGameEngine()
@@ -57,19 +42,41 @@ export class Game {
     // Listen for state changes to auto-start/stop recording
     this.setupStateChangeListeners()
 
-    // Initialize renderer and UI
-    this.renderer = new Renderer(this.app)
+    // Create GameCanvas
+    const gameContainer = document.getElementById("game-container")!
+    const canvasContainer = document.createElement("div")
+    canvasContainer.id = "game-canvas"
+
+    this.canvas = await SnakeGameCanvas.create(canvasContainer, {
+      width: canvasSize.width,
+      height: canvasSize.height,
+      worldWidth: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+      worldHeight: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+      backgroundColor: GAME_CONFIG.COLORS.BACKGROUND,
+      antialias: false,
+      enableDrag: false,
+      enablePinch: false,
+      enableWheel: false,
+      enableDecelerate: false,
+      minZoom: 1.0,
+      maxZoom: 1.0,
+      initialZoom: 1.0,
+    })
+
+    // Associate the game engine with the canvas
+    this.canvas.setGameEngine(this.activeEngine)
+
+    // Initialize UI
     this.ui = new UI(this.onUIAction.bind(this))
 
-    // Add canvas to DOM
-    const gameContainer = document.getElementById("game-container")!
-    gameContainer.appendChild(canvas)
+    // Add elements to DOM
+    gameContainer.appendChild(canvasContainer)
     gameContainer.appendChild(this.ui.getElement())
 
     // Setup input handling
     this.setupInput()
 
-    // Setup game loop using PIXI ticker
+    // Setup game loop for UI updates and replay handling
     this.setupGameLoop()
 
     // Setup responsive canvas
@@ -98,13 +105,8 @@ export class Game {
     const handleResize = () => {
       const newSize = this.calculateCanvasSize()
 
-      // Resize PIXI application
-      this.app.renderer.resize(newSize.width, newSize.height)
-
-      // Update canvas element size
-      const canvas = this.app.canvas as HTMLCanvasElement
-      canvas.style.width = `${newSize.width}px`
-      canvas.style.height = `${newSize.height}px`
+      // Resize GameCanvas
+      this.canvas.resize(newSize.width, newSize.height)
     }
 
     // Listen for window resize
@@ -215,17 +217,12 @@ export class Game {
   }
 
   private setupGameLoop(): void {
-    this.app.ticker.add((ticker) => {
-      const deltaFrames = ticker.deltaTime
-
-      // Call appropriate update method based on mode
+    const ticker = this.canvas.getApp().ticker
+    ticker.add(() => {
+      // Handle replay mode separately since GameCanvas handles normal updates
       if (this.isReplaying) {
-        this.replayManager.update(deltaFrames)
-      } else {
-        this.activeEngine.update(deltaFrames)
+        this.replayManager.update(ticker.deltaTime)
       }
-
-      this.renderer.render(this.activeEngine)
 
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
@@ -266,7 +263,7 @@ export class Game {
       case "replaySpeed":
         this.replaySpeed = data
         if (this.isReplaying) {
-          this.app.ticker.speed = this.replaySpeed
+          this.canvas.getApp().ticker.speed = this.replaySpeed
         }
         break
     }
@@ -326,7 +323,7 @@ export class Game {
     this.isReplaying = true
 
     // Set ticker speed for replay
-    this.app.ticker.speed = this.replaySpeed
+    this.canvas.getApp().ticker.speed = this.replaySpeed
 
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayEngine) {
@@ -334,6 +331,7 @@ export class Game {
     } else {
       // Switch to replay engine
       this.activeEngine = this.replayEngine
+      this.canvas.setGameEngine(this.activeEngine)
     }
 
     // Start replay on the replay engine (this will control the engine internally)
@@ -347,7 +345,7 @@ export class Game {
     this.isReplaying = false
 
     // Reset ticker speed
-    this.app.ticker.speed = 1
+    this.canvas.getApp().ticker.speed = 1
 
     this.replayManager.stopReplay()
 
@@ -366,6 +364,7 @@ export class Game {
 
     // Switch to play engine and reset it
     this.activeEngine = this.playEngine
+    this.canvas.setGameEngine(this.activeEngine)
     this.playEngine.reset("demo-seed-" + Date.now())
   }
 }

@@ -22,3 +22,5 @@ export * from "./RecordedEventSource"
 export * from "./ReplayManager"
 export * from "./Serializer"
 export * from "./Timer"
+// Rendering system components
+export * from "./rendering"

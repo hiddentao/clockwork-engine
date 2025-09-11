@@ -7,7 +7,7 @@
 [![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
-**A TypeScript game engine for deterministic, replayable games with built-in recording and replay capabilities.**
+**A TypeScript game engine for deterministic, replayable games with built-in recording, replay, and rendering capabilities.**
 
 [Documentation](./docs) • [API Reference](./docs/api.md)
 
@@ -24,6 +24,7 @@
 - 🎯 **Deterministic Gameplay** - Frame-based updates with seeded PRNG for perfect reproducibility
 - 📹 **Record & Replay** - Built-in recording system for gameplay sessions with frame-accurate playback
 - 🎮 **Game Object System** - Type-safe game entities with automatic grouping and lifecycle management
+- 🎨 **Built-in PIXI.js Renderer** - Buil-tin [pixi.js](https://pixijs.com/) integration with viewport management, event handling, and rendering abstractions
 - 🏃‍♂️ **High-Performance Collision Detection** - Spatial partitioning with BSP trees for efficient collision queries
 - ⚡ **Event-Driven Architecture** - Flexible event system with custom event sources and managers
 - 🔄 **Universal Serialization** - Automatic serialization for all game data with custom type support
@@ -43,8 +44,7 @@ bun add @hiddentao/clockwork-engine
 ### Basic Usage
 
 ```typescript
-import { GameEngine, GameObject, Vector2D } from '@hiddentao/clockwork-engine'
-import * as PIXI from 'pixi.js'
+import { GameEngine, GameObject, Vector2D, GameCanvas } from '@hiddentao/clockwork-engine'
 
 class MyGame extends GameEngine {
   setup() {
@@ -54,16 +54,30 @@ class MyGame extends GameEngine {
   }
 }
 
+class MyGameCanvas extends GameCanvas {
+  protected initializeGameLayers(): void {
+    // Set up your game rendering layers
+  }
+
+  protected render(deltaFrames: number): void {
+    // Custom rendering logic (optional)
+  }
+}
+
 const game = new MyGame()
 game.reset("my-seed")
-game.start()
 
-// Perfect integration with Pixi.js ticker
-const ticker = PIXI.Ticker.shared
-ticker.add((deltaFrames) => {
-  game.update(deltaFrames) // deltaFrames from Pixi.js ticker
+// Create canvas with built-in PIXI.js integration
+const container = document.getElementById('game-container')
+const canvas = await MyGameCanvas.create(container, {
+  width: 800,
+  height: 600,
+  worldWidth: 800,
+  worldHeight: 600
 })
-ticker.start()
+
+canvas.setGameEngine(game)
+game.start()
 ```
 
 ## 📚 Documentation

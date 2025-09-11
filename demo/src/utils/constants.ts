@@ -18,11 +18,11 @@ export const GAME_CONFIG = {
   // Colors
   COLORS: {
     BACKGROUND: 0x1a1a2e,
-    GRID: 0x16213e,
-    SNAKE_HEAD: 0x0f3460,
-    SNAKE_BODY: 0x16537e,
-    APPLE: 0xe94560,
-    WALL: 0x533483,
+    GRID: 0x333366,
+    SNAKE_HEAD: 0x00ff00,
+    SNAKE_BODY: 0x00cc00,
+    APPLE: 0xff0000,
+    WALL: 0x666666,
   },
 } as const
 

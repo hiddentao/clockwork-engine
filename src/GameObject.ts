@@ -6,6 +6,7 @@ import { Vector2D } from "./geometry/Vector2D"
 // Forward declaration to avoid circular dependency
 export interface GameEngineInterface {
   registerGameObject(gameObject: GameObject): void
+  getTotalFrames(): number
 }
 
 export enum GameObjectEventType {

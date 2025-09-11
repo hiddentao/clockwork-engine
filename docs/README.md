@@ -32,6 +32,9 @@ This documentation is organized into focused topics that cover all aspects of th
 #### Event & Input Systems
 - **[Event System](./event-system.md)** - EventEmitter, GameEventManager, and custom event sources
 
+#### Rendering System
+- **[Rendering System](./rendering-system.md)** - Complete PIXI.js-based rendering architecture with GameCanvas, AbstractRenderer, and implementation examples
+
 #### Utilities & Performance
 - **[Collision Detection](./collision-detection.md)** - CollisionBspTree, spatial partitioning, and performance optimization
 - **[Geometry](./geometry.md)** - Vector2D, GeometryUtils, and IPositionable interface
@@ -54,6 +57,9 @@ This documentation is organized into focused topics that cover all aspects of th
 
 **Work with game objects**
 → See [Game Objects](./game-objects.md)
+
+**Create custom renderers and graphics**
+→ Study [Rendering System](./rendering-system.md)
 
 **Handle collisions efficiently**
 → Learn about [Collision Detection](./collision-detection.md)

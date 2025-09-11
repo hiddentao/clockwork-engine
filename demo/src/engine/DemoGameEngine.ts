@@ -89,8 +89,8 @@ export class DemoGameEngine extends GameEngine {
     snake.move()
   }
 
-  update(deltaFrames: number, totalFrames: number): void {
-    super.update(deltaFrames, totalFrames)
+  update(deltaFrames: number): void {
+    super.update(deltaFrames)
 
     if (this.getState() === GameState.PLAYING) {
       this.checkCollisions()

@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -20,6 +19,6 @@
       "@engine/*": ["../src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["./src/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
