@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.3.0](https://github.com/hiddentao/clockwork-engine/compare/v1.2.0...v1.3.0) (2025-09-12)
+
+
+### Features
+
+* add comprehensive PIXI.js rendering system ([b7da431](https://github.com/hiddentao/clockwork-engine/commit/b7da431077eff2ef2f3eb07eeed5800ff2262b5d))
+* add GameObjectEventType enum for type-safe event handling ([3234943](https://github.com/hiddentao/clockwork-engine/commit/32349434057c551947cc0f4ca7f311a6172e0c47))
+* add totalFrames parameter to GameObject.update() method ([2cae386](https://github.com/hiddentao/clockwork-engine/commit/2cae386e8286ac2c3f241f41c95b0dd82ec59ab3))
+* improve GameObjectGroup event emission system ([6d80bd0](https://github.com/hiddentao/clockwork-engine/commit/6d80bd0e2fe53e152ae3b15d53b86739c2f5d3ae))
+
+
+### Bug Fixes
+
+* **ci:** separate main and demo linting to resolve TypeScript resolution issues ([83c535b](https://github.com/hiddentao/clockwork-engine/commit/83c535bfb27fb8c7684f373fd4cd80f50532061d))
+* correct formatting and broken links in documentation ([b0017f3](https://github.com/hiddentao/clockwork-engine/commit/b0017f313a82b20a63a9a89ae4c28c0ec41db48f))
+* prevent GameObject update when destroyed ([8812c7b](https://github.com/hiddentao/clockwork-engine/commit/8812c7bba4ad19169d450dfd07c3e8f8bb2d387a))
+
+
+### Documentation
+
+* fix markdown links in README.md ([fcddc78](https://github.com/hiddentao/clockwork-engine/commit/fcddc78c78df536f8c85d3801e1636992f1cfab2))
+
+
+### Tests
+
+* expand test coverage and improve code quality ([83a57aa](https://github.com/hiddentao/clockwork-engine/commit/83a57aa2cd1c4d45c9e7558a1dc5785d0639bfce))
+
+
+### Code Refactoring
+
+* rename getAll() to getAllActive() in GameObjectGroup ([b6531b8](https://github.com/hiddentao/clockwork-engine/commit/b6531b88df415c8aea6e4bee8a1f69477e0a865a))
+
+
+### Performance Improvements
+
+* optimize CollisionUtils rebuildTree by merging index and bounds calculation ([ecc7e75](https://github.com/hiddentao/clockwork-engine/commit/ecc7e75f2dc2c11f9d506706580146be2456e446))
+
 ## 1.2.0 (2025-09-09)
 
 
