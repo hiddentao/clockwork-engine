@@ -383,7 +383,7 @@ describe("PRNG", () => {
       }
     })
 
-    it("should return roughly balanced true/false values", () => {
+    it("should return roughly balanced true/false values with default threshold", () => {
       let trueCount = 0
       let falseCount = 0
 
@@ -409,6 +409,81 @@ describe("PRNG", () => {
 
       for (let i = 0; i < 20; i++) {
         expect(prng1.randomBoolean()).toBe(prng2.randomBoolean())
+      }
+    })
+
+    it("should accept custom threshold parameter", () => {
+      // Test with threshold 0.7 (70% chance of true)
+      let trueCount = 0
+      const trials = 1000
+
+      prng.initialize("threshold-test")
+      for (let i = 0; i < trials; i++) {
+        if (prng.randomBoolean(0.7)) {
+          trueCount++
+        }
+      }
+
+      // Should be roughly 70% true (allow for variance)
+      expect(trueCount).toBeGreaterThan(600)
+      expect(trueCount).toBeLessThan(800)
+    })
+
+    it("should handle threshold 0.0 (always false)", () => {
+      for (let i = 0; i < 100; i++) {
+        expect(prng.randomBoolean(0.0)).toBe(false)
+      }
+    })
+
+    it("should handle threshold 1.0 (always true)", () => {
+      for (let i = 0; i < 100; i++) {
+        expect(prng.randomBoolean(1.0)).toBe(true)
+      }
+    })
+
+    it("should work with threshold 0.3 (30% chance of true)", () => {
+      let trueCount = 0
+      const trials = 1000
+
+      prng.initialize("threshold-30")
+      for (let i = 0; i < trials; i++) {
+        if (prng.randomBoolean(0.3)) {
+          trueCount++
+        }
+      }
+
+      // Should be roughly 30% true (allow for variance)
+      expect(trueCount).toBeGreaterThan(200)
+      expect(trueCount).toBeLessThan(400)
+    })
+
+    it("should be deterministic with custom threshold", () => {
+      const prng1 = new PRNG("threshold-deterministic")
+      const prng2 = new PRNG("threshold-deterministic")
+
+      for (let i = 0; i < 20; i++) {
+        expect(prng1.randomBoolean(0.7)).toBe(prng2.randomBoolean(0.7))
+      }
+    })
+
+    it("should handle extreme threshold values gracefully", () => {
+      // Test negative threshold (should always be false since random() >= 0 and threshold < 0)
+      for (let i = 0; i < 10; i++) {
+        expect(prng.randomBoolean(-0.5)).toBe(false)
+      }
+
+      // Test threshold > 1 (should always be true since random() < 1 and threshold > 1)
+      for (let i = 0; i < 10; i++) {
+        expect(prng.randomBoolean(1.5)).toBe(true)
+      }
+    })
+
+    it("should maintain backward compatibility with no parameters", () => {
+      const prng1 = new PRNG("compatibility-test")
+      const prng2 = new PRNG("compatibility-test")
+
+      for (let i = 0; i < 20; i++) {
+        expect(prng1.randomBoolean()).toBe(prng2.randomBoolean(0.5))
       }
     })
   })

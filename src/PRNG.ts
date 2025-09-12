@@ -34,7 +34,7 @@ export class PRNG {
     return this.random() * (max - min) + min
   }
 
-  randomBoolean(): boolean {
-    return this.random() < 0.5
+  randomBoolean(threshold: number = 0.5): boolean {
+    return this.random() < threshold
   }
 }
