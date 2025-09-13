@@ -3,6 +3,7 @@ import { GameEventManager } from "./GameEventManager"
 import type { GameEngineInterface, GameObject } from "./GameObject"
 import { GameObjectGroup } from "./GameObjectGroup"
 import type { GameRecorder } from "./GameRecorder"
+import type { Loader } from "./Loader"
 import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
@@ -34,9 +35,11 @@ export abstract class GameEngine
   protected eventManager: GameEventManager
   protected recorder: GameRecorder | undefined = undefined
   protected collisionTree: CollisionBspTree = new CollisionBspTree()
+  protected loader: Loader | undefined = undefined
 
-  constructor() {
+  constructor(loader?: Loader) {
     super()
+    this.loader = loader
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
   }
 
@@ -280,5 +283,12 @@ export abstract class GameEngine
    */
   getCollisionTree(): CollisionBspTree {
     return this.collisionTree
+  }
+
+  /**
+   * Get the loader instance for data loading
+   */
+  getLoader(): Loader | undefined {
+    return this.loader
   }
 }

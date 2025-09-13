@@ -1,4 +1,9 @@
-import { GameEngine, GameState, Vector2D } from "@hiddentao/clockwork-engine"
+import {
+  GameEngine,
+  GameState,
+  Loader,
+  Vector2D,
+} from "@hiddentao/clockwork-engine"
 import { Apple, Snake, Wall } from "../gameObjects"
 import { Direction, GAME_CONFIG } from "../utils/constants"
 
@@ -9,8 +14,16 @@ export class DemoGameEngine extends GameEngine {
   private gameLost: boolean = false
   private appleCounter: number = 0
   private lastAppleSpawnFrame: number = -1
+  private loadedConfig: any = null
+
+  constructor(loader?: Loader) {
+    super(loader)
+  }
 
   setup(): void {
+    // Load configuration if loader is available
+    this.loadGameConfiguration()
+
     // Set up input handling
     this.setupInputHandling()
 
@@ -339,5 +352,110 @@ export class DemoGameEngine extends GameEngine {
   public reset(seed?: string): void {
     super.reset(seed)
     this.resetGameState()
+  }
+
+  /**
+   * Load game configuration from the loader
+   */
+  private loadGameConfiguration(): void {
+    const loader = this.getLoader()
+    if (!loader) {
+      console.log("🔧 No loader available, using default configuration")
+      return
+    }
+
+    try {
+      // Note: Since this is called during setup and we need to maintain determinism,
+      // we don't await this in the current implementation. In a real game, you might
+      // want to load configuration before calling setup(), or handle async loading differently.
+      loader
+        .fetchData("game", { type: "config" })
+        .then((configData) => {
+          this.loadedConfig = JSON.parse(configData)
+          console.log("🔧 Loaded game configuration:", this.loadedConfig)
+        })
+        .catch((error) => {
+          console.warn("⚠️ Failed to load game configuration:", error.message)
+        })
+    } catch (error) {
+      console.warn("⚠️ Error loading game configuration:", error)
+    }
+  }
+
+  /**
+   * Load level data from the loader
+   * @param levelId - The level identifier to load
+   */
+  public async loadLevel(levelId: string): Promise<any> {
+    const loader = this.getLoader()
+    if (!loader) {
+      throw new Error("No loader available for loading level data")
+    }
+
+    try {
+      const levelData = await loader.fetchData(levelId, { type: "level" })
+      const level = JSON.parse(levelData)
+      console.log(`🎮 Loaded level: ${level.name}`, level)
+      return level
+    } catch (error) {
+      console.error(`❌ Failed to load level ${levelId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Load asset metadata from the loader
+   * @param assetId - The asset identifier to load
+   */
+  public async loadAsset(assetId: string): Promise<any> {
+    const loader = this.getLoader()
+    if (!loader) {
+      throw new Error("No loader available for loading asset data")
+    }
+
+    try {
+      const assetData = await loader.fetchData(assetId, { type: "asset" })
+      const asset = JSON.parse(assetData)
+      console.log(`🎨 Loaded asset: ${assetId}`, asset)
+      return asset
+    } catch (error) {
+      console.error(`❌ Failed to load asset ${assetId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Get the loaded configuration
+   */
+  public getLoadedConfig(): any {
+    return this.loadedConfig
+  }
+
+  /**
+   * Demonstrate loading data for different purposes
+   */
+  public async demonstrateLoaderUsage(): Promise<void> {
+    const loader = this.getLoader()
+    if (!loader) {
+      console.log("🚫 No loader available for demonstration")
+      return
+    }
+
+    try {
+      console.log("🔄 Demonstrating loader usage...")
+
+      // Load different types of data
+      const _easyLevel = await this.loadLevel("easy")
+      const _snakeSprites = await this.loadAsset("snake_sprites")
+
+      // Load high scores
+      const scoresData = await loader.fetchData("leaderboard", {
+        type: "scores",
+      })
+      const scores = JSON.parse(scoresData)
+      console.log("🏆 High scores:", scores)
+    } catch (error) {
+      console.error("❌ Loader demonstration failed:", error)
+    }
   }
 }

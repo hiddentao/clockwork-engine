@@ -1,4 +1,5 @@
 import { GameEngine } from "../../src/GameEngine"
+import { Loader } from "../../src/Loader"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { TestEnemy } from "./TestEnemy"
@@ -22,8 +23,8 @@ export class ComplexTestEngine extends GameEngine {
   private serializer: Serializer
   private setupConfig: SetupConfig = {}
 
-  constructor() {
-    super()
+  constructor(loader?: Loader) {
+    super(loader)
     this.serializer = new Serializer()
     this.registerSerializationTypes()
   }

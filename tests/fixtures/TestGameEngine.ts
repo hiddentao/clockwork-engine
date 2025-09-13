@@ -1,10 +1,15 @@
 import { GameEngine } from "../../src/GameEngine"
+import { Loader } from "../../src/Loader"
 import { TestEnemy } from "./TestEnemy"
 import { TestPlayer } from "./TestPlayer"
 
 export class TestGameEngine extends GameEngine {
   public setupCalled = false
   public setupCallCount = 0
+
+  constructor(loader?: Loader) {
+    super(loader)
+  }
 
   setup(): void {
     this.setupCalled = true

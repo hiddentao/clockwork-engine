@@ -1,5 +1,7 @@
 // Base game object system and engine interface
 
+// Data loading abstraction
+export * from "./Loader"
 // Event emitter and listener infrastructure
 export * from "./EventEmitter"
 // Core type definitions and game state enums

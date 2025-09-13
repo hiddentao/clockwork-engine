@@ -8,6 +8,7 @@ import {
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
+import { DemoLoader } from "./loader/DemoLoader"
 import { Direction, GAME_CONFIG } from "./utils/constants"
 
 export class Game {
@@ -18,6 +19,7 @@ export class Game {
   private ui!: UI
   private recorder!: GameRecorder
   private replayManager!: ReplayManager
+  private loader!: DemoLoader
 
   // Game state
   private isRecording = false
@@ -28,12 +30,19 @@ export class Game {
     // Calculate responsive canvas size
     const canvasSize = this.calculateCanvasSize()
 
-    // Initialize engines
-    this.playEngine = new DemoGameEngine()
-    this.replayEngine = new DemoGameEngine()
+    // Initialize loader
+    this.loader = new DemoLoader()
+    console.log("🔧 DemoLoader initialized")
+
+    // Initialize engines with loader
+    this.playEngine = new DemoGameEngine(this.loader)
+    this.replayEngine = new DemoGameEngine(this.loader)
     this.activeEngine = this.playEngine // Start with play engine active
 
     this.playEngine.reset("demo-seed-" + Date.now())
+
+    // Demonstrate loader usage
+    await this.demonstrateLoaderCapabilities()
 
     // Initialize systems
     this.recorder = new GameRecorder()
@@ -366,5 +375,60 @@ export class Game {
     this.activeEngine = this.playEngine
     this.canvas.setGameEngine(this.activeEngine)
     this.playEngine.reset("demo-seed-" + Date.now())
+  }
+
+  /**
+   * Demonstrate loader capabilities during initialization
+   */
+  private async demonstrateLoaderCapabilities(): Promise<void> {
+    console.log("🔄 Demonstrating loader capabilities...")
+
+    try {
+      // Check what data is available
+      const allKeys = await this.loader.listDataKeys()
+      console.log("📋 Available data keys:", allKeys)
+
+      // List data by type
+      const configKeys = await this.loader.listDataKeys("config")
+      const levelKeys = await this.loader.listDataKeys("level")
+      const assetKeys = await this.loader.listDataKeys("asset")
+
+      console.log("🔧 Config keys:", configKeys)
+      console.log("🎮 Level keys:", levelKeys)
+      console.log("🎨 Asset keys:", assetKeys)
+
+      // Load sample data
+      const gameConfig = await this.loader.fetchData("game", { type: "config" })
+      console.log("⚙️ Game config:", JSON.parse(gameConfig))
+
+      const easyLevel = await this.loader.fetchData("easy", { type: "level" })
+      console.log("🎯 Easy level:", JSON.parse(easyLevel))
+
+      // Test data storage
+      const userPrefs = {
+        soundEnabled: true,
+        difficulty: "medium",
+        lastPlayed: new Date().toISOString(),
+      }
+      await this.loader.storeData("preferences", JSON.stringify(userPrefs), {
+        type: "user",
+      })
+      console.log("💾 Stored user preferences")
+
+      // Verify storage
+      const storedPrefs = await this.loader.fetchData("preferences", {
+        type: "user",
+      })
+      console.log("✅ Retrieved user preferences:", JSON.parse(storedPrefs))
+    } catch (error) {
+      console.error("❌ Loader demonstration failed:", error)
+    }
+  }
+
+  /**
+   * Get the loader instance for external access
+   */
+  public getLoader(): DemoLoader {
+    return this.loader
   }
 }
