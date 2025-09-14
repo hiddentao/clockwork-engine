@@ -22,14 +22,17 @@ jobs:
     - name: Install dependencies
       run: bun install
 
+    - name: Build engine
+      run: bun run build
+
     - name: Run linting and type checking
       run: bun run lint
 
-    - name: Build project
-      run: bun run build
-
     - name: Install demo dependencies
       run: cd demo && bun i
+
+    - name: Run demo linting and type checking
+      run: cd demo && bun run lint
 
     - name: Run tests with coverage
       run: bun run coverage
