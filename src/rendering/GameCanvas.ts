@@ -174,8 +174,12 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
     )
     this.viewport.setZoom(this.options.initialZoom!, true)
 
-    this.app.stage.addChild(this.viewport)
+    // Set proper event modes for containers
+    this.gameContainer.eventMode = "passive"
+    this.hudContainer.eventMode = "passive"
+
     this.viewport.addChild(this.gameContainer)
+    this.app.stage.addChild(this.viewport)
 
     this.app.stage.addChild(this.hudContainer)
 
@@ -255,9 +259,8 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
       this.container.addEventListener("pointermove", this.handlePointerMove)
       this.container.addEventListener("click", this.handleClick)
     }
-
-    this.viewport.on("moved", this.handleViewportMoved)
-    this.viewport.on("zoomed", this.handleViewportZoomed)
+    // this.viewport.on("moved", this.handleViewportMoved)
+    // this.viewport.on("zoomed", this.handleViewportZoomed)
   }
 
   /**

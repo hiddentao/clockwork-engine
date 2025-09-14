@@ -15,9 +15,7 @@
     "format": "biome format --write src"
   },
   "dependencies": {
-    "@hiddentao/clockwork-engine": "file:..",
-    "pixi-viewport": "^6.0.3",
-    "pixi.js": "^8.13.2"
+    "@hiddentao/clockwork-engine": "file:.."
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",
