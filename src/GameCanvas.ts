@@ -1,8 +1,7 @@
-import { Viewport } from "pixi-viewport"
-import * as PIXI from "pixi.js"
-import { EventEmitter } from "../EventEmitter"
-import type { GameEngine } from "../GameEngine"
-import { Vector2D } from "../geometry/Vector2D"
+import { EventEmitter } from "./EventEmitter"
+import type { GameEngine } from "./GameEngine"
+import { Vector2D } from "./geometry/Vector2D"
+import { PIXI, Viewport } from "./lib/pixi"
 
 /**
  * Events emitted by the game canvas for user interactions and viewport changes.

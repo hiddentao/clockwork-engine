@@ -26,3 +26,6 @@ export * from "./Serializer"
 export * from "./Timer"
 // Rendering system components
 export * from "./rendering"
+export * from "./GameCanvas"
+// PIXI.js and pixi-viewport integration
+export * from "./lib/pixi"

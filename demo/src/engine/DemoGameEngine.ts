@@ -445,8 +445,11 @@ export class DemoGameEngine extends GameEngine {
       console.log("🔄 Demonstrating loader usage...")
 
       // Load different types of data
-      const _easyLevel = await this.loadLevel("easy")
-      const _snakeSprites = await this.loadAsset("snake_sprites")
+      const easyLevel = await this.loadLevel("easy")
+      const snakeSprites = await this.loadAsset("snake_sprites")
+
+      console.log("✅ Loaded level:", easyLevel ? "easy level data" : "none")
+      console.log("✅ Loaded sprites:", snakeSprites ? "snake sprites" : "none")
 
       // Load high scores
       const scoresData = await loader.fetchData("leaderboard", {

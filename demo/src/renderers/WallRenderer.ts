@@ -1,5 +1,4 @@
-import { AbstractRenderer } from "@hiddentao/clockwork-engine"
-import * as PIXI from "pixi.js"
+import { AbstractRenderer, PIXI } from "@hiddentao/clockwork-engine"
 import { Wall } from "../gameObjects/Wall"
 import { GAME_CONFIG } from "../utils/constants"
 

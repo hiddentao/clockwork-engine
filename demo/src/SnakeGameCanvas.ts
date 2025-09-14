@@ -1,5 +1,8 @@
-import { GameCanvas, type GameCanvasOptions } from "@hiddentao/clockwork-engine"
-import * as PIXI from "pixi.js"
+import {
+  GameCanvas,
+  type GameCanvasOptions,
+  PIXI,
+} from "@hiddentao/clockwork-engine"
 import { Apple, Snake, Wall } from "./gameObjects"
 import { AppleRenderer } from "./renderers/AppleRenderer"
 import { SnakeRenderer } from "./renderers/SnakeRenderer"

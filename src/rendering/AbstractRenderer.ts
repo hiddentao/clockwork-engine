@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js"
+import { PIXI } from "../lib/pixi"
 import type { BaseRenderer } from "./BaseRenderer"
 
 /**
@@ -166,7 +166,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
     child: PIXI.Container | PIXI.Graphics,
     name: string,
   ): void {
-    child.name = name
+    child.label = name
     container.addChild(child)
   }
 
@@ -181,7 +181,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
     container: PIXI.Container,
     name: string,
   ): T | undefined {
-    return container.getChildByName(name) as T | undefined
+    return container.getChildByLabel(name) as T | undefined
   }
 
   /**
