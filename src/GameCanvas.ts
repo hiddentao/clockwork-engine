@@ -62,6 +62,8 @@ export interface GameCanvasOptions {
   enableDecelerate?: boolean
   /** Scale game content when canvas is resized */
   scaleWithResize?: boolean
+  /** Renderer preference - 'webgl' or 'webgpu' */
+  preference?: "webgl" | "webgpu"
 }
 
 /**
@@ -138,14 +140,20 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   protected async initialize(container: HTMLDivElement): Promise<void> {
     this.container = container
 
-    await this.app.init({
+    const initOptions: any = {
       width: this.options.width,
       height: this.options.height,
       backgroundColor: this.options.backgroundColor,
       resolution: this.options.resolution || window.devicePixelRatio || 1,
       autoDensity: true,
       antialias: this.options.antialias,
-    })
+    }
+
+    if (this.options.preference) {
+      initOptions.preference = this.options.preference
+    }
+
+    await this.app.init(initOptions)
 
     this.viewport = new Viewport({
       screenWidth: this.app.screen.width,

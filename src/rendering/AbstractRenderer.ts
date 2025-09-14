@@ -64,6 +64,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
   /**
    * Updates an existing item's visual representation.
    * Modifies the PIXI container properties without recreating the entire display object.
+   * If the item doesn't exist, it will be created.
    *
    * @param item The game object with updated state
    */
@@ -74,6 +75,8 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
       if (container) {
         this.updateContainer(container, item)
         this.items.set(id, item)
+      } else {
+        this.add(item)
       }
     } catch (error) {
       console.error(`Error updating item in ${this.constructor.name}:`, error)

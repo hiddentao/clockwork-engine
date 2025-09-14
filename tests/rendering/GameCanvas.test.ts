@@ -1,7 +1,259 @@
-import { beforeEach, describe, expect, it, spyOn } from "bun:test"
-import { GameCanvas, GameCanvasEvent, PIXI } from "../../src"
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { ComplexTestEngine } from "../fixtures"
+
+// Mock PIXI.js classes and functions
+class MockContainer {
+  public children: MockContainer[] = []
+  public eventMode = "auto"
+  public label?: string
+  public position = {
+    set: (x: number, y: number) => {
+      this.position.x = x
+      this.position.y = y
+    },
+    x: 0,
+    y: 0,
+  }
+  public visible = true
+  public parent: MockContainer | null = null
+
+  addChild(child: MockContainer) {
+    this.children.push(child)
+    child.parent = this
+    return child
+  }
+
+  removeChild(child: MockContainer) {
+    const index = this.children.indexOf(child)
+    if (index > -1) {
+      this.children.splice(index, 1)
+      child.parent = null
+    }
+    return child
+  }
+
+  getChildByLabel(label: string): MockContainer | null {
+    return this.children.find((child) => child.label === label) || null
+  }
+
+  destroy(options?: any) {
+    // Remove from parent
+    if (this.parent) {
+      this.parent.removeChild(this)
+    }
+
+    // Destroy children if requested
+    if (options?.children) {
+      this.children.forEach((child) => child.destroy(options))
+    } else {
+      // Just clear parent references
+      this.children.forEach((child) => {
+        child.parent = null
+      })
+    }
+
+    this.children = []
+    this.parent = null
+  }
+}
+
+class MockGraphics extends MockContainer {
+  public geometry: any = {}
+  public shader: any = {}
+  public state: any = {}
+  public tint = 0xffffff
+  public blendMode = 0
+  public width = 100 // Mock width for testing
+  public height = 50 // Mock height for testing
+
+  rect(_x: number, _y: number, _width: number, _height: number) {
+    return this
+  }
+
+  circle(_x: number, _y: number, _radius: number) {
+    return this
+  }
+
+  poly(_points: number[]) {
+    return this
+  }
+
+  fill(_color: number | string) {
+    return this
+  }
+
+  stroke(_options: any) {
+    return this
+  }
+
+  clear() {
+    return this
+  }
+
+  lineStyle(_width?: number, _color?: number, _alpha?: number) {
+    return this
+  }
+
+  beginFill(_color?: number, _alpha?: number) {
+    return this
+  }
+
+  endFill() {
+    return this
+  }
+
+  drawRect(_x: number, _y: number, _width: number, _height: number) {
+    return this
+  }
+
+  drawCircle(_x: number, _y: number, _radius: number) {
+    return this
+  }
+
+  drawPolygon(..._path: any[]) {
+    return this
+  }
+}
+
+class MockApplication {
+  public stage = new MockContainer()
+  public screen = { width: 800, height: 600 }
+  public canvas = {
+    width: 800,
+    height: 600,
+    style: {},
+  }
+  public renderer: any
+  public ticker = {
+    add: (_callback: any) => {
+      // Mock ticker - don't actually start any loops in tests
+    },
+    remove: (_callback: any) => {
+      // Mock remove - intentionally empty
+    },
+    start: () => {
+      // Mock start - intentionally empty
+    },
+    stop: () => {
+      // Mock stop - intentionally empty
+    },
+    destroy: () => {
+      // Mock destroy - intentionally empty
+    },
+  }
+
+  constructor() {
+    // Initialize renderer with proper `this` context
+    this.renderer = {
+      events: new MockContainer(),
+      screen: this.screen,
+      resize: (width: number, height: number) => {
+        // Update screen dimensions on resize
+        this.screen.width = width
+        this.screen.height = height
+        this.renderer.screen = this.screen
+      },
+    }
+  }
+
+  async init(_options: any) {
+    // Mock successful initialization
+    return Promise.resolve()
+  }
+
+  destroy() {
+    // Mock cleanup
+  }
+}
+
+class MockViewport extends MockContainer {
+  public worldWidth: number
+  public worldHeight: number
+  public center = { x: 400, y: 300 }
+  public scale = { x: 1, y: 1 }
+  public plugins = new Map([
+    ["drag", {}],
+    ["pinch", {}],
+    ["wheel", {}],
+    ["decelerate", {}],
+    ["clamp-zoom", {}],
+    ["clamp", {}],
+  ])
+
+  constructor(options: any) {
+    super()
+    this.worldWidth = options.worldWidth || 800
+    this.worldHeight = options.worldHeight || 600
+  }
+
+  drag() {
+    return this
+  }
+  pinch() {
+    return this
+  }
+  wheel() {
+    return this
+  }
+  decelerate() {
+    return this
+  }
+  clampZoom(_options: any) {
+    return this
+  }
+  clamp(_options: any) {
+    return this
+  }
+  moveCenter(x: number, y: number) {
+    this.center = { x, y }
+    return this
+  }
+  setZoom(zoom: number, _center?: any) {
+    this.scale = { x: zoom, y: zoom }
+    return this
+  }
+  getZoom() {
+    return this.scale.x
+  }
+  toWorld(x: number, y: number) {
+    // Simple mock transformation - translate screen to world coordinates
+    // For test purposes, just add some offset to simulate viewport transformation
+    return { x: x + 100, y: y + 200 }
+  }
+  toScreen(worldPoint: any) {
+    return { x: worldPoint.x, y: worldPoint.y }
+  }
+  on(_event: string, _callback: any) {
+    return this
+  }
+  off(_event: string, _callback: any) {
+    return this
+  }
+  emit(_event: string, ..._args: any[]) {
+    return this
+  }
+}
+
+// Mock the PIXI imports using Bun's mock system
+mock.module("../../src/lib/pixi", () => ({
+  PIXI: {
+    Application: MockApplication,
+    Container: MockContainer,
+    Graphics: MockGraphics,
+  },
+  Viewport: MockViewport,
+}))
+
+// Import after mocking
+import { GameCanvas, GameCanvasEvent } from "../../src"
+
+// Make PIXI available for tests
+const PIXI = {
+  Container: MockContainer,
+  Graphics: MockGraphics,
+  Application: MockApplication,
+}
 
 // Mock DOM environment for headless testing
 class MockHTMLElement {
@@ -47,6 +299,19 @@ class MockHTMLElement {
   }
   get clientHeight() {
     return 600
+  }
+
+  getBoundingClientRect() {
+    return {
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      bottom: 600,
+      right: 800,
+    }
   }
 }
 
@@ -138,6 +403,7 @@ describe("GameCanvas", () => {
       minZoom: 0.5,
       maxZoom: 2.0,
       initialZoom: 1.0,
+      preference: "webgl",
     })
 
     canvas.setGameEngine(engine)
