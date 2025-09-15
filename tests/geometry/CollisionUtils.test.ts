@@ -63,28 +63,78 @@ describe("CollisionBspTree", () => {
       expect(source1Points[1].source).toBe(source1)
     })
 
-    test("should handle duplicate points from same source", () => {
+    test("should prevent duplicate points from same source", () => {
       const point = new Vector2D(10, 20)
-      tree.add(point, source1)
-      tree.add(point, source1) // Same point, same source
+      const added1 = tree.add(point, source1)
+      const added2 = tree.add(point, source1) // Same point, same source
 
-      expect(tree.size()).toBe(2)
+      expect(added1).toBe(true)
+      expect(added2).toBe(false)
+      expect(tree.size()).toBe(1)
       const collisionSources = tree.containsPoint(point)
-      expect(collisionSources).toHaveLength(2)
+      expect(collisionSources).toHaveLength(1)
       expect(collisionSources[0]).toBe(source1)
-      expect(collisionSources[1]).toBe(source1)
     })
 
-    test("should handle duplicate points from different sources", () => {
+    test("should allow duplicate points from different sources", () => {
       const point = new Vector2D(10, 20)
-      tree.add(point, source1)
-      tree.add(point, source2) // Same point, different source
+      const added1 = tree.add(point, source1)
+      const added2 = tree.add(point, source2) // Same point, different source
 
+      expect(added1).toBe(true)
+      expect(added2).toBe(true)
       expect(tree.size()).toBe(2)
       const collisionSources = tree.containsPoint(point)
       expect(collisionSources).toHaveLength(2)
       expect(collisionSources).toContain(source1)
       expect(collisionSources).toContain(source2)
+    })
+
+    test("should handle multiple duplicate attempts", () => {
+      const point = new Vector2D(10, 20)
+
+      // First add should succeed
+      expect(tree.add(point, source1)).toBe(true)
+      expect(tree.size()).toBe(1)
+
+      // Multiple duplicate attempts should all fail
+      expect(tree.add(point, source1)).toBe(false)
+      expect(tree.add(point, source1)).toBe(false)
+      expect(tree.add(point, source1)).toBe(false)
+      expect(tree.size()).toBe(1)
+
+      // Different source should still work
+      expect(tree.add(point, source2)).toBe(true)
+      expect(tree.size()).toBe(2)
+
+      // Duplicate of second source should fail
+      expect(tree.add(point, source2)).toBe(false)
+      expect(tree.size()).toBe(2)
+    })
+
+    test("should prevent duplicates with floating point coordinates", () => {
+      const point1 = new Vector2D(0.1 + 0.2, 0.3 + 0.4)
+      const point2 = new Vector2D(0.1 + 0.2, 0.3 + 0.4) // Same calculation
+
+      expect(tree.add(point1, source1)).toBe(true)
+      expect(tree.add(point2, source1)).toBe(false)
+      expect(tree.size()).toBe(1)
+    })
+
+    test("should handle duplicate prevention with negative coordinates", () => {
+      const point = new Vector2D(-100, -200)
+
+      expect(tree.add(point, source1)).toBe(true)
+      expect(tree.add(point, source1)).toBe(false)
+      expect(tree.size()).toBe(1)
+    })
+
+    test("should handle duplicate prevention with zero coordinates", () => {
+      const point = new Vector2D(0, 0)
+
+      expect(tree.add(point, source1)).toBe(true)
+      expect(tree.add(point, source1)).toBe(false)
+      expect(tree.size()).toBe(1)
     })
   })
 
@@ -264,9 +314,13 @@ describe("CollisionBspTree", () => {
       })
 
       tree.beginBatch()
-      tree.add(new Vector2D(10, 20), source1)
-      tree.add(new Vector2D(30, 40), source2)
-      tree.add(new Vector2D(50, 60), source3)
+      const added1 = tree.add(new Vector2D(10, 20), source1)
+      const added2 = tree.add(new Vector2D(30, 40), source2)
+      const added3 = tree.add(new Vector2D(50, 60), source3)
+
+      expect(added1).toBe(true)
+      expect(added2).toBe(true)
+      expect(added3).toBe(true)
 
       // Should not emit events during batch mode
       expect(eventCount).toBe(0)
@@ -276,6 +330,25 @@ describe("CollisionBspTree", () => {
       // Should emit single event after batch
       expect(eventCount).toBe(1)
       expect(tree.size()).toBe(3)
+    })
+
+    test("should handle duplicate prevention in batch mode", () => {
+      tree.beginBatch()
+
+      const point = new Vector2D(10, 20)
+      const added1 = tree.add(point, source1)
+      const added2 = tree.add(point, source1) // Duplicate
+      const added3 = tree.add(point, source2) // Different source
+      const added4 = tree.add(point, source2) // Duplicate of source2
+
+      expect(added1).toBe(true)
+      expect(added2).toBe(false)
+      expect(added3).toBe(true)
+      expect(added4).toBe(false)
+
+      tree.endBatch()
+
+      expect(tree.size()).toBe(2)
     })
 
     test("should handle remove operations in batch mode", () => {

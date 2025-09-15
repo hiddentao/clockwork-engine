@@ -88,12 +88,20 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
   /**
    * Add a collision point to the spatial partitioning tree
    * Updates internal index for O(1) removal operations
+   * Only adds the point if it's not already present (coordinates and source must both match)
    * @param point 2D coordinates of the collision point
    * @param source Object that owns this collision point
+   * @returns True if point was added, false if it already exists
    */
-  public add(point: Vector2D, source: ICollisionSource): void {
+  public add(point: Vector2D, source: ICollisionSource): boolean {
     const collisionPoint = { point, source }
     const key = this.createCollisionPointKey(collisionPoint)
+
+    // Check if point already exists
+    if (this.pointIndex.has(key)) {
+      return false
+    }
+
     this.pointIndex.set(key, this.points.length)
     this.points.push(collisionPoint)
     if (this.deferRebuild) {
@@ -102,6 +110,7 @@ export class CollisionBspTree extends EventEmitter<CollisionBspEvents> {
       this.rebuildTree()
       this.emit("pointsChanged")
     }
+    return true
   }
 
   /**
