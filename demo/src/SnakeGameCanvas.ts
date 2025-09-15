@@ -31,6 +31,12 @@ export class SnakeGameCanvas extends GameCanvas {
 
   private drawGrid(): void {
     this.gridGraphics = new PIXI.Graphics()
+
+    // Auto-cleanup when removed from parent
+    this.gridGraphics.on("removed", () => {
+      this.gridGraphics?.destroy()
+    })
+
     const cellSize = GAME_CONFIG.CELL_SIZE
     const gridSize = GAME_CONFIG.GRID_SIZE
 

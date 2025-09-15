@@ -188,6 +188,24 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
   }
 
   /**
+   * Creates a PIXI Graphics object with automatic cleanup on removal.
+   * Graphics objects will automatically destroy themselves when removed from their parent.
+   *
+   * @returns A new PIXI.Graphics instance with cleanup behavior
+   */
+  protected createGraphics(): PIXI.Graphics {
+    const graphics = new PIXI.Graphics()
+
+    // Auto-cleanup when removed from parent
+    // This is essential for preventing memory leaks
+    graphics.on("removed", () => {
+      graphics.destroy()
+    })
+
+    return graphics
+  }
+
+  /**
    * Creates a filled rectangle graphic.
    *
    * @param width Width of the rectangle
@@ -204,7 +222,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
     x?: number,
     y?: number,
   ): PIXI.Graphics {
-    const graphics = new PIXI.Graphics()
+    const graphics = this.createGraphics()
     x = x ?? -width / 2
     y = y ?? -height / 2
     return graphics.rect(x, y, width, height).fill(color)
@@ -225,7 +243,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
     x = 0,
     y = 0,
   ): PIXI.Graphics {
-    const graphics = new PIXI.Graphics()
+    const graphics = this.createGraphics()
     return graphics.circle(x, y, radius).fill(color)
   }
 
@@ -237,7 +255,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
    * @returns A new Graphics object with the polygon drawn
    */
   protected createPolygon(points: number[], color: number): PIXI.Graphics {
-    const graphics = new PIXI.Graphics()
+    const graphics = this.createGraphics()
     return graphics.poly(points).fill(color)
   }
 
@@ -258,7 +276,7 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
     color: number,
     alpha = 1,
   ): PIXI.Graphics {
-    const graphics = new PIXI.Graphics()
+    const graphics = this.createGraphics()
     return graphics
       .rect(0, 0, width, height)
       .stroke({ width: strokeWidth, color, alpha })
