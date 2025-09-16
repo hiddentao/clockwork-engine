@@ -1,4 +1,5 @@
-export * from "./CollisionUtils"
+export * from "./CollisionGrid"
+export * from "./ICollisionSource"
 export * from "./GeometryUtils"
 export * from "./IPositionable"
 export * from "./Vector2D"

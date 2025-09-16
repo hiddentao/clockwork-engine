@@ -7,7 +7,7 @@ import type { Loader } from "./Loader"
 import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
-import { CollisionBspTree } from "./geometry/CollisionUtils"
+import { CollisionGrid } from "./geometry"
 import { GameState } from "./types"
 
 export enum GameEngineEventType {
@@ -34,13 +34,14 @@ export abstract class GameEngine
   protected timer: Timer = new Timer()
   protected eventManager: GameEventManager
   protected recorder: GameRecorder | undefined = undefined
-  protected collisionTree: CollisionBspTree = new CollisionBspTree()
+  protected collisionTree: CollisionGrid
   protected loader: Loader | undefined = undefined
 
   constructor(loader?: Loader) {
     super()
     this.loader = loader
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
+    this.collisionTree = new CollisionGrid()
   }
 
   protected setState(newState: GameState): void {
@@ -281,7 +282,7 @@ export abstract class GameEngine
   /**
    * Get the collision tree for spatial collision detection
    */
-  getCollisionTree(): CollisionBspTree {
+  getCollisionTree(): CollisionGrid {
     return this.collisionTree
   }
 

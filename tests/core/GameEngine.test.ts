@@ -210,7 +210,7 @@ describe("GameEngine", () => {
       const collisionTree = engine.getCollisionTree()
 
       expect(collisionTree).toBeDefined()
-      expect(collisionTree.constructor.name).toBe("CollisionBspTree")
+      expect(collisionTree.constructor.name).toBe("CollisionGrid")
     })
   })
 

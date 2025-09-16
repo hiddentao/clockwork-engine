@@ -4,14 +4,10 @@
  */
 
 /**
- * Collision detection and spatial partitioning constants
+ * Collision detection constants
  */
 export const COLLISION_CONSTANTS = {
-  /** Maximum collision points per quadtree node before subdivision */
-  MAX_POINTS_PER_NODE: 10,
-
-  /** Maximum depth of quadtree subdivision */
-  MAX_TREE_DEPTH: 8,
+  // No constants needed for CollisionGrid - it uses direct coordinate mapping
 } as const
 
 /**

@@ -1,5 +1,5 @@
 import { EventEmitter } from "./EventEmitter"
-import type { ICollisionSource } from "./geometry/CollisionUtils"
+import type { ICollisionSource } from "./geometry/ICollisionSource"
 import type { IPositionable } from "./geometry/IPositionable"
 import { Vector2D } from "./geometry/Vector2D"
 
