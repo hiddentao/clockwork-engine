@@ -214,7 +214,7 @@ class TestRenderer extends AbstractRenderer<TestGameObject> {
     return container
   }
 
-  protected updateContainer(
+  protected repaintContainer(
     container: PIXI.Container,
     item: TestGameObject,
   ): void {
@@ -349,7 +349,7 @@ describe("AbstractRenderer", () => {
       renderer.add(testItems[0])
 
       expect(renderer.createCallCount).toBe(1)
-      expect(renderer.updateContainerCallCount).toBe(1)
+      expect(renderer.updateContainerCallCount).toBe(2) // One from initial add, one from second add
 
       const container = gameContainer.children[0] as PIXI.Container
       expect(container.position.x).toBe(100)
@@ -370,7 +370,7 @@ describe("AbstractRenderer", () => {
       testItems[0].y = 300
       renderer.update(testItems[0])
 
-      expect(renderer.updateContainerCallCount).toBe(1)
+      expect(renderer.updateContainerCallCount).toBe(2) // One from add, one from update
 
       const container = gameContainer.children[0] as PIXI.Container
       expect(container.position.x).toBe(200)
@@ -488,7 +488,7 @@ describe("AbstractRenderer", () => {
       renderer.setItems([testItems[0]])
 
       expect(renderer.createCallCount).toBe(1) // Should not create again
-      expect(renderer.updateContainerCallCount).toBe(1) // Should update
+      expect(renderer.updateContainerCallCount).toBe(2) // One from initial add, one from setItems
 
       const container = gameContainer.children[0] as PIXI.Container
       expect(container.position.x).toBe(500)
@@ -597,7 +597,7 @@ describe("AbstractRenderer", () => {
           return container
         }
 
-        protected updateContainer(): void {
+        protected repaintContainer(): void {
           throw new Error("Update failed")
         }
 
@@ -703,7 +703,7 @@ describe("AbstractRenderer", () => {
       }
 
       expect(renderer.createCallCount).toBe(originalCreateCount) // No new containers created
-      expect(renderer.updateContainerCallCount).toBe(10) // All updates called
+      expect(renderer.updateContainerCallCount).toBe(11) // One from add plus 10 updates
     })
   })
 

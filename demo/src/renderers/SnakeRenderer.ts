@@ -13,7 +13,7 @@ export class SnakeRenderer extends AbstractRenderer<Snake> {
     return container
   }
 
-  protected updateContainer(container: PIXI.Container, snake: Snake): void {
+  protected repaintContainer(container: PIXI.Container, snake: Snake): void {
     this.updateSnakeSegments(container, snake)
   }
 

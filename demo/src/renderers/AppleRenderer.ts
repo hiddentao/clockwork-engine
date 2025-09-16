@@ -37,7 +37,7 @@ export class AppleRenderer extends AbstractRenderer<Apple> {
     return container
   }
 
-  protected updateContainer(container: PIXI.Container, apple: Apple): void {
+  protected repaintContainer(container: PIXI.Container, apple: Apple): void {
     const engine = apple.getEngine()
     const currentFrame = engine ? engine.getTotalFrames() : 0
 

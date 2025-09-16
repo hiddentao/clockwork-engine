@@ -56,6 +56,9 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
       this.gameContainer.addChild(container)
       this.itemSprites.set(id, container)
       this.items.set(id, item)
+
+      // Call updateContainer for newly created items to handle initial paint
+      this.updateContainer(container, item)
     } catch (error) {
       console.error(`Error adding item in ${this.constructor.name}:`, error)
     }
@@ -311,13 +314,40 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
 
   /**
    * Updates a container's visual properties based on the item's current state.
-   * Default implementation performs no updates. Child classes should override
-   * this method to implement specific update behavior.
+   * Checks the needsRepaint flag and only calls repaintContainer if needed.
    *
-   * @param _container The PIXI container to update
+   * @param container The PIXI container to update
+   * @param item The game object with current state
+   */
+  protected updateContainer(container: PIXI.Container, item: T): void {
+    // Check if item has needsRepaint property (for GameObject instances)
+    if (
+      typeof item === "object" &&
+      item !== null &&
+      "needsRepaint" in item &&
+      (item as any).needsRepaint
+    ) {
+      this.repaintContainer(container, item)
+      ;(item as any).needsRepaint = false
+    } else if (
+      typeof item !== "object" ||
+      item === null ||
+      !("needsRepaint" in item)
+    ) {
+      // For backwards compatibility with non-GameObject items, always repaint
+      this.repaintContainer(container, item)
+    }
+  }
+
+  /**
+   * Repaints a container's visual properties based on the item's current state.
+   * Default implementation performs no updates. Child classes should override
+   * this method to implement specific repaint behavior.
+   *
+   * @param _container The PIXI container to repaint
    * @param _item The game object with current state
    */
-  protected updateContainer(_container: PIXI.Container, _item: T): void {
+  protected repaintContainer(_container: PIXI.Container, _item: T): void {
     // Default implementation performs no updates
   }
 

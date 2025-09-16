@@ -38,7 +38,7 @@ export class WallRenderer extends AbstractRenderer<Wall> {
     return container
   }
 
-  protected updateContainer(container: PIXI.Container, wall: Wall): void {
+  protected repaintContainer(container: PIXI.Container, wall: Wall): void {
     // Update position (walls typically don't move, but good practice)
     const cellSize = GAME_CONFIG.CELL_SIZE
     const position = wall.getPosition()

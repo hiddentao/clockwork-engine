@@ -77,6 +77,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   protected maxHealth: number
   protected destroyed: boolean
   protected engine?: GameEngineInterface
+  private isRepaintNeeded: boolean = true
 
   constructor(
     id: string,
@@ -113,7 +114,14 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
 
     // Move object based on velocity
     const movement = this.velocity.scale(deltaFrames)
+    const oldPosition = this.position
     this.position = this.position.add(movement)
+    if (
+      oldPosition.x !== this.position.x ||
+      oldPosition.y !== this.position.y
+    ) {
+      this.isRepaintNeeded = true
+    }
   }
 
   public getPosition(): Vector2D {
@@ -123,6 +131,9 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   public setPosition(position: Vector2D): void {
     const oldPosition = this.position
     this.position = position
+    if (oldPosition.x !== position.x || oldPosition.y !== position.y) {
+      this.isRepaintNeeded = true
+    }
     ;(this.emit as any)(
       GameObjectEventType.POSITION_CHANGED,
       this,
@@ -136,7 +147,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   }
 
   public setSize(size: Vector2D): void {
-    this.size = size
+    if (this.size.x !== size.x || this.size.y !== size.y) {
+      this.size = size
+      this.isRepaintNeeded = true
+    }
   }
 
   public getVelocity(): Vector2D {
@@ -144,7 +158,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   }
 
   public setVelocity(velocity: Vector2D): void {
-    this.velocity = velocity
+    if (this.velocity.x !== velocity.x || this.velocity.y !== velocity.y) {
+      this.velocity = velocity
+      this.isRepaintNeeded = true
+    }
   }
 
   public getRotation(): number {
@@ -152,7 +169,10 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
   }
 
   public setRotation(rotation: number): void {
-    this.rotation = rotation
+    if (this.rotation !== rotation) {
+      this.rotation = rotation
+      this.isRepaintNeeded = true
+    }
   }
 
   public getHealth(): number {
@@ -167,6 +187,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldMaxHealth = this.maxHealth
     this.maxHealth = maxHealth
     if (this.maxHealth !== oldMaxHealth) {
+      this.isRepaintNeeded = true
       ;(this.emit as any)(
         GameObjectEventType.MAX_HEALTH_CHANGED,
         this,
@@ -180,6 +201,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldHealth = this.health
     this.health = Math.max(0, Math.min(this.maxHealth, health))
     if (this.health !== oldHealth) {
+      this.isRepaintNeeded = true
       ;(this.emit as any)(
         GameObjectEventType.HEALTH_CHANGED,
         this,
@@ -197,6 +219,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldHealth = this.health
     this.health = Math.max(0, this.health - amount)
     if (this.health !== oldHealth) {
+      this.isRepaintNeeded = true
       ;(this.emit as any)(
         GameObjectEventType.HEALTH_CHANGED,
         this,
@@ -214,6 +237,7 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     const oldHealth = this.health
     this.health = Math.min(this.maxHealth, this.health + amount)
     if (this.health !== oldHealth) {
+      this.isRepaintNeeded = true
       ;(this.emit as any)(
         GameObjectEventType.HEALTH_CHANGED,
         this,
@@ -229,10 +253,27 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
 
   public destroy(): void {
     this.destroyed = true
+    this.isRepaintNeeded = true
     if (GameObject.debug) {
       // debug: destroy log
     }
     ;(this.emit as any)(GameObjectEventType.DESTROYED, this)
+  }
+
+  /**
+   * Get the repaint flag for this game object
+   * @returns Whether the object needs to be repainted
+   */
+  public get needsRepaint(): boolean {
+    return this.isRepaintNeeded
+  }
+
+  /**
+   * Set the repaint flag for this game object
+   * @param value Whether the object needs to be repainted
+   */
+  public set needsRepaint(value: boolean) {
+    this.isRepaintNeeded = value
   }
 
   /**
