@@ -123,6 +123,18 @@ export class GameObjectGroup<T extends GameObject = GameObject>
   }
 
   /**
+   * Destroy all active GameObjects and then clear the group
+   */
+  public clearAndDestroy(): void {
+    for (const gameObject of this.gameObjects.values()) {
+      if (!gameObject.isDestroyed()) {
+        gameObject.destroy()
+      }
+    }
+    this.clear()
+  }
+
+  /**
    * Remove all destroyed GameObjects from the group
    * @returns Number of destroyed GameObjects that were removed
    */

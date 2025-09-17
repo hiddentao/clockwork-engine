@@ -810,4 +810,239 @@ describe("GameObjectGroup", () => {
       })
     })
   })
+
+  describe("clearAndDestroy() Method", () => {
+    let eventLog: Array<{ event: string; data: any }>
+
+    beforeEach(() => {
+      eventLog = []
+
+      // Set up event listeners to track destruction events for all test objects
+      const allTestObjects = [...players, ...enemies]
+      allTestObjects.forEach((gameObject) => {
+        gameObject.on("destroyed", (destroyedObject) => {
+          eventLog.push({
+            event: "OBJECT_DESTROYED",
+            data: {
+              id: destroyedObject.getId(),
+              type: destroyedObject.getType(),
+            },
+          })
+        })
+      })
+
+      group.on(GameObjectGroupEventType.LIST_CLEARED, () => {
+        eventLog.push({ event: "LIST_CLEARED", data: {} })
+      })
+    })
+
+    it("should destroy all active objects and then clear the group", () => {
+      group.add(players[0])
+      group.add(players[1])
+      group.add(players[2])
+
+      expect(group.size()).toBe(3)
+      expect(group.activeSize()).toBe(3)
+
+      group.clearAndDestroy()
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+      expect(group.getAllActive()).toEqual([])
+
+      // All objects should be destroyed
+      expect(players[0].isDestroyed()).toBe(true)
+      expect(players[1].isDestroyed()).toBe(true)
+      expect(players[2].isDestroyed()).toBe(true)
+    })
+
+    it("should emit DESTROYED events for each object followed by LIST_CLEARED", () => {
+      group.add(players[0])
+      group.add(players[1])
+
+      eventLog = [] // Clear setup events
+      group.clearAndDestroy()
+
+      // Should emit destruction events followed by clear event
+      expect(eventLog).toHaveLength(3)
+      expect(eventLog[0]).toEqual({
+        event: "OBJECT_DESTROYED",
+        data: { id: "player1", type: "Player" },
+      })
+      expect(eventLog[1]).toEqual({
+        event: "OBJECT_DESTROYED",
+        data: { id: "player2", type: "Player" },
+      })
+      expect(eventLog[2]).toEqual({
+        event: "LIST_CLEARED",
+        data: {},
+      })
+    })
+
+    it("should handle already destroyed objects gracefully", () => {
+      group.add(players[0])
+      group.add(players[1])
+      group.add(players[2])
+
+      // Destroy one object manually
+      players[1].destroy()
+
+      expect(group.size()).toBe(3)
+      expect(group.activeSize()).toBe(2)
+
+      eventLog = [] // Clear events from manual destroy
+      group.clearAndDestroy()
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+
+      // Should only emit destruction events for previously active objects
+      expect(eventLog).toHaveLength(3) // 2 destructions + 1 clear
+      expect(eventLog[0]).toEqual({
+        event: "OBJECT_DESTROYED",
+        data: { id: "player1", type: "Player" },
+      })
+      expect(eventLog[1]).toEqual({
+        event: "OBJECT_DESTROYED",
+        data: { id: "player3", type: "Player" },
+      })
+      expect(eventLog[2]).toEqual({
+        event: "LIST_CLEARED",
+        data: {},
+      })
+    })
+
+    it("should handle empty group gracefully", () => {
+      expect(group.size()).toBe(0)
+
+      eventLog = []
+      group.clearAndDestroy()
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+
+      // Should only emit LIST_CLEARED event
+      expect(eventLog).toHaveLength(1)
+      expect(eventLog[0]).toEqual({
+        event: "LIST_CLEARED",
+        data: {},
+      })
+    })
+
+    it("should handle group with only destroyed objects", () => {
+      group.add(players[0])
+      group.add(players[1])
+
+      // Destroy all objects manually
+      players[0].destroy()
+      players[1].destroy()
+
+      expect(group.size()).toBe(2)
+      expect(group.activeSize()).toBe(0)
+
+      eventLog = [] // Clear events from manual destroys
+      group.clearAndDestroy()
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+
+      // Should only emit LIST_CLEARED event (no additional destructions)
+      expect(eventLog).toHaveLength(1)
+      expect(eventLog[0]).toEqual({
+        event: "LIST_CLEARED",
+        data: {},
+      })
+    })
+
+    it("should handle large numbers of objects efficiently", () => {
+      const startTime = performance.now()
+
+      // Add many objects
+      const manyPlayers: TestPlayer[] = []
+      for (let i = 0; i < 1000; i++) {
+        const player = new TestPlayer(`bulkPlayer${i}`, { x: i, y: i })
+        manyPlayers.push(player)
+        group.add(player)
+      }
+
+      expect(group.size()).toBe(1000)
+      expect(group.activeSize()).toBe(1000)
+
+      const clearStartTime = performance.now()
+      group.clearAndDestroy()
+      const clearTime = performance.now() - clearStartTime
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+      expect(clearTime).toBeLessThan(1000) // Should complete in less than 1 second
+
+      // All objects should be destroyed
+      manyPlayers.forEach((player) => {
+        expect(player.isDestroyed()).toBe(true)
+      })
+
+      const totalTime = performance.now() - startTime
+      expect(totalTime).toBeLessThan(2000) // Total operation should be fast
+    })
+
+    it("should maintain consistency after clearAndDestroy", () => {
+      group.add(players[0])
+      group.add(players[1])
+      group.add(enemies[0])
+
+      group.clearAndDestroy()
+
+      // Group should be completely empty and consistent
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+      expect(group.getAllActive()).toEqual([])
+      expect(group.getById("player1")).toBeUndefined()
+      expect(group.getById("player2")).toBeUndefined()
+      expect(group.getById("enemy1")).toBeUndefined()
+
+      // Should be able to add new objects after clearAndDestroy
+      const newPlayer = new TestPlayer("newPlayer", { x: 0, y: 0 })
+      group.add(newPlayer)
+
+      expect(group.size()).toBe(1)
+      expect(group.activeSize()).toBe(1)
+      expect(group.getById("newPlayer")).toBe(newPlayer)
+    })
+
+    it("should handle mixed active and destroyed objects", () => {
+      group.add(players[0])
+      group.add(players[1])
+      group.add(players[2])
+      group.add(enemies[0])
+      group.add(enemies[1])
+
+      // Destroy some objects manually
+      players[1].destroy()
+      enemies[1].destroy()
+
+      expect(group.size()).toBe(5)
+      expect(group.activeSize()).toBe(3) // 3 active objects
+
+      eventLog = [] // Clear events from manual destroys
+      group.clearAndDestroy()
+
+      expect(group.size()).toBe(0)
+      expect(group.activeSize()).toBe(0)
+
+      // Should emit destruction events only for previously active objects + clear event
+      expect(eventLog).toHaveLength(4) // 3 destructions + 1 clear
+
+      const destructionEvents = eventLog.filter(
+        (e) => e.event === "OBJECT_DESTROYED",
+      )
+      const clearEvents = eventLog.filter((e) => e.event === "LIST_CLEARED")
+
+      expect(destructionEvents).toHaveLength(3)
+      expect(clearEvents).toHaveLength(1)
+
+      // Check that only active objects were destroyed
+      const destroyedIds = destructionEvents.map((e) => e.data.id).sort()
+      expect(destroyedIds).toEqual(["enemy1", "player1", "player3"])
+    })
+  })
 })

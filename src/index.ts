@@ -29,3 +29,5 @@ export * from "./rendering"
 export * from "./GameCanvas"
 // PIXI.js and pixi-viewport integration
 export * from "./lib/pixi"
+// Performance measurement
+export * from "./lib/performance"
