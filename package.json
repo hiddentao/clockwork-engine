@@ -79,9 +79,6 @@
     "typescript": "^5.3.3"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "bun run lint",
-      "cd demo && bun run lint"
-    ]
+    "*.{ts,tsx}": ["bun run lint", "cd demo && bun run lint"]
   }
 }
