@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.4.0](https://github.com/hiddentao/clockwork-engine/compare/v1.3.0...v1.4.0) (2025-09-18)
+
+
+### Features
+
+* **collision:** prevent duplicate points in CollisionBspTree ([84a515b](https://github.com/hiddentao/clockwork-engine/commit/84a515b7b8cca4054e97f6c8a6be61ee02b28a6f))
+* **core:** add clearAndDestroy method to GameObjectGroup ([480ed18](https://github.com/hiddentao/clockwork-engine/commit/480ed18a42cfd62c5f3f53d58122f825869838cb))
+* **lib:** add performance timing utilities with comprehensive test coverage ([fdae4f0](https://github.com/hiddentao/clockwork-engine/commit/fdae4f034194aba0d0697945589ba42364d0d4f9))
+* **loader:** add Loader abstraction with DemoLoader implementation and comprehensive tests ([8bafa06](https://github.com/hiddentao/clockwork-engine/commit/8bafa06f4541ac376395c376186c9f8f2f558271))
+* **prng:** add threshold parameter to randomBoolean() method ([372bbc1](https://github.com/hiddentao/clockwork-engine/commit/372bbc171212bf568dc3c8d0795ed8728ed52b7b))
+* **rendering:** add automatic PIXI Graphics cleanup with comprehensive testing ([a6387b6](https://github.com/hiddentao/clockwork-engine/commit/a6387b6cbd9a79033b93d31b71c355fd9adcb76d))
+* **rendering:** add needsRepaint flag optimization system ([b5466c2](https://github.com/hiddentao/clockwork-engine/commit/b5466c252ccac29a7915eb876fef9eaea8851f39))
+
+
+### Bug Fixes
+
+* **ci:** improve workflow order and separate demo linting ([85df80c](https://github.com/hiddentao/clockwork-engine/commit/85df80c12057927d0ac3adbbdc903df8727ea943))
+* **ci:** move linting before build and add demo linting to pre-commit hooks ([0e9e6a2](https://github.com/hiddentao/clockwork-engine/commit/0e9e6a2cf71b5183e1ac672aa30959072313cd58))
+* **tests:** implement comprehensive PIXI mocking and fix rendering tests ([4877701](https://github.com/hiddentao/clockwork-engine/commit/4877701dd161bc9f30522110141bd48cdac4b346))
+
+
+### Code Refactoring
+
+* move GameCanvas from rendering to root and add comprehensive lib utilities ([fc6306f](https://github.com/hiddentao/clockwork-engine/commit/fc6306fb6aba4bf7549cd0238532c14d92b21ce8))
+* **rendering:** rename destroy() to clear() in AbstractRenderer ([007dd78](https://github.com/hiddentao/clockwork-engine/commit/007dd782930a48ad8977b1d57869241adce3be0f))
+* replace CollisionBspTree with simplified CollisionGrid ([36aa34b](https://github.com/hiddentao/clockwork-engine/commit/36aa34b28e716c913de980e5bb645cc315abc88a))
+
 ## [1.3.0](https://github.com/hiddentao/clockwork-engine/compare/v1.2.0...v1.3.0) (2025-09-12)
 
 
