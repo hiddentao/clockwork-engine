@@ -43,7 +43,7 @@ class MockRenderer implements BaseRenderer<TestItem> {
     return item.id
   }
 
-  destroy(): void {
+  clear(): void {
     this.items.clear()
     this.addCalls = []
     this.updateCalls = []
@@ -105,7 +105,7 @@ class AlternativeRenderer implements BaseRenderer<TestItem> {
     return item.id
   }
 
-  destroy(): void {
+  clear(): void {
     this.storage = []
   }
 
@@ -360,7 +360,7 @@ describe("BaseRenderer Interface", () => {
           return item.id
         }
 
-        destroy(): void {
+        clear(): void {
           this.items = []
         }
 
@@ -420,14 +420,11 @@ describe("BaseRenderer Interface", () => {
           return item.id
         }
 
-        destroy(): void {
+        clear(): void {
           this.items.clear()
         }
 
         // Extra functionality beyond the interface
-        clear(): void {
-          this.items.clear()
-        }
 
         getCount(): number {
           return this.items.size

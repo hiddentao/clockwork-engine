@@ -61,10 +61,10 @@ export interface BaseRenderer<T> {
   getId(item: T): string
 
   /**
-   * Completely destroys the renderer and cleans up all resources.
+   * Completely clears the renderer and cleans up all resources.
    * Removes all PIXI containers from the display tree, destroys them
    * to free GPU memory, and clears all internal tracking maps.
    * Should be called when the renderer is no longer needed.
    */
-  destroy(): void
+  clear(): void
 }

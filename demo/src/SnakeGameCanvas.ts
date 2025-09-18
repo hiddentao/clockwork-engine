@@ -95,15 +95,15 @@ export class SnakeGameCanvas extends GameCanvas {
   public destroy(): void {
     // Clean up renderers
     if (this.appleRenderer) {
-      this.appleRenderer.destroy()
+      this.appleRenderer.clear()
       this.appleRenderer = null
     }
     if (this.snakeRenderer) {
-      this.snakeRenderer.destroy()
+      this.snakeRenderer.clear()
       this.snakeRenderer = null
     }
     if (this.wallRenderer) {
-      this.wallRenderer.destroy()
+      this.wallRenderer.clear()
       this.wallRenderer = null
     }
 

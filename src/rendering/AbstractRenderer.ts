@@ -352,10 +352,10 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
   }
 
   /**
-   * Completely destroys the renderer and cleans up all resources.
+   * Completely clears the renderer and cleans up all resources.
    * Removes all PIXI containers from the display tree and frees GPU memory.
    */
-  public destroy(): void {
+  public clear(): void {
     const entries = Array.from(this.itemSprites.entries())
     for (const [id, container] of entries) {
       this.gameContainer.removeChild(container)

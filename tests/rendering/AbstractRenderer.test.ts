@@ -991,13 +991,13 @@ describe("AbstractRenderer", () => {
   })
 
   describe("Destruction and Cleanup", () => {
-    describe("destroy", () => {
+    describe("clear", () => {
       it("should remove all containers from game container", () => {
         renderer.add(testItems[0])
         renderer.add(testItems[1])
         expect(gameContainer.children.length).toBe(2)
 
-        renderer.destroy()
+        renderer.clear()
         expect(gameContainer.children.length).toBe(0)
       })
 
@@ -1005,7 +1005,7 @@ describe("AbstractRenderer", () => {
         renderer.add(testItems[0])
         renderer.add(testItems[1])
 
-        renderer.destroy()
+        renderer.clear()
 
         expect(renderer.getAllItems().size).toBe(0)
         expect(renderer.getContainer("item1")).toBeUndefined()
@@ -1013,7 +1013,7 @@ describe("AbstractRenderer", () => {
       })
 
       it("should handle empty renderer gracefully", () => {
-        expect(() => renderer.destroy()).not.toThrow()
+        expect(() => renderer.clear()).not.toThrow()
       })
 
       it("should destroy PIXI containers with children", () => {
@@ -1027,7 +1027,7 @@ describe("AbstractRenderer", () => {
           return originalDestroy.call(container, options)
         }
 
-        renderer.destroy()
+        renderer.clear()
         expect(destroyCalled).toBe(true)
       })
     })
