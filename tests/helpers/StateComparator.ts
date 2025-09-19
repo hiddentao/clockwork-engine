@@ -129,7 +129,7 @@ export class StateComparator {
 
   static snapshot(engine: GameEngine): GameStateSnapshot {
     const snapshot: GameStateSnapshot = {
-      frame: engine.getTotalFrames(),
+      frame: engine.getTotalTicks(),
       state: engine.getState(),
       seed: engine.getSeed(),
       objects: {},

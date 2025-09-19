@@ -25,7 +25,7 @@ describe("GameEngine", () => {
       engine.reset("test-seed")
 
       expect(engine.getSeed()).toBe("test-seed")
-      expect(engine.getTotalFrames()).toBe(0)
+      expect(engine.getTotalTicks()).toBe(0)
       expect(setupSpy).toHaveBeenCalled()
     })
 
@@ -36,18 +36,18 @@ describe("GameEngine", () => {
       engine.createAutoPlayer(new Vector2D(50, 50))
       engine.createAutoEnemy(new Vector2D(100, 100))
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Run some frames
       ticker.tick(5)
-      expect(engine.getTotalFrames()).toBe(5)
+      expect(engine.getTotalTicks()).toBe(5)
       expect(engine.getTotalObjectCount()).toBeGreaterThan(0)
 
       // Reset
       engine.reset()
 
       expect(engine.getState()).toBe(GameState.READY)
-      expect(engine.getTotalFrames()).toBe(0)
+      expect(engine.getTotalTicks()).toBe(0)
       expect(engine.getTotalObjectCount()).toBe(0)
     })
 
@@ -293,36 +293,36 @@ describe("GameEngine", () => {
     })
 
     it("should only update when in PLAYING state", async () => {
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Should not update in READY state
       await ticker.tick(1)
-      expect(engine.getTotalFrames()).toBe(0)
+      expect(engine.getTotalTicks()).toBe(0)
 
       // Should update in PLAYING state
       engine.start()
       await ticker.tick(1)
-      expect(engine.getTotalFrames()).toBe(1)
+      expect(engine.getTotalTicks()).toBe(1)
 
       // Should not update in PAUSED state
       engine.pause()
       await ticker.tick(1)
-      expect(engine.getTotalFrames()).toBe(1) // No change
+      expect(engine.getTotalTicks()).toBe(1) // No change
 
       // Should update again when resumed
       engine.resume()
       await ticker.tick(1)
-      expect(engine.getTotalFrames()).toBe(2)
+      expect(engine.getTotalTicks()).toBe(2)
 
       // Should not update in ENDED state
       engine.end()
       await ticker.tick(1)
-      expect(engine.getTotalFrames()).toBe(2) // No change
+      expect(engine.getTotalTicks()).toBe(2) // No change
     })
 
-    it("should update frame counter correctly with various delta frames", async () => {
+    it("should update tick counter correctly with various delta frames", async () => {
       engine.start()
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const deltaSequence = [1, 2, 0.5, 3, 1.5]
       let expectedTotal = 0
@@ -330,7 +330,7 @@ describe("GameEngine", () => {
       for (const delta of deltaSequence) {
         await ticker.tick(delta)
         expectedTotal += delta
-        expect(engine.getTotalFrames()).toBe(expectedTotal)
+        expect(engine.getTotalTicks()).toBe(expectedTotal)
       }
     })
 
@@ -347,7 +347,7 @@ describe("GameEngine", () => {
       const initialPlayerPos = player.getPosition()
       const initialEnemyPos = enemy.getPosition()
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
       await ticker.tick(1)
 
       // Objects should have moved
@@ -357,24 +357,24 @@ describe("GameEngine", () => {
       expect(enemy.getPosition().y).toBe(initialEnemyPos.y)
     })
 
-    it("should maintain update order (events -> timers -> objects -> frame counter)", async () => {
+    it("should maintain update order (events -> timers -> objects -> tick counter)", async () => {
       engine.start()
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const updateOrder: string[] = []
 
       // Mock the engine's internal update methods to track order
       const originalUpdate = engine.update.bind(engine)
-      engine.update = async (deltaFrames: number) => {
+      engine.update = async (deltaTicks: number) => {
         updateOrder.push("start")
-        await originalUpdate(deltaFrames)
+        await originalUpdate(deltaTicks)
         updateOrder.push("end")
       }
 
       await ticker.tick(1)
 
       expect(updateOrder).toEqual(["start", "end"])
-      expect(engine.getTotalFrames()).toBe(1)
+      expect(engine.getTotalTicks()).toBe(1)
     })
 
     it("should handle multiple object types updating together", async () => {
@@ -391,7 +391,7 @@ describe("GameEngine", () => {
       player.setVelocity(new Vector2D(2, 0))
       enemy.setVelocity(new Vector2D(0, 2))
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const initialPositions = {
         player: player.getPosition(),
@@ -422,10 +422,10 @@ describe("GameEngine", () => {
       engine.start()
       engine.setTimeout(() => {
         executed = true
-        executionFrame = engine.getTotalFrames()
+        executionFrame = engine.getTotalTicks()
       }, 3)
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Should not execute before target frame
       await ticker.tick(2)
@@ -442,11 +442,11 @@ describe("GameEngine", () => {
 
       engine.start()
       engine.setInterval(() => {
-        executions.push(engine.getTotalFrames())
+        executions.push(engine.getTotalTicks())
       }, 2)
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
-      await ticker.runFrames(8)
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
+      await ticker.runTicks(8)
 
       expect(executions).toEqual([2, 4, 6, 8])
     })
@@ -462,8 +462,8 @@ describe("GameEngine", () => {
       const cleared = engine.clearTimer(timerId)
       expect(cleared).toBe(true)
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
-      await ticker.runFrames(5)
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
+      await ticker.runTicks(5)
 
       expect(executed).toBe(false)
     })
@@ -479,8 +479,8 @@ describe("GameEngine", () => {
       engine.reset()
       engine.start()
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
-      await ticker.runFrames(3)
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
+      await ticker.runTicks(3)
 
       expect(executed).toBe(false) // Timer should be cleared by reset
     })
@@ -502,7 +502,7 @@ describe("GameEngine", () => {
         normalCallbackExecuted = true
       }, 1)
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Should not throw error at engine level
       await expect(ticker.tick(2)).resolves.toBeUndefined()
@@ -540,7 +540,7 @@ describe("GameEngine", () => {
       // Simulate adding an object update event
       const eventManager = engine.getEventManager()
 
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
       await ticker.tick(1)
 
       // Event manager should be processing events
@@ -556,7 +556,7 @@ describe("GameEngine", () => {
     it("should not leak memory during normal operations", async () => {
       const { profile } = await memoryProfiler.profileAsync(async () => {
         engine.start()
-        ticker.add((deltaFrames) => engine.update(deltaFrames))
+        ticker.add((deltaTicks) => engine.update(deltaTicks))
 
         // Create and destroy many objects
         for (let i = 0; i < 100; i++) {
@@ -610,7 +610,7 @@ describe("GameEngine", () => {
       engine1.start()
 
       const ticker1 = new MockTicker()
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
 
       const snapshot1Data: any[] = []
       for (let i = 0; i < operations; i++) {
@@ -625,7 +625,7 @@ describe("GameEngine", () => {
 
         if (i % 5 === 0) {
           snapshot1Data.push({
-            frame: engine1.getTotalFrames(),
+            frame: engine1.getTotalTicks(),
             objectCount: engine1.getTotalObjectCount(),
             prngValue: engine1.getPRNG().random(),
           })
@@ -638,7 +638,7 @@ describe("GameEngine", () => {
       engine2.start()
 
       const ticker2 = new MockTicker()
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       const snapshot2Data: any[] = []
       for (let i = 0; i < operations; i++) {
@@ -653,7 +653,7 @@ describe("GameEngine", () => {
 
         if (i % 5 === 0) {
           snapshot2Data.push({
-            frame: engine2.getTotalFrames(),
+            frame: engine2.getTotalTicks(),
             objectCount: engine2.getTotalObjectCount(),
             prngValue: engine2.getPRNG().random(),
           })
@@ -662,7 +662,7 @@ describe("GameEngine", () => {
 
       // Compare results
       expect(snapshot1Data).toEqual(snapshot2Data)
-      expect(engine1.getTotalFrames()).toBe(engine2.getTotalFrames())
+      expect(engine1.getTotalTicks()).toBe(engine2.getTotalTicks())
 
       const finalSnapshot1 = StateComparator.snapshot(engine1)
       const finalSnapshot2 = StateComparator.snapshot(engine2)
@@ -678,7 +678,7 @@ describe("GameEngine", () => {
         engine.start()
 
         const ticker = new MockTicker()
-        ticker.add((deltaFrames) => engine.update(deltaFrames))
+        ticker.add((deltaTicks) => engine.update(deltaTicks))
 
         // Create some objects with randomness
         for (let i = 0; i < 10; i++) {
@@ -706,22 +706,22 @@ describe("GameEngine", () => {
 
     it("should handle zero delta frames", async () => {
       engine.start()
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
-      const initialFrame = engine.getTotalFrames()
+      const initialFrame = engine.getTotalTicks()
       await ticker.tick(0)
 
-      expect(engine.getTotalFrames()).toBe(initialFrame) // No change
+      expect(engine.getTotalTicks()).toBe(initialFrame) // No change
     })
 
     it("should handle very large delta frames", async () => {
       engine.start()
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const largeDelta = 1000000
       await ticker.tick(largeDelta)
 
-      expect(engine.getTotalFrames()).toBe(largeDelta)
+      expect(engine.getTotalTicks()).toBe(largeDelta)
     })
 
     it("should handle many objects efficiently", () => {
@@ -752,12 +752,12 @@ describe("GameEngine", () => {
 
     it("should handle engine operations when no objects exist", async () => {
       engine.start()
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Should work fine with no objects
-      await ticker.runFrames(10)
+      await ticker.runTicks(10)
 
-      expect(engine.getTotalFrames()).toBe(10)
+      expect(engine.getTotalTicks()).toBe(10)
       expect(engine.getTotalObjectCount()).toBe(0)
     })
   })

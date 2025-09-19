@@ -59,8 +59,8 @@ describe("ReplayManager", () => {
           params: [new Vector2D(0, 0)],
         } as ObjectUpdateEvent,
       ],
-      deltaFrames: [1, 1, 1, 1, 1], // 5 frames total
-      totalFrames: 5,
+      deltaTicks: [1, 1, 1, 1, 1], // 5 frames total
+      totalTicks: 5,
       metadata: {
         createdAt: Date.now(),
         version: "1.0.0",
@@ -72,12 +72,12 @@ describe("ReplayManager", () => {
   describe("Initial State", () => {
     it("should start in non-replaying state", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentTick()).toBe(0)
 
       const progress = replayManager.getReplayProgress()
       expect(progress.isReplaying).toBe(false)
       expect(progress.progress).toBe(0)
-      expect(progress.hasMoreFrames).toBe(false)
+      expect(progress.hasMoreTicks).toBe(false)
     })
   })
 
@@ -86,13 +86,13 @@ describe("ReplayManager", () => {
       replayManager.replay(sampleRecording)
 
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentTick()).toBe(0)
       expect(engine.getState()).toBe(GameState.PLAYING)
 
       const progress = replayManager.getReplayProgress()
       expect(progress.isReplaying).toBe(true)
       expect(progress.progress).toBe(0)
-      expect(progress.hasMoreFrames).toBe(true)
+      expect(progress.hasMoreTicks).toBe(true)
     })
 
     it("should reset engine with recording seed", () => {
@@ -125,8 +125,8 @@ describe("ReplayManager", () => {
       const emptyRecording: GameRecording = {
         seed: "empty-seed",
         events: [],
-        deltaFrames: [],
-        totalFrames: 0,
+        deltaTicks: [],
+        totalTicks: 0,
         metadata: { createdAt: Date.now() },
       }
 
@@ -134,7 +134,7 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       const progress = replayManager.getReplayProgress()
-      expect(progress.hasMoreFrames).toBe(false)
+      expect(progress.hasMoreTicks).toBe(false)
     })
   })
 
@@ -143,48 +143,48 @@ describe("ReplayManager", () => {
       replayManager.replay(sampleRecording)
     })
 
-    it("should process frames according to recorded deltaFrames", () => {
+    it("should process frames according to recorded deltaTicks", () => {
       // Each recorded deltaFrame is 1, so should process one frame per update call
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentTick()).toBe(0)
 
       replayManager.update(1) // Should process frame 1
-      expect(replayManager.getCurrentFrame()).toBe(1)
+      expect(replayManager.getCurrentTick()).toBe(1)
 
       replayManager.update(1) // Should process frame 2
-      expect(replayManager.getCurrentFrame()).toBe(2)
+      expect(replayManager.getCurrentTick()).toBe(2)
 
       replayManager.update(1) // Should process frame 3
-      expect(replayManager.getCurrentFrame()).toBe(3)
+      expect(replayManager.getCurrentTick()).toBe(3)
     })
 
-    it("should accumulate deltaFrames when insufficient for next recorded frame", () => {
-      expect(replayManager.getCurrentFrame()).toBe(0)
+    it("should accumulate deltaTicks when insufficient for next recorded frame", () => {
+      expect(replayManager.getCurrentTick()).toBe(0)
 
       // Provide partial frame
       replayManager.update(0.5)
-      expect(replayManager.getCurrentFrame()).toBe(0) // Not enough for full frame
+      expect(replayManager.getCurrentTick()).toBe(0) // Not enough for full frame
 
       // Provide remaining partial frame
       replayManager.update(0.5)
-      expect(replayManager.getCurrentFrame()).toBe(1) // Now enough for full frame
+      expect(replayManager.getCurrentTick()).toBe(1) // Now enough for full frame
     })
 
     it("should process multiple recorded frames in single update", () => {
-      expect(replayManager.getCurrentFrame()).toBe(0)
+      expect(replayManager.getCurrentTick()).toBe(0)
 
-      // Provide enough deltaFrames for multiple recorded frames
+      // Provide enough deltaTicks for multiple recorded frames
       replayManager.update(3.5) // Should process 3 complete frames (3 * 1.0)
-      expect(replayManager.getCurrentFrame()).toBe(3)
+      expect(replayManager.getCurrentTick()).toBe(3)
 
       // Remaining 0.5 should be accumulated
       replayManager.update(0.5) // Total of 1.0, should process 1 more frame
-      expect(replayManager.getCurrentFrame()).toBe(4)
+      expect(replayManager.getCurrentTick()).toBe(4)
     })
 
     it("should update progress correctly during replay", () => {
       let progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(0)
-      expect(progress.hasMoreFrames).toBe(true)
+      expect(progress.hasMoreTicks).toBe(true)
 
       replayManager.update(1) // Frame 1 of 5
       progress = replayManager.getReplayProgress()
@@ -197,37 +197,37 @@ describe("ReplayManager", () => {
       replayManager.update(2) // Frames 4-5 of 5
       progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(1.0) // Complete
-      expect(progress.hasMoreFrames).toBe(false)
+      expect(progress.hasMoreTicks).toBe(false)
     })
 
-    it("should stop replay when all deltaFrames processed", () => {
+    it("should stop replay when all deltaTicks processed", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       // Process frames one at a time
-      replayManager.update(1) // Should process deltaFrames[0] = 1
+      replayManager.update(1) // Should process deltaTicks[0] = 1
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      replayManager.update(1) // Should process deltaFrames[1] = 1
+      replayManager.update(1) // Should process deltaTicks[1] = 1
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      replayManager.update(1) // Should process deltaFrames[2] = 1
+      replayManager.update(1) // Should process deltaTicks[2] = 1
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      replayManager.update(1) // Should process deltaFrames[3] = 1
+      replayManager.update(1) // Should process deltaTicks[3] = 1
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      replayManager.update(1) // Should process deltaFrames[4] = 1 and auto-stop
+      replayManager.update(1) // Should process deltaTicks[4] = 1 and auto-stop
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
-      expect(replayManager.getCurrentFrame()).toBe(5)
+      expect(replayManager.getCurrentTick()).toBe(5)
     })
 
     it("should not process frames when not replaying", () => {
       replayManager.stopReplay()
 
-      const initialFrame = replayManager.getCurrentFrame()
+      const initialFrame = replayManager.getCurrentTick()
       replayManager.update(10) // Large update
 
-      expect(replayManager.getCurrentFrame()).toBe(initialFrame)
+      expect(replayManager.getCurrentTick()).toBe(initialFrame)
     })
   })
 
@@ -237,7 +237,7 @@ describe("ReplayManager", () => {
       replayManager.update(2) // Process some frames
 
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
-      expect(replayManager.getCurrentFrame()).toBe(2)
+      expect(replayManager.getCurrentTick()).toBe(2)
 
       replayManager.stopReplay()
 
@@ -251,12 +251,12 @@ describe("ReplayManager", () => {
 
       replayManager.stopReplay()
 
-      expect(replayManager.getCurrentFrame()).toBe(3) // Frame count preserved after stop
+      expect(replayManager.getCurrentTick()).toBe(3) // Frame count preserved after stop
 
       const progress = replayManager.getReplayProgress()
       expect(progress.isReplaying).toBe(false)
       expect(progress.progress).toBe(0.6) // 3/5 frames completed
-      expect(progress.hasMoreFrames).toBe(true) // Still has deltaFrames[3] and deltaFrames[4] remaining
+      expect(progress.hasMoreTicks).toBe(true) // Still has deltaTicks[3] and deltaTicks[4] remaining
     })
 
     it("should handle stop when not replaying", () => {
@@ -273,8 +273,8 @@ describe("ReplayManager", () => {
       const newRecording: GameRecording = {
         ...sampleRecording,
         seed: "new-seed",
-        deltaFrames: [0.5, 0.5, 0.5, 0.5],
-        totalFrames: 2,
+        deltaTicks: [0.5, 0.5, 0.5, 0.5],
+        totalTicks: 2,
       }
 
       expect(() => replayManager.replay(newRecording)).not.toThrow()
@@ -284,7 +284,7 @@ describe("ReplayManager", () => {
   })
 
   describe("Frame Timing Edge Cases", () => {
-    it("should handle zero deltaFrames in recording", () => {
+    it("should handle zero deltaTicks in recording", () => {
       const zeroFrameRecording: GameRecording = {
         seed: "zero-frame-test",
         events: [
@@ -296,57 +296,57 @@ describe("ReplayManager", () => {
             params: {},
           } as UserInputEvent,
         ],
-        deltaFrames: [0, 1, 0, 1], // Zero deltaFrames are invalid
-        totalFrames: 2,
+        deltaTicks: [0, 1, 0, 1], // Zero deltaTicks are invalid
+        totalTicks: 2,
         metadata: { createdAt: Date.now() },
       }
 
-      // Should throw validation error for zero deltaFrames
+      // Should throw validation error for zero deltaTicks
       expect(() => replayManager.replay(zeroFrameRecording)).toThrow(
-        "Invalid recording: deltaFrames[0] must be a positive number, got 0",
+        "Invalid recording: deltaTicks[0] must be a positive number, got 0",
       )
     })
 
-    it("should handle fractional deltaFrames in recording", () => {
+    it("should handle fractional deltaTicks in recording", () => {
       const fractionalRecording: GameRecording = {
         seed: "fractional-test",
         events: [],
-        deltaFrames: [0.1, 0.3, 0.5, 1.1],
-        totalFrames: 2,
+        deltaTicks: [0.1, 0.3, 0.5, 1.1],
+        totalTicks: 2,
         metadata: { createdAt: Date.now() },
       }
 
       replayManager.replay(fractionalRecording)
 
       replayManager.update(0.4) // Should process 0.1 + 0.3 frames
-      expect(replayManager.getCurrentFrame()).toBeCloseTo(0.4, 2)
+      expect(replayManager.getCurrentTick()).toBeCloseTo(0.4, 2)
 
       replayManager.update(0.6) // Should process 0.5 frame
-      expect(replayManager.getCurrentFrame()).toBeCloseTo(0.9, 2)
+      expect(replayManager.getCurrentTick()).toBeCloseTo(0.9, 2)
 
       replayManager.update(1.2) // Should process 1.1 frame
-      expect(replayManager.getCurrentFrame()).toBe(2)
+      expect(replayManager.getCurrentTick()).toBe(2)
     })
 
-    it("should handle large deltaFrames in recording", () => {
+    it("should handle large deltaTicks in recording", () => {
       const largeFrameRecording: GameRecording = {
         seed: "large-frame-test",
         events: [],
-        deltaFrames: [10, 20, 30],
-        totalFrames: 60,
+        deltaTicks: [10, 20, 30],
+        totalTicks: 60,
         metadata: { createdAt: Date.now() },
       }
 
       replayManager.replay(largeFrameRecording)
 
       replayManager.update(15) // Should process first frame (10) with 5 remaining
-      expect(replayManager.getCurrentFrame()).toBe(10)
+      expect(replayManager.getCurrentTick()).toBe(10)
 
       replayManager.update(20) // Should process second frame (20) with 5 remaining
-      expect(replayManager.getCurrentFrame()).toBe(30)
+      expect(replayManager.getCurrentTick()).toBe(30)
 
       replayManager.update(35) // Should process third frame (30) and auto-stop
-      expect(replayManager.getCurrentFrame()).toBe(60)
+      expect(replayManager.getCurrentTick()).toBe(60)
       expect(replayManager.isCurrentlyReplaying()).toBe(false) // Auto-stopped after all frames processed
     })
   })
@@ -454,8 +454,8 @@ describe("ReplayManager", () => {
             params: [new Vector2D(1, -1)],
           } as ObjectUpdateEvent,
         ],
-        deltaFrames: [1, 1],
-        totalFrames: 2,
+        deltaTicks: [1, 1],
+        totalTicks: 2,
         metadata: { createdAt: Date.now() },
       }
 
@@ -500,8 +500,8 @@ describe("ReplayManager", () => {
               params: { index: i },
             }) as UserInputEvent,
         ),
-        deltaFrames: new Array(1000).fill(1),
-        totalFrames: 1000,
+        deltaTicks: new Array(1000).fill(1),
+        totalTicks: 1000,
         metadata: { createdAt: Date.now() },
       }
 
@@ -515,7 +515,7 @@ describe("ReplayManager", () => {
       const endTime = performance.now()
       const processingTime = endTime - startTime
 
-      expect(replayManager.getCurrentFrame()).toBe(1000)
+      expect(replayManager.getCurrentTick()).toBe(1000)
       expect(replayManager.isCurrentlyReplaying()).toBe(false) // Auto-stopped after all frames processed
       expect(processingTime).toBeLessThan(1000) // Should complete within 1 second
     })
@@ -524,15 +524,15 @@ describe("ReplayManager", () => {
       const quickRecording: GameRecording = {
         seed: "quick-test",
         events: [],
-        deltaFrames: [0.1, 0.1, 0.1],
-        totalFrames: 0.3,
+        deltaTicks: [0.1, 0.1, 0.1],
+        totalTicks: 0.3,
         metadata: { createdAt: Date.now() },
       }
 
       for (let cycle = 0; cycle < 100; cycle++) {
         replayManager.replay(quickRecording)
 
-        // Process all deltaFrames at once (0.1 + 0.1 + 0.1 = 0.3) - should auto-stop
+        // Process all deltaTicks at once (0.1 + 0.1 + 0.1 = 0.3) - should auto-stop
         replayManager.update(0.3)
         expect(replayManager.isCurrentlyReplaying()).toBe(false)
 
@@ -545,8 +545,8 @@ describe("ReplayManager", () => {
       const irregularRecording: GameRecording = {
         seed: "irregular-test",
         events: [],
-        deltaFrames: [0.001, 10, 0.1, 5, 0.01, 2],
-        totalFrames: 17.111,
+        deltaTicks: [0.001, 10, 0.1, 5, 0.01, 2],
+        totalTicks: 17.111,
         metadata: { createdAt: Date.now() },
       }
 
@@ -561,7 +561,7 @@ describe("ReplayManager", () => {
 
       replayManager.update(2) // Should process 0.01, 2 and auto-stop
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
-      expect(replayManager.getCurrentFrame()).toBeCloseTo(17.111, 3)
+      expect(replayManager.getCurrentTick()).toBeCloseTo(17.111, 3)
     })
   })
 
@@ -570,8 +570,8 @@ describe("ReplayManager", () => {
       const corruptedRecording = {
         seed: "corrupted",
         events: null, // Corrupted
-        deltaFrames: [1, 2, 3],
-        totalFrames: 6,
+        deltaTicks: [1, 2, 3],
+        totalTicks: 6,
         metadata: { createdAt: Date.now() },
       } as any
 
@@ -581,7 +581,7 @@ describe("ReplayManager", () => {
       )
     })
 
-    it("should handle missing deltaFrames", () => {
+    it("should handle missing deltaTicks", () => {
       const missingFramesRecording: GameRecording = {
         seed: "missing-frames",
         events: [
@@ -593,8 +593,8 @@ describe("ReplayManager", () => {
             params: {},
           } as UserInputEvent,
         ],
-        deltaFrames: [], // No frame data
-        totalFrames: 0,
+        deltaTicks: [], // No frame data
+        totalTicks: 0,
         metadata: { createdAt: Date.now() },
       }
 
@@ -605,18 +605,18 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should handle negative totalFrames", () => {
+    it("should handle negative totalTicks", () => {
       const negativeFramesRecording: GameRecording = {
         seed: "negative-frames",
         events: [],
-        deltaFrames: [1, 1],
-        totalFrames: -5, // Invalid
+        deltaTicks: [1, 1],
+        totalTicks: -5, // Invalid
         metadata: { createdAt: Date.now() },
       }
 
-      // Should throw validation error for negative totalFrames
+      // Should throw validation error for negative totalTicks
       expect(() => replayManager.replay(negativeFramesRecording)).toThrow(
-        "Invalid recording: totalFrames must be a non-negative number",
+        "Invalid recording: totalTicks must be a non-negative number",
       )
     })
 
@@ -624,15 +624,15 @@ describe("ReplayManager", () => {
       replayManager.replay(sampleRecording)
 
       replayManager.update(2.5) // Partial processing
-      expect(replayManager.getCurrentFrame()).toBe(2)
+      expect(replayManager.getCurrentTick()).toBe(2)
 
       replayManager.stopReplay()
-      expect(replayManager.getCurrentFrame()).toBe(2) // Frame count preserved after stop
+      expect(replayManager.getCurrentTick()).toBe(2) // Frame count preserved after stop
 
       // Restart
       replayManager.replay(sampleRecording)
       replayManager.update(1)
-      expect(replayManager.getCurrentFrame()).toBe(1)
+      expect(replayManager.getCurrentTick()).toBe(1)
     })
   })
 
@@ -641,8 +641,8 @@ describe("ReplayManager", () => {
       const recording: GameRecording = {
         seed: "progress-test",
         events: [],
-        deltaFrames: [2, 3, 5], // Total of 10 frames
-        totalFrames: 10,
+        deltaTicks: [2, 3, 5], // Total of 10 frames
+        totalTicks: 10,
         metadata: { createdAt: Date.now() },
       }
 
@@ -650,7 +650,7 @@ describe("ReplayManager", () => {
 
       let progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(0)
-      expect(progress.hasMoreFrames).toBe(true)
+      expect(progress.hasMoreTicks).toBe(true)
 
       replayManager.update(2) // Process first deltaFrame (2 frames)
       progress = replayManager.getReplayProgress()
@@ -663,7 +663,7 @@ describe("ReplayManager", () => {
       replayManager.update(5) // Process final deltaFrame (5 frames) and auto-stop
       progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(1.0) // 10/10
-      expect(progress.hasMoreFrames).toBe(false)
+      expect(progress.hasMoreTicks).toBe(false)
       expect(progress.isReplaying).toBe(false) // Auto-stopped after all frames processed
     })
 
@@ -671,8 +671,8 @@ describe("ReplayManager", () => {
       const overflowRecording: GameRecording = {
         seed: "overflow-test",
         events: [],
-        deltaFrames: [1],
-        totalFrames: 0.5, // Less than deltaFrames sum
+        deltaTicks: [1],
+        totalTicks: 0.5, // Less than deltaTicks sum
         metadata: { createdAt: Date.now() },
       }
 

@@ -25,7 +25,7 @@ describe("Performance Integration Tests", () => {
   describe("engine performance", () => {
     test("should handle large numbers of objects efficiently", async () => {
       engine.reset("performance-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const startTime = performance.now()
       profiler.start()
@@ -75,7 +75,7 @@ describe("Performance Integration Tests", () => {
 
     test("should maintain consistent frame times", async () => {
       engine.reset("frame-time-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Create moderate number of objects
       for (let i = 0; i < 200; i++) {
@@ -128,7 +128,7 @@ describe("Performance Integration Tests", () => {
         const testTicker = new MockTicker()
 
         testEngine.reset(`scale-test-${count}`)
-        testTicker.add((deltaFrames) => testEngine.update(deltaFrames))
+        testTicker.add((deltaTicks) => testEngine.update(deltaTicks))
 
         // Create objects
         for (let i = 0; i < count; i++) {
@@ -171,7 +171,7 @@ describe("Performance Integration Tests", () => {
   describe("memory management", () => {
     test("should not leak memory with object lifecycle", async () => {
       engine.reset("memory-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()
       engine.start()
@@ -232,7 +232,7 @@ describe("Performance Integration Tests", () => {
 
     test("should handle rapid object creation/destruction", async () => {
       engine.reset("rapid-memory-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()
       engine.start()
@@ -287,7 +287,7 @@ describe("Performance Integration Tests", () => {
       const recorder = new GameRecorder()
 
       engine.reset("recording-perf-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Create objects
       for (let i = 0; i < 300; i++) {
@@ -343,10 +343,10 @@ describe("Performance Integration Tests", () => {
 
       // Recording should be successful
       expect(recording).toBeDefined()
-      expect(recording!.deltaFrames.length).toBeGreaterThan(0)
+      expect(recording!.deltaTicks.length).toBeGreaterThan(0)
 
       console.log(`Recording overhead: ${overhead.toFixed(1)}%`)
-      console.log(`Frames recorded: ${recording!.deltaFrames.length}`)
+      console.log(`Frames recorded: ${recording!.deltaTicks.length}`)
     })
 
     test("should handle serialization performance", async () => {
@@ -428,7 +428,7 @@ describe("Performance Integration Tests", () => {
   describe("collision performance", () => {
     test("should handle spatial partitioning efficiently", async () => {
       engine.reset("collision-perf-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const startTime = performance.now()
 
@@ -475,7 +475,7 @@ describe("Performance Integration Tests", () => {
   describe("stress testing", () => {
     test("should handle extreme object counts", async () => {
       engine.reset("stress-test")
-      ticker.add((deltaFrames) => engine.update(deltaFrames))
+      ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()
       profiler.takeSnapshot() // Take snapshot after setup
@@ -514,7 +514,7 @@ describe("Performance Integration Tests", () => {
       expect(profile.memoryGrowth).toBeLessThan(200 * 1024 * 1024) // Under 200MB
 
       // Engine should still be in valid state
-      expect(engine.getTotalFrames()).toBe(20)
+      expect(engine.getTotalTicks()).toBe(20)
 
       const activeObjects =
         engine.getGameObjectGroup("Projectile")?.getAllActive() || []

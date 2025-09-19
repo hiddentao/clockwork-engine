@@ -102,7 +102,7 @@ export class ComplexTestEngine extends GameEngine {
   // Capture current engine state for comparison
   captureState(): any {
     const state: any = {
-      totalFrames: this.getTotalFrames(),
+      totalTicks: this.getTotalTicks(),
       gameState: this.getState(),
       objects: {},
     }

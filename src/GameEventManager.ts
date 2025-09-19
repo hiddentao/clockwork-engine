@@ -25,9 +25,9 @@ export class GameEventManager implements IGameLoop {
   /**
    * Process events for the current frame
    */
-  update(_deltaFrames: number, totalFrames: number): void {
+  update(_deltaTicks: number, totalTicks: number): void {
     // Get all events that are ready for this frame
-    const events = this.source.getNextEvents(totalFrames)
+    const events = this.source.getNextEvents(totalTicks)
 
     // Process each event
     for (const event of events) {

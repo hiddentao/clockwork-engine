@@ -24,8 +24,8 @@ export class Wall extends GameObject {
   }
 
   // Visual properties
-  getAge(_currentFrame: number): number {
-    // Could track spawn frame if needed for animations
+  getAge(_currentTick: number): number {
+    // Could track spawn tick if needed for animations
     return 0
   }
 

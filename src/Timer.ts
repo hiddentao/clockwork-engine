@@ -1,10 +1,10 @@
 import type { IGameLoop } from "./IGameLoop"
-import { TIMER_CONSTANTS } from "./constants"
+import { TIMER_CONSTANTS } from "./lib/internals"
 
 interface TimerCallback {
   id: number
   callback: () => void
-  targetFrame: number
+  targetTick: number
   interval?: number // For repeating timers
   isActive: boolean
 }
@@ -12,48 +12,44 @@ interface TimerCallback {
 export class Timer implements IGameLoop {
   protected timers: Map<number, TimerCallback> = new Map()
   protected nextId: number = 1
-  protected currentFrame: number = 0
-  protected updateStartFrame: number = 0
+  protected currentTick: number = 0
+  protected updateStartTick: number = 0
   protected isUpdating: boolean = false
 
   /**
-   * Schedule a one-time callback to execute after the specified number of frames
+   * Schedule a one-time callback to execute after the specified number of ticks
    * @param callback Callback to execute
-   * @param frames Number of frames to wait before execution
+   * @param ticks Number of ticks to wait before execution
    * @returns Timer ID that can be used to cancel the timer
    */
-  setTimeout(callback: () => void, frames: number): number {
+  setTimeout(callback: () => void, ticks: number): number {
     const id = this.nextId++
-    // Use updateStartFrame if we're currently updating, otherwise use currentFrame
-    const baseFrame = this.isUpdating
-      ? this.updateStartFrame
-      : this.currentFrame
+    // Use updateStartTick if we're currently updating, otherwise use currentTick
+    const baseTick = this.isUpdating ? this.updateStartTick : this.currentTick
     this.timers.set(id, {
       id,
       callback,
-      targetFrame: baseFrame + frames,
+      targetTick: baseTick + ticks,
       isActive: true,
     })
     return id
   }
 
   /**
-   * Schedule a repeating callback to execute every specified number of frames
+   * Schedule a repeating callback to execute every specified number of ticks
    * @param callback Callback to execute
-   * @param frames Number of frames between executions
+   * @param ticks Number of ticks between executions
    * @returns Timer ID that can be used to cancel the timer
    */
-  setInterval(callback: () => void, frames: number): number {
+  setInterval(callback: () => void, ticks: number): number {
     const id = this.nextId++
-    // Use updateStartFrame if we're currently updating, otherwise use currentFrame
-    const baseFrame = this.isUpdating
-      ? this.updateStartFrame
-      : this.currentFrame
+    // Use updateStartTick if we're currently updating, otherwise use currentTick
+    const baseTick = this.isUpdating ? this.updateStartTick : this.currentTick
     this.timers.set(id, {
       id,
       callback,
-      targetFrame: baseFrame + frames,
-      interval: frames,
+      targetTick: baseTick + ticks,
+      interval: ticks,
       isActive: true,
     })
     return id
@@ -72,9 +68,9 @@ export class Timer implements IGameLoop {
    * Update the timer system - called by GameEngine
    * Executes all ready timers with proper error handling
    */
-  update(_deltaFrames: number, totalFrames: number): void {
-    this.updateStartFrame = this.currentFrame
-    this.currentFrame = totalFrames
+  update(_deltaTicks: number, totalTicks: number): void {
+    this.updateStartTick = this.currentTick
+    this.currentTick = totalTicks
     this.isUpdating = true
 
     // Process timers until no more are ready to execute
@@ -88,17 +84,17 @@ export class Timer implements IGameLoop {
 
       const readyTimers: TimerCallback[] = []
 
-      // Collect all timers ready for execution, sorted by targetFrame for deterministic order
+      // Collect all timers ready for execution, sorted by targetTick for deterministic order
       for (const timer of this.timers.values()) {
-        if (timer.isActive && this.currentFrame >= timer.targetFrame) {
+        if (timer.isActive && this.currentTick >= timer.targetTick) {
           readyTimers.push(timer)
         }
       }
 
-      // Sort timers by target frame, then by ID for deterministic execution order
+      // Sort timers by target tick, then by ID for deterministic execution order
       readyTimers.sort((a, b) => {
-        if (a.targetFrame !== b.targetFrame) {
-          return a.targetFrame - b.targetFrame
+        if (a.targetTick !== b.targetTick) {
+          return a.targetTick - b.targetTick
         }
         return a.id - b.id
       })
@@ -122,11 +118,11 @@ export class Timer implements IGameLoop {
             // For repeating timers, handle different interval cases
             if (timer.interval === 0) {
               // Zero interval - execute once per update, don't loop infinitely
-              timer.targetFrame = this.currentFrame + 1
+              timer.targetTick = this.currentTick + 1
               hasExecutions = false // Prevent infinite loop for zero intervals
             } else {
               // Reschedule repeating timer
-              timer.targetFrame += timer.interval
+              timer.targetTick += timer.interval
             }
           } else {
             // Remove one-time timer
@@ -141,11 +137,11 @@ export class Timer implements IGameLoop {
 
   /**
    * Reset the timer system
-   * Clears all timers and resets the frame counter
+   * Clears all timers and resets the tick counter
    */
   reset(): void {
     this.timers.clear()
-    this.currentFrame = 0
+    this.currentTick = 0
     // Don't reset nextId - tests expect it to keep incrementing across resets
   }
 
@@ -162,15 +158,15 @@ export class Timer implements IGameLoop {
    */
   getTimerInfo(): Array<{
     id: number
-    targetFrame: number
-    framesRemaining: number
+    targetTick: number
+    ticksRemaining: number
     isRepeating: boolean
     isActive: boolean
   }> {
     return Array.from(this.timers.values()).map((timer) => ({
       id: timer.id,
-      targetFrame: timer.targetFrame,
-      framesRemaining: Math.max(0, timer.targetFrame - this.currentFrame),
+      targetTick: timer.targetTick,
+      ticksRemaining: Math.max(0, timer.targetTick - this.currentTick),
       isRepeating: timer.interval !== undefined,
       isActive: timer.isActive,
     }))

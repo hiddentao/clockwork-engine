@@ -47,8 +47,8 @@ describe("GameRecorder", () => {
       expect(recording).not.toBeNull()
       expect(recording!.seed).toBe(seed)
       expect(recording!.events).toEqual([])
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
       expect(recording!.metadata?.description).toBe(description)
       expect(recording!.metadata?.version).toBe("1.0.0")
       expect(typeof recording!.metadata?.createdAt).toBe("number")
@@ -86,8 +86,8 @@ describe("GameRecorder", () => {
       const recording = recorder.getCurrentRecording()
       expect(recording).not.toBeNull()
       expect(recording!.events).toHaveLength(1)
-      expect(recording!.deltaFrames).toEqual([1])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([1])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should handle stop recording when not recording", () => {
@@ -294,8 +294,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording() // Copies frame data to recording
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([1, 1.5, 0.8])
-      expect(recording!.totalFrames).toBe(3.3)
+      expect(recording!.deltaTicks).toEqual([1, 1.5, 0.8])
+      expect(recording!.totalTicks).toBe(3.3)
     })
 
     it("should not record frames when not recording", () => {
@@ -304,8 +304,8 @@ describe("GameRecorder", () => {
       recorder.recordFrameUpdate(10, 100)
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
     })
 
     it("should handle zero delta frames", () => {
@@ -316,8 +316,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([0, 0, 1])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([0, 0, 1])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should handle negative delta frames", () => {
@@ -327,8 +327,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([-1, 2])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([-1, 2])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should preserve frame data during active recording", () => {
@@ -337,8 +337,8 @@ describe("GameRecorder", () => {
 
       // Frame data should not be copied to recording until stopped
       const activeRecording = recorder.getCurrentRecording()
-      expect(activeRecording!.deltaFrames).toEqual([])
-      expect(activeRecording!.totalFrames).toBe(0)
+      expect(activeRecording!.deltaTicks).toEqual([])
+      expect(activeRecording!.totalTicks).toBe(0)
     })
   })
 
@@ -474,8 +474,8 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toEqual([])
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
     })
 
     it("should handle very long recordings", () => {
@@ -498,8 +498,8 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toHaveLength(10000)
-      expect(recording!.deltaFrames).toHaveLength(10000)
-      expect(recording!.totalFrames).toBe(10000)
+      expect(recording!.deltaTicks).toHaveLength(10000)
+      expect(recording!.totalTicks).toBe(10000)
     })
 
     it("should handle concurrent operations", () => {
@@ -524,7 +524,7 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toHaveLength(100)
-      expect(recording!.deltaFrames).toHaveLength(100)
+      expect(recording!.deltaTicks).toHaveLength(100)
     })
   })
 
@@ -571,9 +571,9 @@ describe("GameRecorder", () => {
       // Recording objects should be separate (shallow copy of recording)
       expect(recording1).not.toBe(recording2)
 
-      // But events array and deltaFrames are shared references (shallow copy)
+      // But events array and deltaTicks are shared references (shallow copy)
       expect(recording1!.events).toBe(recording2!.events)
-      expect(recording1!.deltaFrames).toBe(recording2!.deltaFrames)
+      expect(recording1!.deltaTicks).toBe(recording2!.deltaTicks)
 
       // Content should be equal
       expect(recording1).toEqual(recording2)

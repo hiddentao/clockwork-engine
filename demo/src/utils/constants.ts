@@ -1,3 +1,5 @@
+import { millisecondsToTicks } from "@hiddentao/clockwork-engine"
+
 export const GAME_CONFIG = {
   GRID_SIZE: 25,
   CELL_SIZE: 24,
@@ -5,10 +7,14 @@ export const GAME_CONFIG = {
   CANVAS_WIDTH: 600,
   CANVAS_HEIGHT: 600,
 
-  // Game timing (in frames at 60 FPS)
-  SNAKE_MOVE_INTERVAL: 6,
-  WALL_SPAWN_INTERVAL: 30,
-  APPLE_TIMEOUT: 600,
+  // Game timing (in ticks, converted from milliseconds)
+  SNAKE_MOVE_INTERVAL: millisecondsToTicks(100), // 100ms
+  WALL_SPAWN_INTERVAL: millisecondsToTicks(500), // 500ms
+  APPLE_TIMEOUT: millisecondsToTicks(10000), // 10 seconds
+
+  // Cleanup intervals
+  APPLE_CLEANUP_INTERVAL: millisecondsToTicks(500), // 500ms
+  DESTROYED_OBJECTS_CLEANUP_INTERVAL: millisecondsToTicks(1000), // 1 second
 
   // Game rules
   SNAKE_INITIAL_LENGTH: 2,

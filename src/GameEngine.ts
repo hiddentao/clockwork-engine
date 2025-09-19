@@ -27,7 +27,7 @@ export abstract class GameEngine
   implements GameEngineInterface
 {
   protected gameObjectGroups: Map<string, GameObjectGroup> = new Map()
-  protected totalFrames: number = 0
+  protected totalTicks: number = 0
   protected state: GameState = GameState.READY
   protected seed: string = ""
   protected prng: PRNG = new PRNG()
@@ -61,7 +61,7 @@ export abstract class GameEngine
     }
     this.setState(GameState.READY)
     this.prng.initialize(this.seed)
-    this.totalFrames = 0
+    this.totalTicks = 0
     this.gameObjectGroups.clear()
     this.timer.reset()
     this.eventManager.reset()
@@ -135,30 +135,30 @@ export abstract class GameEngine
   /**
    * Update the game state for the current frame
    * Processes inputs, timers, and game objects in deterministic order
-   * @param deltaFrames Number of frames to advance the simulation
+   * @param deltaTicks Number of ticks to advance the simulation
    */
-  update(deltaFrames: number): void {
+  update(deltaTicks: number): void {
     if (this.state !== GameState.PLAYING) {
       return
     }
 
-    // Update frame counter to maintain deterministic timing
-    this.totalFrames += deltaFrames
+    // Update tick counter to maintain deterministic timing
+    this.totalTicks += deltaTicks
 
-    // Record frame progression for replay system
+    // Record tick progression for replay system
     if (this.recorder) {
-      this.recorder.recordFrameUpdate(deltaFrames, this.totalFrames)
+      this.recorder.recordFrameUpdate(deltaTicks, this.totalTicks)
     }
 
     // Process queued events at current frame
-    this.eventManager.update(deltaFrames, this.totalFrames)
+    this.eventManager.update(deltaTicks, this.totalTicks)
 
     // Execute scheduled timer callbacks
-    this.timer.update(deltaFrames, this.totalFrames)
+    this.timer.update(deltaTicks, this.totalTicks)
 
     // Update all registered game objects by type
     for (const [_type, group] of this.gameObjectGroups) {
-      group.update(deltaFrames, this.totalFrames)
+      group.update(deltaTicks, this.totalTicks)
     }
   }
 
@@ -210,10 +210,10 @@ export abstract class GameEngine
   }
 
   /**
-   * Get the total number of frames processed
+   * Get the total number of ticks processed
    */
-  getTotalFrames(): number {
-    return this.totalFrames
+  getTotalTicks(): number {
+    return this.totalTicks
   }
 
   /**

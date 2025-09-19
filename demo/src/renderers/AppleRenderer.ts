@@ -39,7 +39,7 @@ export class AppleRenderer extends AbstractRenderer<Apple> {
 
   protected repaintContainer(container: PIXI.Container, apple: Apple): void {
     const engine = apple.getEngine()
-    const currentFrame = engine ? engine.getTotalFrames() : 0
+    const currentTick = engine ? engine.getTotalTicks() : 0
 
     // Update position
     const cellSize = GAME_CONFIG.CELL_SIZE
@@ -50,10 +50,10 @@ export class AppleRenderer extends AbstractRenderer<Apple> {
     )
 
     // Update alpha based on apple's age (fading effect)
-    container.alpha = apple.getAlpha(currentFrame)
+    container.alpha = apple.getAlpha(currentTick)
 
-    // Update pulse effect using sin wave like original (frame * 0.2)
-    const pulse = Math.sin(currentFrame * 0.2) * 0.1 + 0.9
+    // Update pulse effect using sin wave like original (tick * 0.2)
+    const pulse = Math.sin(currentTick * 0.2) * 0.1 + 0.9
 
     // Apply pulse to both body and highlight
     const body = this.getNamedChild(container, "body")

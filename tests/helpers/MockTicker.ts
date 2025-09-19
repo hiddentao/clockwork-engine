@@ -1,49 +1,49 @@
 export class MockTicker {
-  private callbacks: ((deltaFrames: number) => Promise<void> | void)[] = []
-  private frameCount: number = 0
+  private callbacks: ((deltaTicks: number) => Promise<void> | void)[] = []
+  private tickCount: number = 0
 
-  add(callback: (deltaFrames: number) => Promise<void> | void): void {
+  add(callback: (deltaTicks: number) => Promise<void> | void): void {
     this.callbacks.push(callback)
   }
 
-  remove(callback: (deltaFrames: number) => Promise<void> | void): void {
+  remove(callback: (deltaTicks: number) => Promise<void> | void): void {
     const index = this.callbacks.indexOf(callback)
     if (index >= 0) {
       this.callbacks.splice(index, 1)
     }
   }
 
-  async tick(deltaFrames: number = 1): Promise<void> {
+  async tick(deltaTicks: number = 1): Promise<void> {
     for (const callback of this.callbacks) {
-      await callback(deltaFrames)
+      await callback(deltaTicks)
     }
-    this.frameCount += deltaFrames
+    this.tickCount += deltaTicks
   }
 
-  async runFrames(
-    totalFrames: number,
-    deltaFramesPerTick: number = 1,
+  async runTicks(
+    totalTicks: number,
+    deltaTicksPerTick: number = 1,
   ): Promise<void> {
-    let remaining = totalFrames
+    let remaining = totalTicks
     while (remaining > 0) {
-      const framesToRun = Math.min(deltaFramesPerTick, remaining)
-      await this.tick(framesToRun)
-      remaining -= framesToRun
+      const ticksToRun = Math.min(deltaTicksPerTick, remaining)
+      await this.tick(ticksToRun)
+      remaining -= ticksToRun
     }
   }
 
-  async runWithDeltaSequence(deltaFrames: number[]): Promise<void> {
-    for (const delta of deltaFrames) {
+  async runWithDeltaSequence(deltaTicks: number[]): Promise<void> {
+    for (const delta of deltaTicks) {
       await this.tick(delta)
     }
   }
 
-  getFrameCount(): number {
-    return this.frameCount
+  getTickCount(): number {
+    return this.tickCount
   }
 
   reset(): void {
-    this.frameCount = 0
+    this.tickCount = 0
     this.callbacks = []
   }
 

@@ -2,56 +2,56 @@ import type { GameEngineInterface } from "@hiddentao/clockwork-engine"
 import { GameObject, Vector2D } from "@hiddentao/clockwork-engine"
 
 export class Apple extends GameObject {
-  private spawnFrame: number
-  private timeoutFrames: number
+  private spawnTick: number
+  private timeoutTicks: number
 
   constructor(
     id: string,
     position: Vector2D,
-    timeoutFrames: number = 500,
+    timeoutTicks: number = 500,
     engine?: GameEngineInterface,
   ) {
     super(id, position, new Vector2D(1, 1), 1, engine)
-    this.timeoutFrames = timeoutFrames
-    this.spawnFrame = 0 // Will be set by the game engine
+    this.timeoutTicks = timeoutTicks
+    this.spawnTick = 0 // Will be set by the game engine
   }
 
   getType(): string {
     return "Apple"
   }
 
-  setSpawnFrame(frame: number): void {
-    this.spawnFrame = frame
+  setSpawnTick(tick: number): void {
+    this.spawnTick = tick
   }
 
-  isExpired(currentFrame: number): boolean {
-    return currentFrame - this.spawnFrame >= this.timeoutFrames
+  isExpired(currentTick: number): boolean {
+    return currentTick - this.spawnTick >= this.timeoutTicks
   }
 
-  getAge(currentFrame: number): number {
-    return currentFrame - this.spawnFrame
+  getAge(currentTick: number): number {
+    return currentTick - this.spawnTick
   }
 
-  getRemainingTime(currentFrame: number): number {
-    return Math.max(0, this.timeoutFrames - (currentFrame - this.spawnFrame))
+  getRemainingTime(currentTick: number): number {
+    return Math.max(0, this.timeoutTicks - (currentTick - this.spawnTick))
   }
 
   // Visual properties for rendering
-  getAlpha(currentFrame: number): number {
-    const age = this.getAge(currentFrame)
-    const fadeStartFrame = this.timeoutFrames * 0.8 // Start fading at 80% of lifetime
+  getAlpha(currentTick: number): number {
+    const age = this.getAge(currentTick)
+    const fadeStartTick = this.timeoutTicks * 0.8 // Start fading at 80% of lifetime
 
-    if (age < fadeStartFrame) {
+    if (age < fadeStartTick) {
       return 1.0
     }
 
     const fadeProgress =
-      (age - fadeStartFrame) / (this.timeoutFrames - fadeStartFrame)
+      (age - fadeStartTick) / (this.timeoutTicks - fadeStartTick)
     return Math.max(0.3, 1.0 - fadeProgress)
   }
 
-  getPulse(currentFrame: number): number {
-    const age = this.getAge(currentFrame)
+  getPulse(currentTick: number): number {
+    const age = this.getAge(currentTick)
     const pulseSpeed = 0.1 // How fast it pulses
     return 0.9 + 0.1 * Math.sin(age * pulseSpeed)
   }
@@ -60,8 +60,8 @@ export class Apple extends GameObject {
   serialize() {
     return {
       ...super.serialize(),
-      spawnFrame: this.spawnFrame,
-      timeoutFrames: this.timeoutFrames,
+      spawnTick: this.spawnTick,
+      timeoutTicks: this.timeoutTicks,
     }
   }
 
@@ -69,9 +69,9 @@ export class Apple extends GameObject {
     const apple = new Apple(
       data.id,
       Vector2D.deserialize(data.position),
-      data.timeoutFrames,
+      data.timeoutTicks,
     )
-    apple.spawnFrame = data.spawnFrame
+    apple.spawnTick = data.spawnTick
     return apple
   }
 }

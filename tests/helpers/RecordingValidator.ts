@@ -37,22 +37,19 @@ export class RecordingValidator {
       })
     }
 
-    if (!Array.isArray(recording.deltaFrames)) {
+    if (!Array.isArray(recording.deltaTicks)) {
       errors.push("DeltaFrames is not an array")
     } else {
-      // Validate deltaFrames
-      recording.deltaFrames.forEach((delta, index) => {
+      // Validate deltaTicks
+      recording.deltaTicks.forEach((delta, index) => {
         if (typeof delta !== "number" || delta <= 0) {
           errors.push(`DeltaFrame ${index}: invalid value ${delta}`)
         }
       })
     }
 
-    if (
-      typeof recording.totalFrames !== "number" ||
-      recording.totalFrames < 0
-    ) {
-      errors.push("Invalid totalFrames")
+    if (typeof recording.totalTicks !== "number" || recording.totalTicks < 0) {
+      errors.push("Invalid totalTicks")
     }
 
     // Cross-validation
@@ -69,9 +66,9 @@ export class RecordingValidator {
         lastFrame = event.frame
 
         // Check event frames don't exceed total frames
-        if (event.frame > recording.totalFrames) {
+        if (event.frame > recording.totalTicks) {
           errors.push(
-            `Event ${i} at frame ${event.frame} exceeds totalFrames ${recording.totalFrames}`,
+            `Event ${i} at frame ${event.frame} exceeds totalTicks ${recording.totalTicks}`,
           )
         }
       }
@@ -89,16 +86,16 @@ export class RecordingValidator {
       }
     }
 
-    if (recording.deltaFrames && Array.isArray(recording.deltaFrames)) {
-      // Validate deltaFrames sum matches totalFrames
-      const sumFrames = recording.deltaFrames.reduce(
+    if (recording.deltaTicks && Array.isArray(recording.deltaTicks)) {
+      // Validate deltaTicks sum matches totalTicks
+      const sumFrames = recording.deltaTicks.reduce(
         (sum, delta) => sum + delta,
         0,
       )
       const tolerance = 0.001
-      if (Math.abs(sumFrames - recording.totalFrames) > tolerance) {
+      if (Math.abs(sumFrames - recording.totalTicks) > tolerance) {
         errors.push(
-          `DeltaFrames sum (${sumFrames}) doesn't match totalFrames (${recording.totalFrames})`,
+          `DeltaFrames sum (${sumFrames}) doesn't match totalTicks (${recording.totalTicks})`,
         )
       }
     }
@@ -138,12 +135,12 @@ export class RecordingValidator {
     replayManager.replay(recording)
 
     // Add ticker callback for replay manager
-    ticker.add((deltaFrames) => {
-      replayManager.update(deltaFrames)
+    ticker.add((deltaTicks) => {
+      replayManager.update(deltaTicks)
     })
 
     // Run through all recorded frames
-    await ticker.runWithDeltaSequence(recording.deltaFrames)
+    await ticker.runWithDeltaSequence(recording.deltaTicks)
 
     return StateComparator.snapshot(engine)
   }
@@ -189,24 +186,23 @@ export class RecordingValidator {
     })
 
     const frameDistribution =
-      recording.deltaFrames.length > 0
+      recording.deltaTicks.length > 0
         ? {
-            min: Math.min(...recording.deltaFrames),
-            max: Math.max(...recording.deltaFrames),
+            min: Math.min(...recording.deltaTicks),
+            max: Math.max(...recording.deltaTicks),
             avg:
-              recording.deltaFrames.reduce((sum, delta) => sum + delta, 0) /
-              recording.deltaFrames.length,
+              recording.deltaTicks.reduce((sum, delta) => sum + delta, 0) /
+              recording.deltaTicks.length,
           }
         : { min: 0, max: 0, avg: 0 }
 
     return {
       eventCount: recording.events.length,
-      frameCount: recording.totalFrames,
-      duration: recording.deltaFrames.length,
+      frameCount: recording.totalTicks,
+      duration: recording.deltaTicks.length,
       eventTypes,
       frameDistribution,
-      eventDensity:
-        recording.events.length / Math.max(recording.totalFrames, 1),
+      eventDensity: recording.events.length / Math.max(recording.totalTicks, 1),
     }
   }
 
@@ -215,8 +211,8 @@ export class RecordingValidator {
     const data = JSON.stringify({
       seed: recording.seed,
       eventCount: recording.events.length,
-      totalFrames: recording.totalFrames,
-      deltaSum: recording.deltaFrames.reduce((sum, delta) => sum + delta, 0),
+      totalTicks: recording.totalTicks,
+      deltaSum: recording.deltaTicks.reduce((sum, delta) => sum + delta, 0),
     })
 
     let hash = 0
@@ -234,7 +230,7 @@ export class RecordingValidator {
 
     // Check for unusually high event density
     const eventDensity =
-      recording.events.length / Math.max(recording.totalFrames, 1)
+      recording.events.length / Math.max(recording.totalTicks, 1)
     if (eventDensity > 10) {
       issues.push(
         `High event density: ${eventDensity.toFixed(2)} events per frame`,
@@ -242,12 +238,12 @@ export class RecordingValidator {
     }
 
     // Check for very large or very small delta frames
-    const largeDelta = recording.deltaFrames.find((delta) => delta > 60)
+    const largeDelta = recording.deltaTicks.find((delta) => delta > 60)
     if (largeDelta) {
       issues.push(`Large delta frame detected: ${largeDelta}`)
     }
 
-    const smallDelta = recording.deltaFrames.find((delta) => delta < 0.01)
+    const smallDelta = recording.deltaTicks.find((delta) => delta < 0.01)
     if (smallDelta) {
       issues.push(`Very small delta frame detected: ${smallDelta}`)
     }
@@ -261,8 +257,8 @@ export class RecordingValidator {
     }
 
     // Check for long recordings
-    if (recording.totalFrames > 100000) {
-      issues.push(`Very long recording: ${recording.totalFrames} frames`)
+    if (recording.totalTicks > 100000) {
+      issues.push(`Very long recording: ${recording.totalTicks} frames`)
     }
 
     // Check for many events

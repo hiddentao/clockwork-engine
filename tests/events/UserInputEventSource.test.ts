@@ -35,25 +35,25 @@ describe("UserInputEventSource", () => {
 
   describe("Event Generation", () => {
     it("should convert queued data to game events", () => {
-      const currentFrame = 10
+      const currentTick = 10
 
       inputSource.queueInput("direction", { x: 1, y: 0 })
       inputSource.queueInput("button", { action: "jump" })
 
-      const events = inputSource.getNextEvents(currentFrame)
+      const events = inputSource.getNextEvents(currentTick)
 
       expect(events).toHaveLength(2)
 
       // Check first event
       expect(events[0].type).toBe(GameEventType.USER_INPUT)
-      expect(events[0].frame).toBe(currentFrame)
+      expect(events[0].frame).toBe(currentTick)
       expect((events[0] as UserInputEvent).inputType).toBe("direction")
       expect(events[0].params).toEqual({ x: 1, y: 0 })
       expect(typeof events[0].timestamp).toBe("number")
 
       // Check second event
       expect(events[1].type).toBe(GameEventType.USER_INPUT)
-      expect(events[1].frame).toBe(currentFrame)
+      expect(events[1].frame).toBe(currentTick)
       expect((events[1] as UserInputEvent).inputType).toBe("button")
       expect(events[1].params).toEqual({ action: "jump" })
       expect(typeof events[1].timestamp).toBe("number")

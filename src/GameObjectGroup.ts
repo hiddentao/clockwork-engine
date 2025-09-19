@@ -157,13 +157,13 @@ export class GameObjectGroup<T extends GameObject = GameObject>
 
   /**
    * Update all GameObjects in the group
-   * @param deltaFrames Number of frames since last update
-   * @param totalFrames Total number of frames processed since start
+   * @param deltaTicks Number of ticks since last update
+   * @param totalTicks Total number of ticks processed since start
    */
-  public update(deltaFrames: number, totalFrames: number): void {
+  public update(deltaTicks: number, totalTicks: number): void {
     for (const gameObject of this.gameObjects.values()) {
       if (!gameObject.isDestroyed()) {
-        gameObject.update(deltaFrames, totalFrames)
+        gameObject.update(deltaTicks, totalTicks)
       }
     }
   }

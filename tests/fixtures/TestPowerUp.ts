@@ -38,23 +38,23 @@ export class TestPowerUp extends GameObject {
     return "PowerUp"
   }
 
-  update(deltaFrames: number, totalFrames: number): void {
-    super.update(deltaFrames, totalFrames)
+  update(deltaTicks: number, totalTicks: number): void {
+    super.update(deltaTicks, totalTicks)
 
     // Handle respawn timer if power-up was picked up
     if (!this.isActive) {
-      this.timeSincePickup += deltaFrames
+      this.timeSincePickup += deltaTicks
       if (this.respawnTime > 0 && this.timeSincePickup >= this.respawnTime) {
         this.respawn()
       }
     }
 
     // Simple floating animation using deterministic frame-based time
-    this.frameCounter += deltaFrames
+    this.frameCounter += deltaTicks
     const time = this.frameCounter * 0.016 // ~60fps frame time
     const offset = Math.sin(time * 2) * 2
     this.setPosition(
-      this.getPosition().add(new Vector2D(0, offset * deltaFrames * 0.1)),
+      this.getPosition().add(new Vector2D(0, offset * deltaTicks * 0.1)),
     )
   }
 

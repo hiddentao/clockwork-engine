@@ -5,8 +5,8 @@ export class GameRecorder {
   protected recording: GameRecording | null = null
   protected isRecording: boolean = false
   protected eventManager: GameEventManager | null = null
-  protected deltaFrames: number[] = []
-  protected totalFrames: number = 0
+  protected deltaTicks: number[] = []
+  protected totalTicks: number = 0
 
   /**
    * Start recording a game session
@@ -45,12 +45,12 @@ export class GameRecorder {
     this.recording = {
       seed,
       events: [],
-      deltaFrames: [],
-      totalFrames: 0,
+      deltaTicks: [],
+      totalTicks: 0,
       metadata,
     }
-    this.deltaFrames = []
-    this.totalFrames = 0
+    this.deltaTicks = []
+    this.totalTicks = 0
 
     this.eventManager = eventManager
     this.eventManager.setRecorder(this)
@@ -68,13 +68,13 @@ export class GameRecorder {
   }
 
   /**
-   * Record frame update with deltaFrames and totalFrames
+   * Record tick update with deltaTicks and totalTicks
    * Only records if currently recording
    */
-  recordFrameUpdate(deltaFrames: number, totalFrames: number): void {
+  recordFrameUpdate(deltaTicks: number, totalTicks: number): void {
     if (this.isRecording && this.recording) {
-      this.deltaFrames.push(deltaFrames)
-      this.totalFrames = totalFrames
+      this.deltaTicks.push(deltaTicks)
+      this.totalTicks = totalTicks
     }
   }
 
@@ -87,9 +87,9 @@ export class GameRecorder {
       return
     }
 
-    // Copy frame data to the recording
-    this.recording.deltaFrames = [...this.deltaFrames]
-    this.recording.totalFrames = this.totalFrames
+    // Copy tick data to the recording
+    this.recording.deltaTicks = [...this.deltaTicks]
+    this.recording.totalTicks = this.totalTicks
 
     if (this.eventManager) {
       this.eventManager.setRecorder(undefined)
@@ -120,8 +120,8 @@ export class GameRecorder {
   reset(): void {
     this.recording = null
     this.isRecording = false
-    this.deltaFrames = []
-    this.totalFrames = 0
+    this.deltaTicks = []
+    this.totalTicks = 0
     if (this.eventManager) {
       this.eventManager.setRecorder(undefined)
       this.eventManager = null

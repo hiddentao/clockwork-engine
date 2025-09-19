@@ -639,10 +639,10 @@ describe("Timer", () => {
         testTimer.setTimeout(() => executions.push(2), 2)
         testTimer.setTimeout(() => executions.push(5), 5)
 
-        let totalFrames = 0
-        for (const deltaFrames of updatePattern) {
-          totalFrames += deltaFrames
-          testTimer.update(deltaFrames, totalFrames)
+        let totalTicks = 0
+        for (const deltaTicks of updatePattern) {
+          totalTicks += deltaTicks
+          testTimer.update(deltaTicks, totalTicks)
         }
 
         return executions
@@ -711,15 +711,15 @@ describe("Timer", () => {
 
       const timeoutInfo = info.find((t) => t.id === id1)
       expect(timeoutInfo).toBeDefined()
-      expect(timeoutInfo!.targetFrame).toBe(5)
-      expect(timeoutInfo!.framesRemaining).toBe(5)
+      expect(timeoutInfo!.targetTick).toBe(5)
+      expect(timeoutInfo!.ticksRemaining).toBe(5)
       expect(timeoutInfo!.isRepeating).toBe(false)
       expect(timeoutInfo!.isActive).toBe(true)
 
       const intervalInfo = info.find((t) => t.id === id2)
       expect(intervalInfo).toBeDefined()
-      expect(intervalInfo!.targetFrame).toBe(3)
-      expect(intervalInfo!.framesRemaining).toBe(3)
+      expect(intervalInfo!.targetTick).toBe(3)
+      expect(intervalInfo!.ticksRemaining).toBe(3)
       expect(intervalInfo!.isRepeating).toBe(true)
       expect(intervalInfo!.isActive).toBe(true)
 
@@ -727,10 +727,10 @@ describe("Timer", () => {
       const updatedInfo = timer.getTimerInfo()
 
       const updatedTimeoutInfo = updatedInfo.find((t) => t.id === id1)
-      expect(updatedTimeoutInfo!.framesRemaining).toBe(3)
+      expect(updatedTimeoutInfo!.ticksRemaining).toBe(3)
 
       const updatedIntervalInfo = updatedInfo.find((t) => t.id === id2)
-      expect(updatedIntervalInfo!.framesRemaining).toBe(1)
+      expect(updatedIntervalInfo!.ticksRemaining).toBe(1)
     })
 
     it("should pause and resume timers", () => {

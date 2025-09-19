@@ -1,6 +1,7 @@
 import { EventEmitter } from "./EventEmitter"
 import type { GameEngine } from "./GameEngine"
 import { Vector2D } from "./geometry/Vector2D"
+import { FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
 import { PIXI, Viewport } from "./lib/pixi"
 
 /**
@@ -249,13 +250,13 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    * Updates the game state and triggers rendering for each frame.
    * Coordinates between the game engine and visual rendering.
    *
-   * @param deltaFrames Frames elapsed since the last frame
+   * @param deltaTicks Ticks elapsed since the last frame
    */
-  protected update(deltaFrames: number): void {
+  protected update(deltaTicks: number): void {
     if (this.gameEngine) {
-      this.gameEngine.update(deltaFrames)
+      this.gameEngine.update(deltaTicks)
     }
-    this.render(deltaFrames)
+    this.render(deltaTicks)
   }
 
   /**
@@ -266,8 +267,8 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
       this.container.addEventListener("pointermove", this.handlePointerMove)
       this.container.addEventListener("click", this.handleClick)
     }
-    // this.viewport.on("moved", this.handleViewportMoved)
-    // this.viewport.on("zoomed", this.handleViewportZoomed)
+    this.viewport.on("moved", this.handleViewportMoved)
+    this.viewport.on("zoomed", this.handleViewportZoomed)
   }
 
   /**
@@ -275,7 +276,7 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    */
   protected setupUpdateLoop(): void {
     this.app.ticker.add((ticker) => {
-      this.update(ticker.deltaTime)
+      this.update(~~(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER))
     })
   }
 

@@ -229,7 +229,7 @@ export class TestScenarioBuilder {
 
           // Record this as an object update event
           this.recordObjectUpdate(
-            this.engine.getTotalFrames(),
+            this.engine.getTotalTicks(),
             objectType,
             objectId,
             method,
@@ -350,8 +350,8 @@ export class TestScenarioBuilder {
     this.engine.start()
 
     // Set up ticker callback
-    this.ticker.add(async (deltaFrames) => {
-      await this.engine.update(deltaFrames)
+    this.ticker.add(async (deltaTicks) => {
+      await this.engine.update(deltaTicks)
     })
 
     return {
@@ -362,30 +362,30 @@ export class TestScenarioBuilder {
   }
 
   async run(
-    totalFrames: number,
-    deltaFramesPerTick = 1,
+    totalTicks: number,
+    deltaTicksPerTick = 1,
   ): Promise<ScenarioResult> {
     const { engine, recorder, ticker } = await this.build()
 
     const snapshots: GameStateSnapshot[] = []
-    let currentFrame = 0
+    let currentTick = 0
 
-    while (currentFrame < totalFrames) {
+    while (currentTick < totalTicks) {
       // Execute scheduled actions for this frame
       this.scheduledActions
-        .filter((action) => action.frame === currentFrame)
+        .filter((action) => action.frame === currentTick)
         .forEach((action) => action.action())
 
       // Execute movement commands for this frame
       this.movementCommands
-        .filter((cmd) => cmd.frame === currentFrame)
+        .filter((cmd) => cmd.frame === currentTick)
         .forEach((cmd) => {
           const group = engine.getGameObjectGroup(cmd.objectType)
           const obj = group?.getById(cmd.objectId)
           if (obj && typeof (obj as any)[cmd.method] === "function") {
             ;(obj as any)[cmd.method](...cmd.params)
             this.recordObjectUpdate(
-              currentFrame,
+              currentTick,
               cmd.objectType,
               cmd.objectId,
               cmd.method,
@@ -395,13 +395,13 @@ export class TestScenarioBuilder {
         })
 
       // Capture snapshot if scheduled
-      if (this.snapshotFrames.includes(currentFrame)) {
+      if (this.snapshotFrames.includes(currentTick)) {
         snapshots.push(StateComparator.snapshot(engine))
       }
 
       // Run frame
-      await ticker.tick(deltaFramesPerTick)
-      currentFrame += deltaFramesPerTick
+      await ticker.tick(deltaTicksPerTick)
+      currentTick += deltaTicksPerTick
     }
 
     // Stop recording

@@ -31,3 +31,5 @@ export * from "./GameCanvas"
 export * from "./lib/pixi"
 // Performance measurement
 export * from "./lib/performance"
+// Internal constants and utilities
+export * from "./lib/internals"

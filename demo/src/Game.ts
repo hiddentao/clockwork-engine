@@ -228,19 +228,15 @@ export class Game {
   private setupGameLoop(): void {
     const ticker = this.canvas.getApp().ticker
     ticker.add(() => {
-      // Handle replay mode separately since GameCanvas handles normal updates
-      if (this.isReplaying) {
-        this.replayManager.update(ticker.deltaTime)
-      }
-
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
-        frame: this.isReplaying
-          ? this.replayManager.getCurrentFrame()
-          : this.activeEngine.getTotalFrames(),
+        tick: this.isReplaying
+          ? this.replayManager.getCurrentTick()
+          : this.activeEngine.getTotalTicks(),
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
+        actualFPS: ticker.FPS,
       })
     })
   }
@@ -272,7 +268,7 @@ export class Game {
       case "replaySpeed":
         this.replaySpeed = data
         if (this.isReplaying) {
-          this.canvas.getApp().ticker.speed = this.replaySpeed
+          this.replayManager.setReplaySpeed(this.replaySpeed)
         }
         break
     }
@@ -331,9 +327,6 @@ export class Game {
     console.log("🎬 Starting replay mode...")
     this.isReplaying = true
 
-    // Set ticker speed for replay
-    this.canvas.getApp().ticker.speed = this.replaySpeed
-
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayEngine) {
       this.replayEngine.reset(recording.seed)
@@ -345,6 +338,9 @@ export class Game {
 
     // Start replay on the replay engine (this will control the engine internally)
     this.replayManager.replay(recording)
+
+    // Set replay speed
+    this.replayManager.setReplaySpeed(this.replaySpeed)
   }
 
   private stopReplay(switchToPlay: boolean = true): void {
@@ -352,9 +348,6 @@ export class Game {
 
     console.log("⏹️ Stopping replay mode...")
     this.isReplaying = false
-
-    // Reset ticker speed
-    this.canvas.getApp().ticker.speed = 1
 
     this.replayManager.stopReplay()
 

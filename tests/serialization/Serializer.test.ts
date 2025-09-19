@@ -616,8 +616,8 @@ describe("Serializer", () => {
       const recording = {
         seed: "test-seed",
         events: [],
-        deltaFrames: [1, 2, 3],
-        totalFrames: 6,
+        deltaTicks: [1, 2, 3],
+        totalTicks: 6,
         metadata: {
           createdAt: Date.now(),
           version: "1.0.0",
