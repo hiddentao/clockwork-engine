@@ -1,6 +1,6 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
-import { TARGET_TPS } from "./lib/internals"
+import { FRAMES_PER_SECOND, FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
 import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
@@ -151,9 +151,10 @@ export class ReplayManager {
    * Start the setInterval-based replay loop
    */
   private startReplayLoop(): void {
-    const intervalMs = 1000 / this.replaySpeed
+    const intervalMs = 1000 / FRAMES_PER_SECOND
     this.intervalId = setInterval(() => {
-      this.runReplayLoop()
+      const deltaTicks = FRAMES_TO_TICKS_MULTIPLIER * this.replaySpeed
+      this.runReplayLoop(deltaTicks)
     }, intervalMs)
   }
 
@@ -169,25 +170,25 @@ export class ReplayManager {
 
   /**
    * Run one iteration of the replay loop
-   * Processes recorded ticks up to TARGET_TPS worth per iteration
+   * Processes recorded ticks up to deltaTicks worth per iteration
    */
-  private runReplayLoop(): void {
+  private runReplayLoop(deltaTicks: number): void {
     if (!this.isReplaying || !this.recording) {
       return
     }
 
     let ticksProcessedThisIteration = 0
 
-    // Process recorded ticks while we haven't exceeded TARGET_TPS for this iteration
+    // Process recorded ticks while we haven't exceeded deltaTicks for this iteration
     while (
       this.isReplaying &&
       this.deltaTicksIndex < this.recording.deltaTicks.length &&
-      ticksProcessedThisIteration < TARGET_TPS
+      ticksProcessedThisIteration < deltaTicks
     ) {
       const recordedDeltaTicks = this.recording.deltaTicks[this.deltaTicksIndex]
 
       // Check if adding this delta would exceed our target
-      if (ticksProcessedThisIteration + recordedDeltaTicks > TARGET_TPS) {
+      if (ticksProcessedThisIteration + recordedDeltaTicks > deltaTicks) {
         break
       }
 

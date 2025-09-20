@@ -4,6 +4,8 @@
  * and maintaining deterministic behavior with integer-based ticks
  */
 
+export const FRAMES_PER_SECOND = 60
+
 /**
  * Multiplier to convert floating-point frame deltas to integer ticks
  * This eliminates floating-point precision issues in recording/replay
@@ -14,7 +16,7 @@ export const FRAMES_TO_TICKS_MULTIPLIER = 1000
  * Target ticks per second - calculated from PIXI's target FPS
  * This is the expected number of ticks per second at optimal frame rate
  */
-export const TARGET_TPS = 60 * FRAMES_TO_TICKS_MULTIPLIER
+export const TARGET_TPS = FRAMES_PER_SECOND * FRAMES_TO_TICKS_MULTIPLIER
 
 /**
  * Converts milliseconds to ticks for deterministic timing
