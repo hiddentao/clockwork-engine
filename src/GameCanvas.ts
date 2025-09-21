@@ -1,6 +1,7 @@
 import { EventEmitter } from "./EventEmitter"
 import type { GameEngine } from "./GameEngine"
 import { Vector2D } from "./geometry/Vector2D"
+import { FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
 import { PIXI, Viewport } from "./lib/pixi"
 
 /**
@@ -239,23 +240,23 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
   /**
    * Renders the current frame with game-specific drawing logic.
-   * Called every frame after the game engine update.
+   * Called every tick after the game engine update.
    *
-   * @param deltaTime Time elapsed since the last frame
+   * @param deltaTicks Ticks elapsed since the last update
    */
-  protected abstract render(deltaTime: number): void
+  protected abstract render(deltaTicks: number): void
 
   /**
-   * Updates the game state and triggers rendering for each frame.
+   * Updates the game state and triggers rendering for each tick.
    * Coordinates between the game engine and visual rendering.
    *
-   * @param deltaFrames Frames elapsed since the last frame
+   * @param deltaTicks Ticks elapsed since the last update
    */
-  protected update(deltaFrames: number): void {
+  protected update(deltaTicks: number): void {
     if (this.gameEngine) {
-      this.gameEngine.update(deltaFrames)
+      this.gameEngine.update(deltaTicks)
     }
-    this.render(deltaFrames)
+    this.render(deltaTicks)
   }
 
   /**
@@ -275,7 +276,7 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    */
   protected setupUpdateLoop(): void {
     this.app.ticker.add((ticker) => {
-      this.update(ticker.deltaTime)
+      this.update(~~(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER))
     })
   }
 
