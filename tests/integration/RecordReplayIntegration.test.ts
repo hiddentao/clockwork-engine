@@ -129,9 +129,10 @@ describe("Record-Replay Integration Tests", () => {
         0,
         replayEngine,
       )
+      const proxyEngine = replayManager.getReplayEngine()
       replayTicker.add((deltaFrames) => {
         replayStates.push(replayEngine.captureState())
-        replayManager.update(deltaFrames)
+        proxyEngine.update(deltaFrames)
       })
 
       // Run replay
@@ -203,7 +204,8 @@ describe("Record-Replay Integration Tests", () => {
 
       // Replay and verify checkpoints
       replayManager.replay(recording!)
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngine2 = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngine2.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []
       for (let frame = 0; frame < 100; frame++) {
@@ -340,7 +342,8 @@ describe("Record-Replay Integration Tests", () => {
         "",
         replayEngine,
       )
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngineReplay = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
 
       const replayStates: any[] = []
       for (let frame = 0; frame < 60; frame++) {
@@ -424,7 +427,8 @@ describe("Record-Replay Integration Tests", () => {
         "",
         replayEngine,
       )
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngineReplay = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
 
       for (let frame = 0; frame < 50; frame++) {
         await replayTicker.tick(1)
@@ -462,7 +466,8 @@ describe("Record-Replay Integration Tests", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       // Should finish immediately
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngineReplay = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
       replayTicker.tick(1)
 
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
@@ -534,7 +539,8 @@ describe("Record-Replay Integration Tests", () => {
 
       // Should be replayable
       replayManager.replay(partialRecording!)
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngineReplay = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
 
       let replayFrames = 0
       while (replayManager.isCurrentlyReplaying() && replayFrames < 20) {
@@ -587,7 +593,8 @@ describe("Record-Replay Integration Tests", () => {
         const testTicker = new MockTicker()
 
         testReplay.replay(recording!)
-        testTicker.add((deltaFrames) => testReplay.update(deltaFrames))
+        const testProxyEngine = testReplay.getReplayEngine()
+        testTicker.add((deltaFrames) => testProxyEngine.update(deltaFrames))
 
         let totalFramesProcessed = 0
         while (testReplay.isCurrentlyReplaying() && totalFramesProcessed < 30) {
@@ -748,7 +755,8 @@ describe("Record-Replay Integration Tests", () => {
 
       // Replay and verify checkpoints
       replayManager.replay(recording!)
-      replayTicker.add((deltaFrames) => replayManager.update(deltaFrames))
+      const proxyEngineReplay = replayManager.getReplayEngine()
+      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
 
       const replayCheckpoints: { frame: number; state: any }[] = []
 

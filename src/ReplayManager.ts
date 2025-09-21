@@ -5,6 +5,7 @@ import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
 export class ReplayManager {
+  protected __engine: GameEngine
   protected engine: GameEngine
   protected isReplaying: boolean = false
   protected deltaFramesIndex: number = 0
@@ -13,7 +14,78 @@ export class ReplayManager {
   protected accumulatedFrames: number = 0
 
   constructor(engine: GameEngine) {
-    this.engine = engine
+    this.__engine = engine
+    this.engine = this.createProxyEngine()
+  }
+
+  /**
+   * Create the proxy GameEngine that intercepts update() calls during replay
+   * The proxy implements the replay logic and calls the real engine with recorded deltaFrames
+   */
+  protected createProxyEngine(): GameEngine {
+    const replayManager = this
+
+    return new Proxy(this.__engine, {
+      get(target, prop, receiver) {
+        if (
+          prop === "update" &&
+          replayManager.isReplaying &&
+          replayManager.recording
+        ) {
+          // Intercept update() calls during replay
+          return function (deltaFrames: number) {
+            // Accumulate incoming frames
+            replayManager.accumulatedFrames += deltaFrames
+
+            // Process recorded frames while we have enough accumulated frames
+            while (
+              replayManager.isReplaying && // Check again in case stopReplay was called
+              replayManager.deltaFramesIndex <
+                replayManager.recording!.deltaFrames.length &&
+              replayManager.accumulatedFrames >=
+                replayManager.recording!.deltaFrames[
+                  replayManager.deltaFramesIndex
+                ] -
+                  REPLAY_CONSTANTS.FLOATING_POINT_TOLERANCE
+            ) {
+              const recordedDeltaFrames =
+                replayManager.recording!.deltaFrames[
+                  replayManager.deltaFramesIndex
+                ]
+              replayManager.deltaFramesIndex++
+
+              // Subtract processed frames from accumulator
+              replayManager.accumulatedFrames -= recordedDeltaFrames
+
+              // Update the real engine with the recorded deltaFrames
+              target.update(recordedDeltaFrames)
+
+              // Track current frame
+              replayManager.currentReplayFrame += recordedDeltaFrames
+            }
+
+            // Check if replay is complete after processing
+            if (
+              replayManager.isReplaying &&
+              replayManager.deltaFramesIndex >=
+                replayManager.recording!.deltaFrames.length
+            ) {
+              replayManager.stopReplay()
+            }
+          }
+        }
+
+        // For all other methods, pass through to the real engine
+        return Reflect.get(target, prop, receiver)
+      },
+    }) as GameEngine
+  }
+
+  /**
+   * Get the proxy GameEngine (same as this.engine)
+   */
+  getReplayEngine(): GameEngine {
+    return this.engine
   }
 
   /**
@@ -37,16 +109,16 @@ export class ReplayManager {
     this.accumulatedFrames = 0
 
     // Initialize engine with deterministic seed
-    this.engine.reset(recording.seed)
+    this.__engine.reset(recording.seed)
 
     // Configure event source for recorded input
     const recordedSource = new RecordedEventSource(
       recording.events as AnyGameEvent[],
     )
-    this.engine.getEventManager().setSource(recordedSource)
+    this.__engine.getEventManager().setSource(recordedSource)
 
     // Begin game execution
-    this.engine.start()
+    this.__engine.start()
   }
 
   /**
@@ -61,8 +133,8 @@ export class ReplayManager {
     this.isReplaying = false
 
     // Pause engine to preserve final state
-    if (this.engine.getState() === GameState.PLAYING) {
-      this.engine.pause()
+    if (this.__engine.getState() === GameState.PLAYING) {
+      this.__engine.pause()
     }
 
     // Reset playback state (preserve currentReplayFrame for inspection)
@@ -84,51 +156,6 @@ export class ReplayManager {
    */
   getCurrentFrame(): number {
     return this.currentReplayFrame
-  }
-
-  /**
-   * Update method to be called by game loop during replay
-   * Accumulates incoming frames and processes recorded frames deterministically
-   * Maintains frame-accurate timing with floating-point tolerance
-   * @param deltaFrames Number of frames elapsed since last update
-   */
-  update(deltaFrames: number): void {
-    if (!this.isReplaying || !this.recording) {
-      return
-    }
-
-    // Accumulate incoming frames
-    this.accumulatedFrames += deltaFrames
-
-    // Process recorded frames while we have enough accumulated frames
-    while (
-      this.isReplaying && // Check again in case stopReplay was called
-      this.deltaFramesIndex < this.recording.deltaFrames.length &&
-      this.accumulatedFrames >=
-        this.recording.deltaFrames[this.deltaFramesIndex] -
-          REPLAY_CONSTANTS.FLOATING_POINT_TOLERANCE
-    ) {
-      const recordedDeltaFrames =
-        this.recording.deltaFrames[this.deltaFramesIndex]
-      this.deltaFramesIndex++
-
-      // Subtract processed frames from accumulator
-      this.accumulatedFrames -= recordedDeltaFrames
-
-      // Update the engine with the recorded deltaFrames
-      this.engine.update(recordedDeltaFrames)
-
-      // Track current frame
-      this.currentReplayFrame += recordedDeltaFrames
-    }
-
-    // Check if replay is complete after processing (moved from beginning)
-    if (
-      this.isReplaying &&
-      this.deltaFramesIndex >= this.recording.deltaFrames.length
-    ) {
-      this.stopReplay()
-    }
   }
 
   /**

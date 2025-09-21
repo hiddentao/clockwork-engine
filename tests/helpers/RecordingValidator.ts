@@ -138,8 +138,9 @@ export class RecordingValidator {
     replayManager.replay(recording)
 
     // Add ticker callback for replay manager
+    const proxyEngine = replayManager.getReplayEngine()
     ticker.add((deltaFrames) => {
-      replayManager.update(deltaFrames)
+      proxyEngine.update(deltaFrames)
     })
 
     // Run through all recorded frames

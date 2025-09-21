@@ -185,8 +185,9 @@ export class DemoGameEngine extends GameEngine {
 
     const position = this.findEmptyPosition()
     if (position) {
+      const appleId = `apple-${this.appleCounter++}`
       const apple = new Apple(
-        `apple-${this.appleCounter++}`,
+        appleId,
         position,
         GAME_CONFIG.APPLE_TIMEOUT,
         this,
@@ -204,7 +205,8 @@ export class DemoGameEngine extends GameEngine {
 
     const position = this.findEmptyPosition()
     if (position) {
-      const wall = new Wall(`wall-${this.wallsSpawned++}`, position, this)
+      const wallId = `wall-${this.wallsSpawned++}`
+      const wall = new Wall(wallId, position, this)
 
       // Add wall to collision tree
       this.getCollisionTree().add(position, wall)

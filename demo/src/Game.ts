@@ -228,11 +228,6 @@ export class Game {
   private setupGameLoop(): void {
     const ticker = this.canvas.getApp().ticker
     ticker.add(() => {
-      // Handle replay mode separately since GameCanvas handles normal updates
-      if (this.isReplaying) {
-        this.replayManager.update(ticker.deltaTime)
-      }
-
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         frame: this.isReplaying
@@ -335,13 +330,14 @@ export class Game {
     this.canvas.getApp().ticker.speed = this.replaySpeed
 
     // If already on replay engine (e.g., after a replay ended), just restart
-    if (this.activeEngine === this.replayEngine) {
+    if (this.activeEngine === this.replayManager.getReplayEngine()) {
       this.replayEngine.reset(recording.seed)
     } else {
-      // Switch to replay engine
-      this.activeEngine = this.replayEngine
-      this.canvas.setGameEngine(this.activeEngine)
+      // Switch to replay proxy engine
+      this.activeEngine = this.replayManager.getReplayEngine() as DemoGameEngine
     }
+
+    this.canvas.setGameEngine(this.activeEngine)
 
     // Start replay on the replay engine (this will control the engine internally)
     this.replayManager.replay(recording)
@@ -361,6 +357,9 @@ export class Game {
     // Switch back to play engine only if requested
     if (switchToPlay) {
       this.switchToPlayMode()
+    } else {
+      // If staying in replay mode, restore canvas connection to replay engine for rendering
+      this.canvas.setGameEngine(this.activeEngine)
     }
   }
 
@@ -373,6 +372,7 @@ export class Game {
 
     // Switch to play engine and reset it
     this.activeEngine = this.playEngine
+    // Restore GameCanvas engine connection for normal play mode
     this.canvas.setGameEngine(this.activeEngine)
     this.playEngine.reset("demo-seed-" + Date.now())
   }

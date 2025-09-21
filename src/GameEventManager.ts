@@ -9,6 +9,7 @@ export class GameEventManager implements IGameLoop {
   protected source: GameEventSource
   protected engine: GameEngine
   protected recorder?: GameRecorder
+  protected currentFrame: number = 0
 
   constructor(source: GameEventSource, engine: GameEngine) {
     this.source = source
@@ -26,6 +27,8 @@ export class GameEventManager implements IGameLoop {
    * Process events for the current frame
    */
   update(_deltaFrames: number, totalFrames: number): void {
+    this.currentFrame = totalFrames
+
     // Get all events that are ready for this frame
     const events = this.source.getNextEvents(totalFrames)
 
@@ -115,6 +118,15 @@ export class GameEventManager implements IGameLoop {
         `Object not found: ${event.objectId} of type ${event.objectType}`,
       )
       return
+    }
+
+    // Get object position for logging if available
+    let _position: { x: number; y: number } | undefined
+    if (typeof obj.getPosition === "function") {
+      const pos = obj.getPosition()
+      if (pos && typeof pos.x === "number" && typeof pos.y === "number") {
+        _position = { x: pos.x, y: pos.y }
+      }
     }
 
     const method = obj[event.method as keyof typeof obj]
