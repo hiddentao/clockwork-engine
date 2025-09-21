@@ -176,10 +176,10 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private spawnApple(): void {
-    const currentFrame = this.getTotalFrames()
+    const currentTick = this.getTotalTicks()
 
     // Prevent multiple apple spawns in the same frame
-    if (this.lastAppleSpawnFrame === currentFrame) {
+    if (this.lastAppleSpawnFrame === currentTick) {
       return
     }
 
@@ -192,8 +192,8 @@ export class DemoGameEngine extends GameEngine {
         GAME_CONFIG.APPLE_TIMEOUT,
         this,
       )
-      apple.setSpawnFrame(currentFrame)
-      this.lastAppleSpawnFrame = currentFrame
+      apple.setSpawnFrame(currentTick)
+      this.lastAppleSpawnFrame = currentTick
 
       // Add apple to collision tree
       this.getCollisionTree().add(position, apple)
@@ -215,10 +215,10 @@ export class DemoGameEngine extends GameEngine {
 
   private cleanupExpiredApples(): void {
     const apples = this.getApples()
-    const currentFrame = this.getTotalFrames()
+    const currentTick = this.getTotalTicks()
 
     apples.forEach((apple) => {
-      if (apple.isExpired(currentFrame)) {
+      if (apple.isExpired(currentTick)) {
         this.removeAppleAndSpawnNew(apple)
       }
     })

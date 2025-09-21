@@ -231,8 +231,8 @@ export class Game {
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         frame: this.isReplaying
-          ? this.replayManager.getCurrentFrame()
-          : this.activeEngine.getTotalFrames(),
+          ? this.replayManager.getCurrentTick()
+          : this.activeEngine.getTotalTicks(),
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
