@@ -159,7 +159,7 @@ import { serializer } from './src/Serializer'
 const recorder = new GameRecorder()
 serializer.registerType('Vector2D', Vector2D)
 
-engine.initialize("seed123")
+engine.reset("seed123")
 recorder.startRecording(engine)
 
 // Manual object updates must be recorded explicitly

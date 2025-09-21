@@ -270,7 +270,7 @@ class ReplayManager {
   
   replay(recording: GameRecording): void {
     // 1. Initialize engine with recording seed
-    this.engine.initialize(recording.seed)
+    this.engine.reset(recording.seed)
     
     // 2. Set input source to recorded events
     const recordedSource = new RecordedInputSource(recording.events)
@@ -376,7 +376,7 @@ const serializer = new Serializer()
 serializer.registerType('Vector2D', Vector2D)
 
 // Start recording
-engine.initialize("seed123")
+engine.reset("seed123")
 recorder.startRecording(engine)
 
 // Play game...

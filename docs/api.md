@@ -502,12 +502,12 @@ class PRNG
 
 #### Methods
 
-##### `initialize(seed: string): void`
+##### `reset(seed: string): void`
 
-Initializes with a seed value.
+Resets the PRNG with a seed value.
 
 ```typescript
-prng.initialize("my-seed")
+prng.reset("my-seed")
 ```
 
 ##### `random(): number`

@@ -60,7 +60,7 @@ export abstract class GameEngine
       this.seed = seed
     }
     this.setState(GameState.READY)
-    this.prng.initialize(this.seed)
+    this.prng.reset(this.seed)
     this.totalTicks = 0
     this.gameObjectGroups.clear()
     this.timer.reset()

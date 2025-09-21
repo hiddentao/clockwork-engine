@@ -8,7 +8,7 @@ describe("PRNG", () => {
     prng = new PRNG()
   })
 
-  describe("Initialization", () => {
+  describe("Reset", () => {
     it("should initialize with default seed", () => {
       expect(prng).toBeDefined()
     })
@@ -18,13 +18,13 @@ describe("PRNG", () => {
       expect(customPrng).toBeDefined()
     })
 
-    it("should accept initialize method", () => {
-      prng.initialize("test-seed")
+    it("should accept reset method", () => {
+      prng.reset("test-seed")
       expect(prng).toBeDefined()
     })
 
     it("should handle empty seed", () => {
-      prng.initialize("")
+      prng.reset("")
       const value = prng.random()
       expect(value).toBeGreaterThanOrEqual(0)
       expect(value).toBeLessThan(1)
@@ -32,7 +32,7 @@ describe("PRNG", () => {
 
     it("should handle undefined seed", () => {
       try {
-        prng.initialize(undefined as any)
+        prng.reset(undefined as any)
         const value = prng.random()
         expect(value).toBeGreaterThanOrEqual(0)
         expect(value).toBeLessThan(1)
@@ -76,16 +76,16 @@ describe("PRNG", () => {
       expect(sequence1).not.toEqual(sequence2)
     })
 
-    it("should be repeatable after reinitialization", () => {
+    it("should be repeatable after reset", () => {
       const seed = "repeatable-test"
 
-      prng.initialize(seed)
+      prng.reset(seed)
       const firstSequence: number[] = []
       for (let i = 0; i < 20; i++) {
         firstSequence.push(prng.random())
       }
 
-      prng.initialize(seed)
+      prng.reset(seed)
       const secondSequence: number[] = []
       for (let i = 0; i < 20; i++) {
         secondSequence.push(prng.random())
@@ -119,7 +119,7 @@ describe("PRNG", () => {
 
   describe("random()", () => {
     beforeEach(() => {
-      prng.initialize("test-random")
+      prng.reset("test-random")
     })
 
     it("should return values in range [0, 1)", () => {
@@ -174,7 +174,7 @@ describe("PRNG", () => {
 
   describe("randomInt()", () => {
     beforeEach(() => {
-      prng.initialize("test-int")
+      prng.reset("test-int")
     })
 
     it("should return integers in specified range", () => {
@@ -254,7 +254,7 @@ describe("PRNG", () => {
 
   describe("randomFloat()", () => {
     beforeEach(() => {
-      prng.initialize("test-float")
+      prng.reset("test-float")
     })
 
     it("should return floats in specified range", () => {
@@ -304,7 +304,7 @@ describe("PRNG", () => {
 
   describe("randomChoice()", () => {
     beforeEach(() => {
-      prng.initialize("test-choice")
+      prng.reset("test-choice")
     })
 
     it("should return element from array", () => {
@@ -373,7 +373,7 @@ describe("PRNG", () => {
 
   describe("randomBoolean()", () => {
     beforeEach(() => {
-      prng.initialize("test-boolean")
+      prng.reset("test-boolean")
     })
 
     it("should return boolean values", () => {
@@ -417,7 +417,7 @@ describe("PRNG", () => {
       let trueCount = 0
       const trials = 1000
 
-      prng.initialize("threshold-test")
+      prng.reset("threshold-test")
       for (let i = 0; i < trials; i++) {
         if (prng.randomBoolean(0.7)) {
           trueCount++
@@ -445,7 +445,7 @@ describe("PRNG", () => {
       let trueCount = 0
       const trials = 1000
 
-      prng.initialize("threshold-30")
+      prng.reset("threshold-30")
       for (let i = 0; i < trials; i++) {
         if (prng.randomBoolean(0.3)) {
           trueCount++
@@ -490,7 +490,7 @@ describe("PRNG", () => {
 
   describe("Performance", () => {
     beforeEach(() => {
-      prng.initialize("performance-test")
+      prng.reset("performance-test")
     })
 
     it("should generate random numbers quickly", () => {
@@ -525,6 +525,146 @@ describe("PRNG", () => {
       const endTime = performance.now()
 
       expect(endTime - startTime).toBeLessThan(100)
+    })
+  })
+
+  describe("Reset Method Additional Tests", () => {
+    it("should allow multiple resets in succession", () => {
+      const seeds = ["seed1", "seed2", "seed3", "seed1"]
+      const results: number[] = []
+
+      // Test multiple resets and ensure they work
+      for (const seed of seeds) {
+        prng.reset(seed)
+        results.push(prng.random())
+      }
+
+      // First and last should be identical (same seed)
+      expect(results[0]).toBe(results[3])
+
+      // All results should be different from each other (except first and last)
+      expect(results[0]).not.toBe(results[1])
+      expect(results[0]).not.toBe(results[2])
+      expect(results[1]).not.toBe(results[2])
+    })
+
+    it("should handle numeric string seeds consistently", () => {
+      const seeds = ["123", "456", "789", "123"]
+      const firstRun: number[] = []
+      const secondRun: number[] = []
+
+      // First run
+      for (const seed of seeds) {
+        prng.reset(seed)
+        firstRun.push(prng.random())
+      }
+
+      // Second run
+      for (const seed of seeds) {
+        prng.reset(seed)
+        secondRun.push(prng.random())
+      }
+
+      expect(firstRun).toEqual(secondRun)
+    })
+
+    it("should handle special character seeds", () => {
+      const specialSeeds = ["!@#$", "()[]{}|", "+-=<>", "&*%^"]
+
+      for (const seed of specialSeeds) {
+        prng.reset(seed)
+        const value = prng.random()
+        expect(value).toBeGreaterThanOrEqual(0)
+        expect(value).toBeLessThan(1)
+        expect(typeof value).toBe("number")
+      }
+    })
+
+    it("should maintain determinism across multiple method calls after reset", () => {
+      const seed = "multi-method-test"
+
+      // First sequence
+      prng.reset(seed)
+      const seq1 = {
+        random: prng.random(),
+        randomInt: prng.randomInt(1, 100),
+        randomFloat: prng.randomFloat(0, 10),
+        randomChoice: prng.randomChoice(["A", "B", "C", "D"]),
+        randomBoolean: prng.randomBoolean(),
+      }
+
+      // Second sequence (should be identical)
+      prng.reset(seed)
+      const seq2 = {
+        random: prng.random(),
+        randomInt: prng.randomInt(1, 100),
+        randomFloat: prng.randomFloat(0, 10),
+        randomChoice: prng.randomChoice(["A", "B", "C", "D"]),
+        randomBoolean: prng.randomBoolean(),
+      }
+
+      expect(seq1).toEqual(seq2)
+    })
+
+    it("should clear any internal state properly on reset", () => {
+      // Generate some numbers to potentially change internal state
+      prng.reset("initial-seed")
+      for (let i = 0; i < 1000; i++) {
+        prng.random()
+      }
+
+      // Reset and check we get the same initial value
+      prng.reset("initial-seed")
+      const afterReset = prng.random()
+
+      // Create fresh PRNG for comparison
+      const fresh = new PRNG("initial-seed")
+      const freshValue = fresh.random()
+
+      expect(afterReset).toBe(freshValue)
+    })
+
+    it("should handle rapid successive resets", () => {
+      const seed = "rapid-reset-test"
+
+      // Perform many rapid resets
+      for (let i = 0; i < 100; i++) {
+        prng.reset(seed)
+        const value = prng.random()
+        expect(value).toBeGreaterThanOrEqual(0)
+        expect(value).toBeLessThan(1)
+      }
+    })
+
+    it("should work correctly after constructor initialization followed by reset", () => {
+      // Create PRNG with constructor seed
+      const constructorPrng = new PRNG("constructor-seed")
+      const constructorValue = constructorPrng.random()
+
+      // Reset to same seed
+      constructorPrng.reset("constructor-seed")
+      const resetValue = constructorPrng.random()
+
+      expect(constructorValue).toBe(resetValue)
+    })
+
+    it("should handle empty string initialization consistently", () => {
+      const emptyPrng1 = new PRNG("")
+      const emptyPrng2 = new PRNG("")
+
+      const value1 = emptyPrng1.random()
+      const value2 = emptyPrng2.random()
+
+      expect(value1).toBe(value2)
+
+      // Test reset with empty string
+      prng.reset("")
+      const resetValue1 = prng.random()
+
+      prng.reset("")
+      const resetValue2 = prng.random()
+
+      expect(resetValue1).toBe(resetValue2)
     })
   })
 
@@ -601,7 +741,7 @@ describe("PRNG", () => {
 
   describe("Statistical Quality", () => {
     beforeEach(() => {
-      prng.initialize("stats-test")
+      prng.reset("stats-test")
     })
 
     it("should pass basic chi-square test for uniformity", () => {

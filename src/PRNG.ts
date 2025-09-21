@@ -7,11 +7,11 @@ export class PRNG {
   constructor(seed?: string) {
     this.rng = alea()
     if (seed) {
-      this.initialize(seed)
+      this.reset(seed)
     }
   }
 
-  initialize(seed: string): void {
+  reset(seed: string): void {
     this.seed = seed
     this.rng = alea(seed)
   }

@@ -74,8 +74,8 @@ const prng = new PRNG()
 // Initialize with specific seed
 const prng = new PRNG("my-game-seed")
 
-// Re-initialize with new seed
-prng.initialize("new-seed")
+// Reset with new seed
+prng.reset("new-seed")
 ```
 
 ### Basic Random Generation
@@ -342,7 +342,7 @@ class ProceduralDungeon {
   
   generateDungeon(seed: string, width: number, height: number): Dungeon {
     // Re-initialize with specific seed for this dungeon
-    this.prng.initialize(`dungeon-${seed}`)
+    this.prng.reset(`dungeon-${seed}`)
     
     const dungeon = new Dungeon(width, height)
     
@@ -405,11 +405,11 @@ class ProceduralDungeon {
 ```typescript
 // GOOD - Consistent seed format
 const gameSeed = `game-${levelNumber}-${difficulty}-${playerId}`
-prng.initialize(gameSeed)
+prng.reset(gameSeed)
 
 // AVOID - Inconsistent seeds
-prng.initialize(Math.random().toString()) // Non-deterministic!
-prng.initialize(`${Date.now()}`) // Time-dependent!
+prng.reset(Math.random().toString()) // Non-deterministic!
+prng.reset(`${Date.now()}`) // Time-dependent!
 ```
 
 ### State Synchronization
@@ -488,7 +488,7 @@ class RandomSystem {
   private prng = new PRNG()
   
   initialize(seed: string): void {
-    this.prng.initialize(seed)
+    this.prng.reset(seed)
   }
   
   generateValue(): number {
