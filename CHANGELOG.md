@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.0](https://github.com/hiddentao/clockwork-engine/compare/v1.6.1...v1.7.0) (2025-09-21)
+
+
+### Features
+
+* make GameEngine reset/setup and ReplayManager replay methods async ([6503fc2](https://github.com/hiddentao/clockwork-engine/commit/6503fc291d02ba82fcd2ed7a24628420639e1f4a))
+
 ## [1.6.1](https://github.com/hiddentao/clockwork-engine/compare/v1.6.0...v1.6.1) (2025-09-21)
 
 
