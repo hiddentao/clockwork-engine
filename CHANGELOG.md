@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.0](https://github.com/hiddentao/clockwork-engine/compare/v1.5.0...v1.6.0) (2025-09-21)
+
+
+### Features
+
+* **demo:** update UI to display ticks and real FPS ([c8db781](https://github.com/hiddentao/clockwork-engine/commit/c8db781355e32d636cc4ee48fc42cc11f0fc4836))
+* implement frames-to-ticks conversion in GameCanvas and demo ([d4c2761](https://github.com/hiddentao/clockwork-engine/commit/d4c2761341c16da0db7cc96852abaef46d814df4))
+
+
+### Bug Fixes
+
+* improve stability of performance test with warmup and median timing ([ac4c9e0](https://github.com/hiddentao/clockwork-engine/commit/ac4c9e0238105a225d27d3806e42df18c6461ae6))
+* **tests:** update GameCanvas test to use deltaTicks parameter ([d6b7407](https://github.com/hiddentao/clockwork-engine/commit/d6b7407b85cec11aa678268e81147d3bb01feccb))
+* update GameCanvas to use tick-based timing and format package.json ([b891e65](https://github.com/hiddentao/clockwork-engine/commit/b891e650488f094533adf6158afab559b922bd34))
+
 ## [1.5.0](https://github.com/hiddentao/clockwork-engine/compare/v1.4.0...v1.5.0) (2025-09-21)
 
 
