@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.5.0](https://github.com/hiddentao/clockwork-engine/compare/v1.4.0...v1.5.0) (2025-09-21)
+
+
+### Bug Fixes
+
+* **demo:** update remaining frame references to tick methods ([de18108](https://github.com/hiddentao/clockwork-engine/commit/de18108a9061f1d7b1feb38e59ac3039e37ba4e0))
+* lint issues ([de19a18](https://github.com/hiddentao/clockwork-engine/commit/de19a1815d30c6a2cd731e8b3da6f879271534c9))
+
+
+### Code Refactoring
+
+* migrate from frame-based to tick-based timing system ([57da91d](https://github.com/hiddentao/clockwork-engine/commit/57da91d0fec82cf96a9b30855a6832b6f9864439))
+* **replay:** update ReplayManager architecture to use proxy pattern ([85398f0](https://github.com/hiddentao/clockwork-engine/commit/85398f0763f112eb3c4a20b60eddcb7961270a82))
+
 ## [1.4.0](https://github.com/hiddentao/clockwork-engine/compare/v1.3.0...v1.4.0) (2025-09-18)
 
 
