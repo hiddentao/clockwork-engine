@@ -230,12 +230,13 @@ export class Game {
     ticker.add(() => {
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
-        frame: this.isReplaying
+        tick: this.isReplaying
           ? this.replayManager.getCurrentTick()
           : this.activeEngine.getTotalTicks(),
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
+        actualFPS: ticker.FPS,
       })
     })
   }

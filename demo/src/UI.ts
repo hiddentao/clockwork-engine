@@ -2,10 +2,11 @@ import { GameState } from "@hiddentao/clockwork-engine"
 
 export interface UIStatus {
   state: GameState
-  frame: number
+  tick: number
   isRecording: boolean
   isReplaying: boolean
   replaySpeed: number
+  actualFPS: number
 }
 
 export class UI {
@@ -280,8 +281,8 @@ export class UI {
           ${stateText}
         </span>
       </div>
-      <div><strong>Frame:</strong> ${status.frame}</div>
-      <div><strong>FPS:</strong> ~${Math.round(60)} (target)</div>
+      <div><strong>Tick:</strong> ${status.tick}</div>
+      <div><strong>FPS:</strong> ${Math.round(status.actualFPS)}</div>
       ${recordingText ? `<div style="color: #ff4444; font-weight: bold; margin-top: 8px;">${recordingText}</div>` : ""}
       ${replayText ? `<div style="color: #44ff44; font-weight: bold; margin-top: 8px;">${replayText}</div>` : ""}
       <div style="margin-top: 8px; font-size: 0.9em; color: #aaa;">
