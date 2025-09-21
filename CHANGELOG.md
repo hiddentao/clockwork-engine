@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.1](https://github.com/hiddentao/clockwork-engine/compare/v1.6.0...v1.6.1) (2025-09-21)
+
+
+### Code Refactoring
+
+* rename PRNG initialize() method to reset() ([58b7672](https://github.com/hiddentao/clockwork-engine/commit/58b7672e7be4906adfbad84b28cec3ffbf6f80d7))
+
 ## [1.6.0](https://github.com/hiddentao/clockwork-engine/compare/v1.5.0...v1.6.0) (2025-09-21)
 
 
