@@ -59,7 +59,7 @@ describe("Loader Integration", () => {
         engine.update(1)
       }
 
-      const finalFrames1 = engine.getTotalFrames()
+      const finalFrames1 = engine.getTotalTicks()
 
       // Second playthrough with same seed
       const engine2 = new ComplexTestEngine(loader)
@@ -71,7 +71,7 @@ describe("Loader Integration", () => {
         engine2.update(1)
       }
 
-      const finalFrames2 = engine2.getTotalFrames()
+      const finalFrames2 = engine2.getTotalTicks()
 
       // Should be deterministic regardless of loader
       expect(finalFrames1).toBe(finalFrames2)
@@ -105,7 +105,7 @@ describe("Loader Integration", () => {
         engine.update(1)
       }
 
-      const finalFrames = engine.getTotalFrames()
+      const finalFrames = engine.getTotalTicks()
 
       // Loader should still be accessible
       expect(engine.getLoader()).toBe(loader)
@@ -136,9 +136,9 @@ describe("Loader Integration", () => {
       ).rejects.toThrow("Mock error for id: bad-config")
 
       // Engine should still be functional
-      expect(engine.getTotalFrames()).toBe(5)
+      expect(engine.getTotalTicks()).toBe(5)
       engine.update(3)
-      expect(engine.getTotalFrames()).toBe(8)
+      expect(engine.getTotalTicks()).toBe(8)
     })
   })
 
@@ -211,7 +211,7 @@ describe("Loader Integration", () => {
 
       const duration = Date.now() - startTime
 
-      expect(engine.getTotalFrames()).toBe(targetFrames)
+      expect(engine.getTotalTicks()).toBe(targetFrames)
       expect(duration).toBeLessThan(1000) // Should complete in under 1 second
     })
 
@@ -253,7 +253,7 @@ describe("Loader Integration", () => {
 
       // Game loop should continue working
       engine.update(5)
-      expect(engine.getTotalFrames()).toBe(5)
+      expect(engine.getTotalTicks()).toBe(5)
     })
 
     it("should maintain engine state when loader throws", async () => {
@@ -273,7 +273,7 @@ describe("Loader Integration", () => {
       // Engine should still be functional
       expect(engine.getState()).toBe(GameState.PLAYING)
       engine.update(3)
-      expect(engine.getTotalFrames()).toBe(3)
+      expect(engine.getTotalTicks()).toBe(3)
     })
   })
 

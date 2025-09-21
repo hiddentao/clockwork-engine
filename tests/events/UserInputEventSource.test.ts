@@ -46,14 +46,14 @@ describe("UserInputEventSource", () => {
 
       // Check first event
       expect(events[0].type).toBe(GameEventType.USER_INPUT)
-      expect(events[0].frame).toBe(currentFrame)
+      expect(events[0].tick).toBe(currentFrame)
       expect((events[0] as UserInputEvent).inputType).toBe("direction")
       expect(events[0].params).toEqual({ x: 1, y: 0 })
       expect(typeof events[0].timestamp).toBe("number")
 
       // Check second event
       expect(events[1].type).toBe(GameEventType.USER_INPUT)
-      expect(events[1].frame).toBe(currentFrame)
+      expect(events[1].tick).toBe(currentFrame)
       expect((events[1] as UserInputEvent).inputType).toBe("button")
       expect(events[1].params).toEqual({ action: "jump" })
       expect(typeof events[1].timestamp).toBe("number")
@@ -94,7 +94,7 @@ describe("UserInputEventSource", () => {
 
       // Check that all events have the correct frame
       events.forEach((event) => {
-        expect(event.frame).toBe(50)
+        expect(event.tick).toBe(50)
         expect(event.type).toBe(GameEventType.USER_INPUT)
       })
     })

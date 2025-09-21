@@ -2,11 +2,11 @@ import type { AnyGameEvent } from "./types"
 
 export interface GameEventSource {
   /**
-   * Get the next events for the current frame
-   * @param totalFrames The current total frames in the game
+   * Get the next events for the current tick
+   * @param totalTicks The current total ticks in the game
    * @returns Array of events to process, or empty array if no events are ready
    */
-  getNextEvents(totalFrames: number): AnyGameEvent[]
+  getNextEvents(totalTicks: number): AnyGameEvent[]
 
   /**
    * Check if there are more events available

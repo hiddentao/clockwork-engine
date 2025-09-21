@@ -58,8 +58,8 @@ describe("Determinism Integration Tests", () => {
       }
 
       // Connect tickers and start
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       engine1.start()
       engine2.start()
@@ -138,7 +138,7 @@ describe("Determinism Integration Tests", () => {
           )
         }
 
-        ticker.add((deltaFrames) => engine.update(deltaFrames))
+        ticker.add((deltaTicks) => engine.update(deltaTicks))
         engine.start()
 
         // Run simulation
@@ -187,8 +187,8 @@ describe("Determinism Integration Tests", () => {
         engine2,
       )
 
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       engine1.start()
       engine2.start()
@@ -230,7 +230,7 @@ describe("Determinism Integration Tests", () => {
         "",
         engine1,
       )
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
 
       engine1.start()
 
@@ -266,8 +266,8 @@ describe("Determinism Integration Tests", () => {
       engine1.reset(seed)
       engine2.reset(seed)
 
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       engine1.start()
       engine2.start()
@@ -336,13 +336,13 @@ describe("Determinism Integration Tests", () => {
       const seed = "rapid-cycle-test"
 
       engine1.reset(seed)
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
       engine1.start()
 
       let objects: TestProjectile[] = []
 
       for (let frame = 0; frame < 50; frame++) {
-        // Every frame: create one, destroy one (if any exist)
+        // Every tick: create one, destroy one (if any exist)
         const newPos = new Vector2D(frame * 2, frame)
         const newObj = new TestProjectile(
           `frame${frame}`,
@@ -366,7 +366,7 @@ describe("Determinism Integration Tests", () => {
         await ticker1.tick(1)
 
         // Verify engine is still in consistent state
-        expect(engine1.getTotalFrames()).toBe(frame + 1)
+        expect(engine1.getTotalTicks()).toBe(frame + 1)
         const activeObjects =
           engine1.getGameObjectGroup("TestProjectile")?.getAllActive() || []
         expect(activeObjects.length).toBeLessThanOrEqual(5)
@@ -398,7 +398,7 @@ describe("Determinism Integration Tests", () => {
       const seed = "prng-state-test"
 
       engine1.reset(seed)
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
 
       // Get some random numbers before starting
       const preStart = []
@@ -435,7 +435,7 @@ describe("Determinism Integration Tests", () => {
 
       // Now create second engine and repeat exactly
       engine2.reset(seed)
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       // Should get same pre-start sequence
       const preStart2 = []
@@ -528,8 +528,8 @@ describe("Determinism Integration Tests", () => {
         projectiles2.push(proj2)
       }
 
-      ticker1.add((deltaFrames) => engine1.update(deltaFrames))
-      ticker2.add((deltaFrames) => engine2.update(deltaFrames))
+      ticker1.add((deltaTicks) => engine1.update(deltaTicks))
+      ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       engine1.start()
       engine2.start()

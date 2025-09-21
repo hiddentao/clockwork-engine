@@ -1,8 +1,8 @@
 export interface IGameLoop {
   /**
-   * Update the game state for the current frame
-   * @param deltaFrames Number of frames since the last update
-   * @param totalFrames Total number of frames processed since start
+   * Update the game state for the current tick
+   * @param deltaTicks Number of ticks since the last update
+   * @param totalTicks Total number of ticks processed since start
    */
-  update(deltaFrames: number, totalFrames: number): void | Promise<void>
+  update(deltaTicks: number, totalTicks: number): void | Promise<void>
 }

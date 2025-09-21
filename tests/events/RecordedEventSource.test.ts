@@ -16,14 +16,14 @@ describe("RecordedEventSource", () => {
     sampleEvents = [
       {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "keyboard",
         params: { key: "W", pressed: true },
       } as UserInputEvent,
       {
         type: GameEventType.OBJECT_UPDATE,
-        frame: 1,
+        tick: 1,
         timestamp: 1001,
         objectType: "Player",
         objectId: "player1",
@@ -32,14 +32,14 @@ describe("RecordedEventSource", () => {
       } as ObjectUpdateEvent,
       {
         type: GameEventType.USER_INPUT,
-        frame: 3,
+        tick: 3,
         timestamp: 3000,
         inputType: "mouse",
         params: { button: "left", x: 100, y: 200 },
       } as UserInputEvent,
       {
         type: GameEventType.OBJECT_UPDATE,
-        frame: 5,
+        tick: 5,
         timestamp: 5000,
         objectType: "Enemy",
         objectId: "enemy1",
@@ -48,7 +48,7 @@ describe("RecordedEventSource", () => {
       } as ObjectUpdateEvent,
       {
         type: GameEventType.USER_INPUT,
-        frame: 5,
+        tick: 5,
         timestamp: 5001,
         inputType: "keyboard",
         params: { key: "SPACE", pressed: false },
@@ -65,10 +65,10 @@ describe("RecordedEventSource", () => {
 
     it("should clone events to prevent external modification", () => {
       // Modify original array
-      sampleEvents[0].frame = 999
+      sampleEvents[0].tick = 999
       sampleEvents.push({
         type: GameEventType.USER_INPUT,
-        frame: 10,
+        tick: 10,
         timestamp: 10000,
         inputType: "test",
         params: {},
@@ -76,7 +76,7 @@ describe("RecordedEventSource", () => {
 
       // Event source should not be affected
       const events = eventSource.getNextEvents(1)
-      expect(events[0].frame).toBe(1) // Not 999
+      expect(events[0].tick).toBe(1) // Not 999
 
       // Complete playback to check total event count
       eventSource.reset()
@@ -100,8 +100,8 @@ describe("RecordedEventSource", () => {
       const events = eventSource.getNextEvents(1)
 
       expect(events).toHaveLength(2)
-      expect(events[0].frame).toBe(1)
-      expect(events[1].frame).toBe(1)
+      expect(events[0].tick).toBe(1)
+      expect(events[1].tick).toBe(1)
       expect(events[0].type).toBe(GameEventType.USER_INPUT)
       expect(events[1].type).toBe(GameEventType.OBJECT_UPDATE)
     })
@@ -110,9 +110,9 @@ describe("RecordedEventSource", () => {
       const events = eventSource.getNextEvents(3)
 
       expect(events).toHaveLength(3) // Frame 1 (2 events) + Frame 3 (1 event)
-      expect(events[0].frame).toBe(1)
-      expect(events[1].frame).toBe(1)
-      expect(events[2].frame).toBe(3)
+      expect(events[0].tick).toBe(1)
+      expect(events[1].tick).toBe(1)
+      expect(events[2].tick).toBe(3)
     })
 
     it("should not return events for future frames", () => {
@@ -134,7 +134,7 @@ describe("RecordedEventSource", () => {
       // Get frame 3 events
       events = eventSource.getNextEvents(3)
       expect(events).toHaveLength(1)
-      expect(events[0].frame).toBe(3)
+      expect(events[0].tick).toBe(3)
 
       // Get frame 4 events (should be empty)
       events = eventSource.getNextEvents(4)
@@ -143,8 +143,8 @@ describe("RecordedEventSource", () => {
       // Get frame 5 events
       events = eventSource.getNextEvents(5)
       expect(events).toHaveLength(2)
-      expect(events[0].frame).toBe(5)
-      expect(events[1].frame).toBe(5)
+      expect(events[0].tick).toBe(5)
+      expect(events[1].tick).toBe(5)
     })
   })
 
@@ -254,7 +254,7 @@ describe("RecordedEventSource", () => {
       const complexEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Complex",
           objectId: "complex1",
@@ -339,14 +339,14 @@ describe("RecordedEventSource", () => {
       const duplicateFrameEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "input1",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "input2",
           params: {},
@@ -365,21 +365,21 @@ describe("RecordedEventSource", () => {
       const unsortedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 3,
+          tick: 3,
           timestamp: 3000,
           inputType: "frame3",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "frame1",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 2,
+          tick: 2,
           timestamp: 2000,
           inputType: "frame2",
           params: {},
@@ -408,7 +408,7 @@ describe("RecordedEventSource", () => {
       const largeFrameEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 999999,
+          tick: 999999,
           timestamp: 1000,
           inputType: "large",
           params: {},
@@ -430,14 +430,14 @@ describe("RecordedEventSource", () => {
       const negativeFrameEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: -5,
+          tick: -5,
           timestamp: 1000,
           inputType: "negative",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 0,
+          tick: 0,
           timestamp: 2000,
           inputType: "zero",
           params: {},
@@ -463,7 +463,7 @@ describe("RecordedEventSource", () => {
         for (let i = 0; i < 10; i++) {
           largeEventList.push({
             type: GameEventType.USER_INPUT,
-            frame: frame,
+            tick: frame,
             timestamp: frame * 1000 + i,
             inputType: `input${i}`,
             params: { frame, index: i },

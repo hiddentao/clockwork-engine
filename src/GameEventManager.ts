@@ -9,7 +9,7 @@ export class GameEventManager implements IGameLoop {
   protected source: GameEventSource
   protected engine: GameEngine
   protected recorder?: GameRecorder
-  protected currentFrame: number = 0
+  protected currentTick: number = 0
 
   constructor(source: GameEventSource, engine: GameEngine) {
     this.source = source
@@ -24,13 +24,13 @@ export class GameEventManager implements IGameLoop {
   }
 
   /**
-   * Process events for the current frame
+   * Process events for the current tick
    */
-  update(_deltaFrames: number, totalFrames: number): void {
-    this.currentFrame = totalFrames
+  update(_deltaTicks: number, totalTicks: number): void {
+    this.currentTick = totalTicks
 
-    // Get all events that are ready for this frame
-    const events = this.source.getNextEvents(totalFrames)
+    // Get all events that are ready for this tick
+    const events = this.source.getNextEvents(totalTicks)
 
     // Process each event
     for (const event of events) {

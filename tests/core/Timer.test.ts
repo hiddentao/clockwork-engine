@@ -9,36 +9,36 @@ describe("Timer", () => {
   })
 
   describe("setTimeout", () => {
-    it("should execute callback at exact frame", () => {
+    it("should execute callback at exact tick", () => {
       let executed = false
-      let executionFrame = -1
+      let executionTick = -1
 
       timer.setTimeout(() => {
         executed = true
-        executionFrame = 3
+        executionTick = 3
       }, 3)
 
-      // Should not execute before target frame
+      // Should not execute before target tick
       timer.update(1, 1)
       expect(executed).toBe(false)
 
       timer.update(1, 2)
       expect(executed).toBe(false)
 
-      // Should execute at target frame
+      // Should execute at target tick
       timer.update(1, 3)
       expect(executed).toBe(true)
-      expect(executionFrame).toBe(3)
+      expect(executionTick).toBe(3)
     })
 
-    it("should execute callback with frame precision", () => {
+    it("should execute callback with tick precision", () => {
       let executed = false
 
       timer.setTimeout(() => {
         executed = true
       }, 5)
 
-      // Execute updates that sum to exactly 5 frames
+      // Execute updates that sum to exactly 5 ticks
       timer.update(2, 2)
       timer.update(3, 5)
 
@@ -105,7 +105,7 @@ describe("Timer", () => {
       timer.setTimeout(() => executions.push(3), 3)
       timer.setTimeout(() => executions.push(1), 1)
       timer.setTimeout(() => executions.push(2), 2)
-      timer.setTimeout(() => executions.push(1), 1) // Same frame as second
+      timer.setTimeout(() => executions.push(1), 1) // Same tick as second
 
       timer.update(1, 1)
       expect(executions).toEqual([1, 1])
@@ -191,7 +191,7 @@ describe("Timer", () => {
         executionCount++
       }, 0.5)
 
-      // Update by 2 frames should trigger 4 executions
+      // Update by 2 ticks should trigger 4 executions
       timer.update(2, 2)
       expect(executionCount).toBe(4)
     })
@@ -223,12 +223,12 @@ describe("Timer", () => {
     })
 
     it("should track next execution time correctly", () => {
-      const executions: Array<{ frame: number; expected: number }> = []
-      let expectedFrame = 3
+      const executions: Array<{ tick: number; expected: number }> = []
+      let expectedTick = 3
 
       timer.setInterval(() => {
-        executions.push({ frame: expectedFrame, expected: expectedFrame })
-        expectedFrame += 3
+        executions.push({ tick: expectedTick, expected: expectedTick })
+        expectedTick += 3
       }, 3)
 
       for (let i = 1; i <= 10; i++) {
@@ -236,9 +236,9 @@ describe("Timer", () => {
       }
 
       expect(executions).toHaveLength(3)
-      expect(executions[0].frame).toBe(3)
-      expect(executions[1].frame).toBe(6)
-      expect(executions[2].frame).toBe(9)
+      expect(executions[0].tick).toBe(3)
+      expect(executions[1].tick).toBe(6)
+      expect(executions[2].tick).toBe(9)
     })
 
     it("should handle interval callback errors gracefully", () => {
@@ -347,10 +347,10 @@ describe("Timer", () => {
       expect(intervalCount).toBe(0)
     })
 
-    it("should reset frame tracking", () => {
+    it("should reset tick tracking", () => {
       let executed = false
 
-      // Set up a timer and run some frames
+      // Set up a timer and run some ticks
       timer.update(3, 3)
 
       timer.setTimeout(() => {
@@ -359,7 +359,7 @@ describe("Timer", () => {
 
       timer.reset()
 
-      // After reset, timer should start from frame 0 again
+      // After reset, timer should start from tick 0 again
       timer.setTimeout(() => {
         executed = true
       }, 2)
@@ -384,17 +384,17 @@ describe("Timer", () => {
     })
   })
 
-  describe("Frame Accuracy", () => {
-    it("should maintain precise frame timing", () => {
+  describe("Tick Accuracy", () => {
+    it("should maintain precise tick timing", () => {
       const executions: Array<{ expected: number; actual: number }> = []
 
       timer.setTimeout(() => executions.push({ expected: 1, actual: 1 }), 1)
       timer.setTimeout(() => executions.push({ expected: 3, actual: 3 }), 3)
       timer.setTimeout(() => executions.push({ expected: 5, actual: 5 }), 5)
 
-      timer.update(1, 1) // Frame 1
-      timer.update(2, 3) // Frame 3
-      timer.update(2, 5) // Frame 5
+      timer.update(1, 1) // Tick 1
+      timer.update(2, 3) // Tick 3
+      timer.update(2, 5) // Tick 5
 
       expect(executions).toHaveLength(3)
       executions.forEach((exec) => {
@@ -402,7 +402,7 @@ describe("Timer", () => {
       })
     })
 
-    it("should handle non-integer frame updates", () => {
+    it("should handle non-integer tick updates", () => {
       let executed = false
 
       timer.setTimeout(() => {
@@ -413,14 +413,14 @@ describe("Timer", () => {
       expect(executed).toBe(true)
     })
 
-    it("should accumulate fractional frames correctly", () => {
+    it("should accumulate fractional ticks correctly", () => {
       let executed = false
 
       timer.setTimeout(() => {
         executed = true
       }, 3)
 
-      // Accumulate to exactly 3 frames
+      // Accumulate to exactly 3 ticks
       timer.update(1.2, 1.2)
       timer.update(0.8, 2.0)
       timer.update(1.0, 3.0)
@@ -435,11 +435,11 @@ describe("Timer", () => {
         executed = true
       }, 1)
 
-      // Almost but not quite 1 frame
+      // Almost but not quite 1 tick
       timer.update(0.999999, 0.999999)
       expect(executed).toBe(false)
 
-      // Now exactly 1 frame
+      // Now exactly 1 tick
       timer.update(0.000001, 1)
       expect(executed).toBe(true)
     })
@@ -639,10 +639,10 @@ describe("Timer", () => {
         testTimer.setTimeout(() => executions.push(2), 2)
         testTimer.setTimeout(() => executions.push(5), 5)
 
-        let totalFrames = 0
-        for (const deltaFrames of updatePattern) {
-          totalFrames += deltaFrames
-          testTimer.update(deltaFrames, totalFrames)
+        let totalTicks = 0
+        for (const deltaTicks of updatePattern) {
+          totalTicks += deltaTicks
+          testTimer.update(deltaTicks, totalTicks)
         }
 
         return executions
@@ -711,15 +711,15 @@ describe("Timer", () => {
 
       const timeoutInfo = info.find((t) => t.id === id1)
       expect(timeoutInfo).toBeDefined()
-      expect(timeoutInfo!.targetFrame).toBe(5)
-      expect(timeoutInfo!.framesRemaining).toBe(5)
+      expect(timeoutInfo!.targetTick).toBe(5)
+      expect(timeoutInfo!.ticksRemaining).toBe(5)
       expect(timeoutInfo!.isRepeating).toBe(false)
       expect(timeoutInfo!.isActive).toBe(true)
 
       const intervalInfo = info.find((t) => t.id === id2)
       expect(intervalInfo).toBeDefined()
-      expect(intervalInfo!.targetFrame).toBe(3)
-      expect(intervalInfo!.framesRemaining).toBe(3)
+      expect(intervalInfo!.targetTick).toBe(3)
+      expect(intervalInfo!.ticksRemaining).toBe(3)
       expect(intervalInfo!.isRepeating).toBe(true)
       expect(intervalInfo!.isActive).toBe(true)
 
@@ -727,10 +727,10 @@ describe("Timer", () => {
       const updatedInfo = timer.getTimerInfo()
 
       const updatedTimeoutInfo = updatedInfo.find((t) => t.id === id1)
-      expect(updatedTimeoutInfo!.framesRemaining).toBe(3)
+      expect(updatedTimeoutInfo!.ticksRemaining).toBe(3)
 
       const updatedIntervalInfo = updatedInfo.find((t) => t.id === id2)
-      expect(updatedIntervalInfo!.framesRemaining).toBe(1)
+      expect(updatedIntervalInfo!.ticksRemaining).toBe(1)
     })
 
     it("should pause and resume timers", () => {
@@ -746,7 +746,7 @@ describe("Timer", () => {
 
       expect(timer.resumeTimer(id)).toBe(true)
 
-      timer.update(0, 5) // Same frame, but resumed
+      timer.update(0, 5) // Same tick, but resumed
       expect(executed).toBe(true) // Should execute after resume
     })
 

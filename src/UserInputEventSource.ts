@@ -19,19 +19,19 @@ export class UserInputEventSource implements GameEventSource {
   }
 
   /**
-   * Get all events for the current frame
-   * Transforms queued data into game events with the current frame
+   * Get all events for the current tick
+   * Transforms queued data into game events with the current tick
    * Clears the queue after returning events
    */
-  getNextEvents(totalFrames: number): AnyGameEvent[] {
+  getNextEvents(totalTicks: number): AnyGameEvent[] {
     if (this.dataQueue.length === 0) {
       return []
     }
 
-    // Transform all queued data into events with current frame
+    // Transform all queued data into events with current tick
     const events: UserInputEvent[] = this.dataQueue.map((item) => ({
       type: GameEventType.USER_INPUT,
-      frame: totalFrames,
+      tick: totalTicks,
       timestamp: item.timestamp,
       inputType: item.inputType,
       params: item.data,

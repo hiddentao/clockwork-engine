@@ -284,9 +284,9 @@ describe("GameObjectGroup", () => {
       // Override update method to track order
       players.forEach((player, _index) => {
         const originalUpdate = player.update.bind(player)
-        player.update = (deltaFrames: number, totalFrames: number) => {
+        player.update = (deltaTicks: number, totalTicks: number) => {
           updateOrder.push(player.getId())
-          originalUpdate(deltaFrames, totalFrames)
+          originalUpdate(deltaTicks, totalTicks)
         }
       })
 

@@ -12,17 +12,17 @@ export class RecordedEventSource implements GameEventSource {
   }
 
   /**
-   * Get events for the current frame
-   * Returns all events that are due for this frame or earlier
+   * Get events for the current tick
+   * Returns all events that are due for this tick or earlier
    */
-  getNextEvents(totalFrames: number): AnyGameEvent[] {
+  getNextEvents(totalTicks: number): AnyGameEvent[] {
     const readyEvents: AnyGameEvent[] = []
 
     while (this.currentIndex < this.events.length) {
       const event = this.events[this.currentIndex]
 
-      // Only return events that are due for the current frame or earlier
-      if (event.frame <= totalFrames) {
+      // Only return events that are due for the current tick or earlier
+      if (event.tick <= totalTicks) {
         readyEvents.push(event)
         this.currentIndex++
       } else {

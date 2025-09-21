@@ -10,13 +10,13 @@ import { MockTicker } from "./MockTicker"
 import { type GameStateSnapshot, StateComparator } from "./StateComparator"
 
 export interface ScheduledAction {
-  frame: number
+  tick: number
   action: () => void
   description?: string
 }
 
 export interface MovementCommand {
-  frame: number
+  tick: number
   objectType: string
   objectId: string
   method: string
@@ -38,7 +38,7 @@ export class TestScenarioBuilder {
   private scheduledActions: ScheduledAction[] = []
   private movementCommands: MovementCommand[] = []
   private inputEvents: UserInputEvent[] = []
-  private snapshotFrames: number[] = []
+  private snapshotTicks: number[] = []
   private seed: string
 
   constructor(engine: GameEngine, seed = "test-scenario") {
@@ -58,7 +58,7 @@ export class TestScenarioBuilder {
     spacing = 20,
   ): this {
     this.scheduledActions.push({
-      frame: 0,
+      tick: 0,
       action: () => {
         for (let i = 0; i < count; i++) {
           const position = startPosition.add(new Vector2D(i * spacing, 0))
@@ -79,7 +79,7 @@ export class TestScenarioBuilder {
     spacing = 30,
   ): this {
     this.scheduledActions.push({
-      frame: 0,
+      tick: 0,
       action: () => {
         for (let i = 0; i < count; i++) {
           const position = startPosition.add(new Vector2D(i * spacing, 0))
@@ -95,7 +95,7 @@ export class TestScenarioBuilder {
 
   // Movement scheduling
   scheduleMovement(
-    frame: number,
+    tick: number,
     objectType: string,
     objectId: string,
     direction: "up" | "down" | "left" | "right",
@@ -104,7 +104,7 @@ export class TestScenarioBuilder {
     const methodName = `move${direction.charAt(0).toUpperCase()}${direction.slice(1)}`
 
     this.movementCommands.push({
-      frame,
+      tick,
       objectType,
       objectId,
       method: methodName,
@@ -117,14 +117,14 @@ export class TestScenarioBuilder {
     objectType: string,
     objectId: string,
     movements: Array<{
-      frame: number
+      tick: number
       direction: "up" | "down" | "left" | "right"
       distance?: number
     }>,
   ): this {
     movements.forEach((movement) => {
       this.scheduleMovement(
-        movement.frame,
+        movement.tick,
         objectType,
         objectId,
         movement.direction,
@@ -136,13 +136,13 @@ export class TestScenarioBuilder {
 
   // Object lifecycle
   scheduleObjectCreation(
-    frame: number,
+    tick: number,
     type: "player" | "enemy" | "projectile" | "powerup",
     id: string,
     position: Vector2D,
   ): this {
     this.scheduledActions.push({
-      frame,
+      tick,
       action: () => {
         const methodName = `createTest${type.charAt(0).toUpperCase()}${type.slice(1)}`
         if (methodName in this.engine) {
@@ -159,12 +159,12 @@ export class TestScenarioBuilder {
   }
 
   scheduleObjectDestruction(
-    frame: number,
+    tick: number,
     objectType: string,
     objectId: string,
   ): this {
     this.scheduledActions.push({
-      frame,
+      tick,
       action: () => {
         const group = this.engine.getGameObjectGroup(objectType)
         const obj = group?.getById(objectId)
@@ -179,13 +179,13 @@ export class TestScenarioBuilder {
 
   // Timer-based events
   scheduleTimerCallback(
-    frame: number,
+    tick: number,
     delay: number,
     callback: () => void,
     description?: string,
   ): this {
     this.scheduledActions.push({
-      frame,
+      tick,
       action: () => {
         this.engine.setTimeout(callback, delay)
       },
@@ -195,13 +195,13 @@ export class TestScenarioBuilder {
   }
 
   scheduleIntervalCallback(
-    frame: number,
+    tick: number,
     interval: number,
     callback: () => void,
     description?: string,
   ): this {
     this.scheduledActions.push({
-      frame,
+      tick,
       action: () => {
         this.engine.setInterval(callback, interval)
       },
@@ -213,14 +213,14 @@ export class TestScenarioBuilder {
 
   // Property modifications
   schedulePropertyChange(
-    frame: number,
+    tick: number,
     objectType: string,
     objectId: string,
     method: string,
     params: any[],
   ): this {
     this.scheduledActions.push({
-      frame,
+      tick,
       action: () => {
         const group = this.engine.getGameObjectGroup(objectType)
         const obj = group?.getById(objectId)
@@ -229,7 +229,7 @@ export class TestScenarioBuilder {
 
           // Record this as an object update event
           this.recordObjectUpdate(
-            this.engine.getTotalFrames(),
+            this.engine.getTotalTicks(),
             objectType,
             objectId,
             method,
@@ -243,11 +243,11 @@ export class TestScenarioBuilder {
   }
 
   // Input events
-  addInputEvent(frame: number, inputType: string, params: any): this {
+  addInputEvent(tick: number, inputType: string, params: any): this {
     this.inputEvents.push({
       type: GameEventType.USER_INPUT,
-      frame,
-      timestamp: Date.now() + frame * 16.67, // Simulate 60 FPS timing
+      tick,
+      timestamp: Date.now() + tick * 16.67, // Simulate 60 FPS timing
       inputType,
       params,
     })
@@ -255,14 +255,14 @@ export class TestScenarioBuilder {
   }
 
   // State snapshots
-  captureSnapshotAt(frame: number): this {
-    this.snapshotFrames.push(frame)
+  captureSnapshotAt(tick: number): this {
+    this.snapshotTicks.push(tick)
     return this
   }
 
-  captureSnapshotsEvery(interval: number, maxFrames: number): this {
-    for (let frame = 0; frame <= maxFrames; frame += interval) {
-      this.snapshotFrames.push(frame)
+  captureSnapshotsEvery(interval: number, maxTicks: number): this {
+    for (let tick = 0; tick <= maxTicks; tick += interval) {
+      this.snapshotTicks.push(tick)
     }
     return this
   }
@@ -276,9 +276,9 @@ export class TestScenarioBuilder {
     // Schedule some movements
     for (let i = 0; i < playerCount; i++) {
       this.scheduleMovementSequence(`Player`, `player-${i}`, [
-        { frame: 10, direction: "right", distance: 5 },
-        { frame: 20, direction: "up", distance: 3 },
-        { frame: 30, direction: "left", distance: 2 },
+        { tick: 10, direction: "right", distance: 5 },
+        { tick: 20, direction: "up", distance: 3 },
+        { tick: 30, direction: "left", distance: 2 },
       ])
     }
 
@@ -315,10 +315,10 @@ export class TestScenarioBuilder {
         "left",
         "right",
       ]
-      for (let frame = 10; frame < 100; frame += 10) {
+      for (let tick = 10; tick < 100; tick += 10) {
         const direction = directions[i % directions.length]
-        this.scheduleMovement(frame, "Player", `player-${i}`, direction, 2)
-        this.scheduleMovement(frame + 5, "Enemy", `enemy-${i}`, direction, 1)
+        this.scheduleMovement(tick, "Player", `player-${i}`, direction, 2)
+        this.scheduleMovement(tick + 5, "Enemy", `enemy-${i}`, direction, 1)
       }
     }
 
@@ -336,7 +336,7 @@ export class TestScenarioBuilder {
   }> {
     // Execute initial actions (frame 0)
     this.scheduledActions
-      .filter((action) => action.frame === 0)
+      .filter((action) => action.tick === 0)
       .forEach((action) => action.action())
 
     // Start recording
@@ -350,8 +350,8 @@ export class TestScenarioBuilder {
     this.engine.start()
 
     // Set up ticker callback
-    this.ticker.add(async (deltaFrames) => {
-      await this.engine.update(deltaFrames)
+    this.ticker.add(async (deltaTicks) => {
+      await this.engine.update(deltaTicks)
     })
 
     return {
@@ -362,30 +362,30 @@ export class TestScenarioBuilder {
   }
 
   async run(
-    totalFrames: number,
-    deltaFramesPerTick = 1,
+    totalTicks: number,
+    deltaTicksPerTick = 1,
   ): Promise<ScenarioResult> {
     const { engine, recorder, ticker } = await this.build()
 
     const snapshots: GameStateSnapshot[] = []
-    let currentFrame = 0
+    let currentTick = 0
 
-    while (currentFrame < totalFrames) {
-      // Execute scheduled actions for this frame
+    while (currentTick < totalTicks) {
+      // Execute scheduled actions for this tick
       this.scheduledActions
-        .filter((action) => action.frame === currentFrame)
+        .filter((action) => action.tick === currentTick)
         .forEach((action) => action.action())
 
-      // Execute movement commands for this frame
+      // Execute movement commands for this tick
       this.movementCommands
-        .filter((cmd) => cmd.frame === currentFrame)
+        .filter((cmd) => cmd.tick === currentTick)
         .forEach((cmd) => {
           const group = engine.getGameObjectGroup(cmd.objectType)
           const obj = group?.getById(cmd.objectId)
           if (obj && typeof (obj as any)[cmd.method] === "function") {
             ;(obj as any)[cmd.method](...cmd.params)
             this.recordObjectUpdate(
-              currentFrame,
+              currentTick,
               cmd.objectType,
               cmd.objectId,
               cmd.method,
@@ -395,13 +395,13 @@ export class TestScenarioBuilder {
         })
 
       // Capture snapshot if scheduled
-      if (this.snapshotFrames.includes(currentFrame)) {
+      if (this.snapshotTicks.includes(currentTick)) {
         snapshots.push(StateComparator.snapshot(engine))
       }
 
       // Run frame
-      await ticker.tick(deltaFramesPerTick)
-      currentFrame += deltaFramesPerTick
+      await ticker.tick(deltaTicksPerTick)
+      currentTick += deltaTicksPerTick
     }
 
     // Stop recording
@@ -420,7 +420,7 @@ export class TestScenarioBuilder {
   }
 
   private recordObjectUpdate(
-    frame: number,
+    tick: number,
     objectType: string,
     objectId: string,
     method: string,
@@ -428,7 +428,7 @@ export class TestScenarioBuilder {
   ): void {
     const event: ObjectUpdateEvent = {
       type: GameEventType.OBJECT_UPDATE,
-      frame,
+      tick,
       timestamp: Date.now(),
       objectType,
       objectId,
@@ -443,7 +443,7 @@ export class TestScenarioBuilder {
     this.scheduledActions = []
     this.movementCommands = []
     this.inputEvents = []
-    this.snapshotFrames = []
+    this.snapshotTicks = []
     this.engine.reset(this.seed)
     this.recorder.reset()
     this.ticker.reset()

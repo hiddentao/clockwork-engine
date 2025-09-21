@@ -13,7 +13,7 @@ export interface StateComparisonResult {
 }
 
 export interface GameStateSnapshot {
-  frame: number
+  tick: number
   state: string
   seed: string
   objects: Record<string, any[]>
@@ -129,7 +129,7 @@ export class StateComparator {
 
   static snapshot(engine: GameEngine): GameStateSnapshot {
     const snapshot: GameStateSnapshot = {
-      frame: engine.getTotalFrames(),
+      tick: engine.getTotalTicks(),
       state: engine.getState(),
       seed: engine.getSeed(),
       objects: {},

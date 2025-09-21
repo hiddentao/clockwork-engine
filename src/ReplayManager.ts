@@ -1,6 +1,6 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
-import { REPLAY_CONSTANTS } from "./constants"
+// Note: REPLAY_CONSTANTS removed as ticks system eliminates floating-point precision issues
 import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
@@ -8,10 +8,10 @@ export class ReplayManager {
   protected __engine: GameEngine
   protected engine: GameEngine
   protected isReplaying: boolean = false
-  protected deltaFramesIndex: number = 0
+  protected deltaTicksIndex: number = 0
   protected recording: GameRecording | null = null
-  protected currentReplayFrame: number = 0
-  protected accumulatedFrames: number = 0
+  protected currentReplayTick: number = 0
+  protected accumulatedTicks: number = 0
 
   constructor(engine: GameEngine) {
     this.__engine = engine
@@ -33,42 +33,41 @@ export class ReplayManager {
           replayManager.recording
         ) {
           // Intercept update() calls during replay
-          return function (deltaFrames: number) {
-            // Accumulate incoming frames
-            replayManager.accumulatedFrames += deltaFrames
+          return function (deltaTicks: number) {
+            // Accumulate incoming ticks
+            replayManager.accumulatedTicks += deltaTicks
 
-            // Process recorded frames while we have enough accumulated frames
+            // Process recorded ticks while we have enough accumulated ticks
             while (
               replayManager.isReplaying && // Check again in case stopReplay was called
-              replayManager.deltaFramesIndex <
-                replayManager.recording!.deltaFrames.length &&
-              replayManager.accumulatedFrames >=
-                replayManager.recording!.deltaFrames[
-                  replayManager.deltaFramesIndex
-                ] -
-                  REPLAY_CONSTANTS.FLOATING_POINT_TOLERANCE
-            ) {
-              const recordedDeltaFrames =
-                replayManager.recording!.deltaFrames[
-                  replayManager.deltaFramesIndex
+              replayManager.deltaTicksIndex <
+                replayManager.recording!.deltaTicks.length &&
+              replayManager.accumulatedTicks >=
+                replayManager.recording!.deltaTicks[
+                  replayManager.deltaTicksIndex
                 ]
-              replayManager.deltaFramesIndex++
+            ) {
+              const recordedDeltaTicks =
+                replayManager.recording!.deltaTicks[
+                  replayManager.deltaTicksIndex
+                ]
+              replayManager.deltaTicksIndex++
 
-              // Subtract processed frames from accumulator
-              replayManager.accumulatedFrames -= recordedDeltaFrames
+              // Subtract processed ticks from accumulator
+              replayManager.accumulatedTicks -= recordedDeltaTicks
 
-              // Update the real engine with the recorded deltaFrames
-              target.update(recordedDeltaFrames)
+              // Update the real engine with the recorded deltaTicks
+              target.update(recordedDeltaTicks)
 
-              // Track current frame
-              replayManager.currentReplayFrame += recordedDeltaFrames
+              // Track current tick
+              replayManager.currentReplayTick += recordedDeltaTicks
             }
 
             // Check if replay is complete after processing
             if (
               replayManager.isReplaying &&
-              replayManager.deltaFramesIndex >=
-                replayManager.recording!.deltaFrames.length
+              replayManager.deltaTicksIndex >=
+                replayManager.recording!.deltaTicks.length
             ) {
               replayManager.stopReplay()
             }
@@ -104,9 +103,9 @@ export class ReplayManager {
 
     this.isReplaying = true
     this.recording = recording
-    this.deltaFramesIndex = 0
-    this.currentReplayFrame = 0
-    this.accumulatedFrames = 0
+    this.deltaTicksIndex = 0
+    this.currentReplayTick = 0
+    this.accumulatedTicks = 0
 
     // Initialize engine with deterministic seed
     this.__engine.reset(recording.seed)
@@ -137,9 +136,9 @@ export class ReplayManager {
       this.__engine.pause()
     }
 
-    // Reset playback state (preserve currentReplayFrame for inspection)
-    this.deltaFramesIndex = 0
-    this.accumulatedFrames = 0
+    // Reset playback state (preserve currentReplayTick for inspection)
+    this.deltaTicksIndex = 0
+    this.accumulatedTicks = 0
   }
 
   /**
@@ -151,38 +150,38 @@ export class ReplayManager {
   }
 
   /**
-   * Get the current frame number during replay
-   * @returns Current replay frame position
+   * Get the current tick number during replay
+   * @returns Current replay tick position
    */
-  getCurrentFrame(): number {
-    return this.currentReplayFrame
+  getCurrentTick(): number {
+    return this.currentReplayTick
   }
 
   /**
    * Get comprehensive replay progress information
-   * Provides completion percentage and remaining frame status
-   * @returns Object containing replay state, progress (0-1), and frame availability
+   * Provides completion percentage and remaining tick status
+   * @returns Object containing replay state, progress (0-1), and tick availability
    */
   getReplayProgress(): {
     isReplaying: boolean
     progress: number
-    hasMoreFrames: boolean
+    hasMoreTicks: boolean
   } {
     if (!this.recording) {
-      return { isReplaying: false, progress: 0, hasMoreFrames: false }
+      return { isReplaying: false, progress: 0, hasMoreTicks: false }
     }
 
-    const totalFrames = this.recording.totalFrames
-    const progress = totalFrames > 0 ? this.currentReplayFrame / totalFrames : 0
-    // If replay is active, check deltaFramesIndex; if stopped, check if replay was completed
-    const hasMoreFrames = this.isReplaying
-      ? this.deltaFramesIndex < this.recording.deltaFrames.length
+    const totalTicks = this.recording.totalTicks
+    const progress = totalTicks > 0 ? this.currentReplayTick / totalTicks : 0
+    // If replay is active, check deltaTicksIndex; if stopped, check if replay was completed
+    const hasMoreTicks = this.isReplaying
+      ? this.deltaTicksIndex < this.recording.deltaTicks.length
       : progress < 1.0
 
     return {
       isReplaying: this.isReplaying,
       progress: Math.min(1, progress), // Clamp to 1.0 maximum
-      hasMoreFrames,
+      hasMoreTicks,
     }
   }
 
@@ -205,27 +204,24 @@ export class ReplayManager {
       throw new Error("Invalid recording: events must be an array")
     }
 
-    // Validate deltaFrames array
-    if (!Array.isArray(recording.deltaFrames)) {
-      throw new Error("Invalid recording: deltaFrames must be an array")
+    // Validate deltaTicks array
+    if (!Array.isArray(recording.deltaTicks)) {
+      throw new Error("Invalid recording: deltaTicks must be an array")
     }
 
-    // Validate totalFrames
-    if (
-      typeof recording.totalFrames !== "number" ||
-      recording.totalFrames < 0
-    ) {
+    // Validate totalTicks
+    if (typeof recording.totalTicks !== "number" || recording.totalTicks < 0) {
       throw new Error(
-        "Invalid recording: totalFrames must be a non-negative number",
+        "Invalid recording: totalTicks must be a non-negative number",
       )
     }
 
-    // Validate that all deltaFrames are positive numbers
-    for (let i = 0; i < recording.deltaFrames.length; i++) {
-      const deltaFrame = recording.deltaFrames[i]
-      if (typeof deltaFrame !== "number" || deltaFrame <= 0) {
+    // Validate that all deltaTicks are positive numbers
+    for (let i = 0; i < recording.deltaTicks.length; i++) {
+      const deltaTick = recording.deltaTicks[i]
+      if (typeof deltaTick !== "number" || deltaTick <= 0) {
         throw new Error(
-          `Invalid recording: deltaFrames[${i}] must be a positive number, got ${deltaFrame}`,
+          `Invalid recording: deltaTicks[${i}] must be a positive number, got ${deltaTick}`,
         )
       }
     }
@@ -241,9 +237,9 @@ export class ReplayManager {
         throw new Error(`Invalid recording: events[${i}].type must be a string`)
       }
 
-      if (typeof event.frame !== "number" || event.frame < 0) {
+      if (typeof event.tick !== "number" || event.tick < 0) {
         throw new Error(
-          `Invalid recording: events[${i}].frame must be a non-negative number`,
+          `Invalid recording: events[${i}].tick must be a non-negative number`,
         )
       }
     }

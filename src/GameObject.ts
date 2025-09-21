@@ -6,7 +6,7 @@ import { Vector2D } from "./geometry/Vector2D"
 // Forward declaration to avoid circular dependency
 export interface GameEngineInterface {
   registerGameObject(gameObject: GameObject): void
-  getTotalFrames(): number
+  getTotalTicks(): number
 }
 
 export enum GameObjectEventType {
@@ -107,13 +107,13 @@ export abstract class GameObject<T extends GameObjectEvents = GameObjectEvents>
     }
   }
 
-  public update(deltaFrames: number, _totalFrames: number): void {
+  public update(deltaTicks: number, _totalTicks: number): void {
     if (this.destroyed) {
       return
     }
 
     // Move object based on velocity
-    const movement = this.velocity.scale(deltaFrames)
+    const movement = this.velocity.scale(deltaTicks)
     const oldPosition = this.position
     this.position = this.position.add(movement)
     if (

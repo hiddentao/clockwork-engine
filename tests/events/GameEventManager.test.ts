@@ -52,7 +52,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "test",
           params: {},
@@ -99,7 +99,7 @@ describe("GameEventManager", () => {
 
       expect(receivedInputEvent).not.toBeNull()
       expect(receivedInputEvent!.type).toBe(GameEventType.USER_INPUT)
-      expect(receivedInputEvent!.frame).toBe(5)
+      expect(receivedInputEvent!.tick).toBe(5)
       expect(receivedInputEvent!.inputType).toBe("keyboard")
       expect(receivedInputEvent!.params).toEqual({ key: "W", pressed: true })
     })
@@ -111,7 +111,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "test-player",
@@ -142,7 +142,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "test-player",
@@ -151,7 +151,7 @@ describe("GameEventManager", () => {
         } as ObjectUpdateEvent,
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1001,
           objectType: "Player",
           objectId: "test-player",
@@ -184,7 +184,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "test-player",
@@ -227,7 +227,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "NonExistentType",
           objectId: "test-id",
@@ -247,7 +247,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "non-existent-player",
@@ -269,7 +269,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "test-player",
@@ -295,7 +295,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           objectType: "Player",
           objectId: "test-player",
@@ -314,7 +314,7 @@ describe("GameEventManager", () => {
     it("should handle unknown event types gracefully", () => {
       const unknownEvent = {
         type: "UNKNOWN_TYPE",
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
       } as any
 
@@ -365,7 +365,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "test",
           params: {},
@@ -398,7 +398,7 @@ describe("GameEventManager", () => {
       const recordedSource = new RecordedEventSource([
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "test",
           params: {},
@@ -427,7 +427,7 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 2,
+          tick: 2,
           timestamp: 2000,
           objectType: "Player",
           objectId: "test-player",
@@ -456,7 +456,7 @@ describe("GameEventManager", () => {
       const recorded = new RecordedEventSource([
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "recorded",
           params: {},
@@ -495,14 +495,14 @@ describe("GameEventManager", () => {
       const recordedEvents: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "frame1-input",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1001,
           objectType: "Player",
           objectId: "test-player",
@@ -511,14 +511,14 @@ describe("GameEventManager", () => {
         } as ObjectUpdateEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 3,
+          tick: 3,
           timestamp: 3000,
           inputType: "frame3-input",
           params: {},
         } as UserInputEvent,
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 3,
+          tick: 3,
           timestamp: 3001,
           objectType: "Player",
           objectId: "test-player",
@@ -554,7 +554,7 @@ describe("GameEventManager", () => {
       for (let i = 0; i < 1000; i++) {
         largeEventSet.push({
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: i,
           inputType: `event${i}`,
           params: { index: i },

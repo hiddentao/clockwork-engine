@@ -16,7 +16,7 @@ export class TestPowerUp extends GameObject {
   private respawnTime: number
   private isActive: boolean = true
   private timeSincePickup: number = 0
-  private frameCounter: number = 0
+  private tickCounter: number = 0
 
   constructor(
     id: string,
@@ -38,23 +38,23 @@ export class TestPowerUp extends GameObject {
     return "PowerUp"
   }
 
-  update(deltaFrames: number, totalFrames: number): void {
-    super.update(deltaFrames, totalFrames)
+  update(deltaTicks: number, totalTicks: number): void {
+    super.update(deltaTicks, totalTicks)
 
     // Handle respawn timer if power-up was picked up
     if (!this.isActive) {
-      this.timeSincePickup += deltaFrames
+      this.timeSincePickup += deltaTicks
       if (this.respawnTime > 0 && this.timeSincePickup >= this.respawnTime) {
         this.respawn()
       }
     }
 
-    // Simple floating animation using deterministic frame-based time
-    this.frameCounter += deltaFrames
-    const time = this.frameCounter * 0.016 // ~60fps frame time
+    // Simple floating animation using deterministic tick-based time
+    this.tickCounter += deltaTicks
+    const time = this.tickCounter * 0.016 // ~60fps tick time
     const offset = Math.sin(time * 2) * 2
     this.setPosition(
-      this.getPosition().add(new Vector2D(0, offset * deltaFrames * 0.1)),
+      this.getPosition().add(new Vector2D(0, offset * deltaTicks * 0.1)),
     )
   }
 
@@ -174,7 +174,7 @@ export class TestPowerUp extends GameObject {
       respawnTime: this.respawnTime,
       isActive: this.isActive,
       timeSincePickup: this.timeSincePickup,
-      frameCounter: this.frameCounter,
+      tickCounter: this.tickCounter,
     }
   }
 
@@ -191,7 +191,7 @@ export class TestPowerUp extends GameObject {
     // Restore state
     powerUp.isActive = data.isActive
     powerUp.timeSincePickup = data.timeSincePickup
-    powerUp.frameCounter = data.frameCounter || 0
+    powerUp.tickCounter = data.tickCounter || 0
 
     // Restore base GameObject state
     powerUp.setHealth(data.health)

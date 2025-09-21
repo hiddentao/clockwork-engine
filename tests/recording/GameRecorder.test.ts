@@ -47,8 +47,8 @@ describe("GameRecorder", () => {
       expect(recording).not.toBeNull()
       expect(recording!.seed).toBe(seed)
       expect(recording!.events).toEqual([])
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
       expect(recording!.metadata?.description).toBe(description)
       expect(recording!.metadata?.version).toBe("1.0.0")
       expect(typeof recording!.metadata?.createdAt).toBe("number")
@@ -70,7 +70,7 @@ describe("GameRecorder", () => {
       // Record some test data
       const testEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: Date.now(),
         inputType: "keyboard",
         params: { key: "W" },
@@ -86,8 +86,8 @@ describe("GameRecorder", () => {
       const recording = recorder.getCurrentRecording()
       expect(recording).not.toBeNull()
       expect(recording!.events).toHaveLength(1)
-      expect(recording!.deltaFrames).toEqual([1])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([1])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should handle stop recording when not recording", () => {
@@ -100,7 +100,7 @@ describe("GameRecorder", () => {
       recorder.startRecording(mockEventManager as any, "session1")
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "test1",
         params: {},
@@ -115,14 +115,14 @@ describe("GameRecorder", () => {
       recorder.startRecording(mockEventManager as any, "session2")
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 2000,
         inputType: "test2",
         params: {},
       } as UserInputEvent)
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 2,
+        tick: 2,
         timestamp: 3000,
         inputType: "test3",
         params: {},
@@ -146,7 +146,7 @@ describe("GameRecorder", () => {
     it("should record user input events", () => {
       const userInputEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: Date.now(),
         inputType: "keyboard",
         params: { key: "SPACE", pressed: true },
@@ -162,7 +162,7 @@ describe("GameRecorder", () => {
     it("should record object update events", () => {
       const objectUpdateEvent: ObjectUpdateEvent = {
         type: GameEventType.OBJECT_UPDATE,
-        frame: 2,
+        tick: 2,
         timestamp: Date.now(),
         objectType: "Player",
         objectId: "player1",
@@ -181,14 +181,14 @@ describe("GameRecorder", () => {
       const events: AnyGameEvent[] = [
         {
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000,
           inputType: "keyboard",
           params: { key: "W" },
         } as UserInputEvent,
         {
           type: GameEventType.OBJECT_UPDATE,
-          frame: 1,
+          tick: 1,
           timestamp: 1001,
           objectType: "Player",
           objectId: "player1",
@@ -197,7 +197,7 @@ describe("GameRecorder", () => {
         } as ObjectUpdateEvent,
         {
           type: GameEventType.USER_INPUT,
-          frame: 2,
+          tick: 2,
           timestamp: 2000,
           inputType: "mouse",
           params: { button: "left", x: 100, y: 50 },
@@ -213,7 +213,7 @@ describe("GameRecorder", () => {
     it("should perform shallow cloning of events", () => {
       const originalEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "keyboard",
         params: { key: "W", pressed: true },
@@ -222,14 +222,14 @@ describe("GameRecorder", () => {
       recorder.recordEvent(originalEvent)
 
       // Modify original event's top-level properties
-      originalEvent.frame = 999
+      originalEvent.tick = 999
       originalEvent.inputType = "modified"
 
       const recording = recorder.getCurrentRecording()
       const recordedEvent = recording!.events[0] as UserInputEvent
 
       // Top-level properties should be protected by shallow copy
-      expect(recordedEvent.frame).toBe(1)
+      expect(recordedEvent.tick).toBe(1)
       expect(recordedEvent.inputType).toBe("keyboard")
 
       // But nested objects are still shared (shallow copy limitation)
@@ -242,7 +242,7 @@ describe("GameRecorder", () => {
 
       const event: UserInputEvent = {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: Date.now(),
         inputType: "test",
         params: {},
@@ -257,7 +257,7 @@ describe("GameRecorder", () => {
     it("should handle complex event parameters", () => {
       const complexEvent: ObjectUpdateEvent = {
         type: GameEventType.OBJECT_UPDATE,
-        frame: 1,
+        tick: 1,
         timestamp: Date.now(),
         objectType: "ComplexObject",
         objectId: "complex1",
@@ -294,8 +294,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording() // Copies frame data to recording
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([1, 1.5, 0.8])
-      expect(recording!.totalFrames).toBe(3.3)
+      expect(recording!.deltaTicks).toEqual([1, 1.5, 0.8])
+      expect(recording!.totalTicks).toBe(3.3)
     })
 
     it("should not record frames when not recording", () => {
@@ -304,8 +304,8 @@ describe("GameRecorder", () => {
       recorder.recordFrameUpdate(10, 100)
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
     })
 
     it("should handle zero delta frames", () => {
@@ -316,8 +316,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([0, 0, 1])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([0, 0, 1])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should handle negative delta frames", () => {
@@ -327,8 +327,8 @@ describe("GameRecorder", () => {
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.deltaFrames).toEqual([-1, 2])
-      expect(recording!.totalFrames).toBe(1)
+      expect(recording!.deltaTicks).toEqual([-1, 2])
+      expect(recording!.totalTicks).toBe(1)
     })
 
     it("should preserve frame data during active recording", () => {
@@ -337,8 +337,8 @@ describe("GameRecorder", () => {
 
       // Frame data should not be copied to recording until stopped
       const activeRecording = recorder.getCurrentRecording()
-      expect(activeRecording!.deltaFrames).toEqual([])
-      expect(activeRecording!.totalFrames).toBe(0)
+      expect(activeRecording!.deltaTicks).toEqual([])
+      expect(activeRecording!.totalTicks).toBe(0)
     })
   })
 
@@ -348,7 +348,7 @@ describe("GameRecorder", () => {
 
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "test",
         params: {},
@@ -371,7 +371,7 @@ describe("GameRecorder", () => {
       recorder.startRecording(mockEventManager as any, "first")
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "test",
         params: {},
@@ -382,7 +382,7 @@ describe("GameRecorder", () => {
       recorder.startRecording(mockEventManager as any, "second")
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 2000,
         inputType: "test2",
         params: {},
@@ -455,7 +455,7 @@ describe("GameRecorder", () => {
         recorder.startRecording(mockEventManager as any, `seed${i}`)
         recorder.recordEvent({
           type: GameEventType.USER_INPUT,
-          frame: 1,
+          tick: 1,
           timestamp: 1000 + i,
           inputType: `test${i}`,
           params: {},
@@ -474,8 +474,8 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toEqual([])
-      expect(recording!.deltaFrames).toEqual([])
-      expect(recording!.totalFrames).toBe(0)
+      expect(recording!.deltaTicks).toEqual([])
+      expect(recording!.totalTicks).toBe(0)
     })
 
     it("should handle very long recordings", () => {
@@ -485,7 +485,7 @@ describe("GameRecorder", () => {
       for (let i = 0; i < 10000; i++) {
         recorder.recordEvent({
           type: GameEventType.USER_INPUT,
-          frame: i + 1,
+          tick: i + 1,
           timestamp: 1000 + i,
           inputType: `event${i}`,
           params: { index: i },
@@ -498,8 +498,8 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toHaveLength(10000)
-      expect(recording!.deltaFrames).toHaveLength(10000)
-      expect(recording!.totalFrames).toBe(10000)
+      expect(recording!.deltaTicks).toHaveLength(10000)
+      expect(recording!.totalTicks).toBe(10000)
     })
 
     it("should handle concurrent operations", () => {
@@ -510,7 +510,7 @@ describe("GameRecorder", () => {
       for (let i = 0; i < 100; i++) {
         const event: UserInputEvent = {
           type: GameEventType.USER_INPUT,
-          frame: Math.floor(i / 10) + 1,
+          tick: Math.floor(i / 10) + 1,
           timestamp: Date.now() + Math.random() * 100,
           inputType: `concurrent${i}`,
           params: { value: i },
@@ -524,7 +524,7 @@ describe("GameRecorder", () => {
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.events).toHaveLength(100)
-      expect(recording!.deltaFrames).toHaveLength(100)
+      expect(recording!.deltaTicks).toHaveLength(100)
     })
   })
 
@@ -537,7 +537,7 @@ describe("GameRecorder", () => {
       timestamps.forEach((timestamp, index) => {
         recorder.recordEvent({
           type: GameEventType.USER_INPUT,
-          frame: index + 1,
+          tick: index + 1,
           timestamp,
           inputType: `event${index}`,
           params: {},
@@ -556,7 +556,7 @@ describe("GameRecorder", () => {
 
       const originalEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
-        frame: 1,
+        tick: 1,
         timestamp: 1000,
         inputType: "keyboard",
         params: { nested: { data: [1, 2, 3] } },
@@ -571,9 +571,9 @@ describe("GameRecorder", () => {
       // Recording objects should be separate (shallow copy of recording)
       expect(recording1).not.toBe(recording2)
 
-      // But events array and deltaFrames are shared references (shallow copy)
+      // But events array and deltaTicks are shared references (shallow copy)
       expect(recording1!.events).toBe(recording2!.events)
-      expect(recording1!.deltaFrames).toBe(recording2!.deltaFrames)
+      expect(recording1!.deltaTicks).toBe(recording2!.deltaTicks)
 
       // Content should be equal
       expect(recording1).toEqual(recording2)

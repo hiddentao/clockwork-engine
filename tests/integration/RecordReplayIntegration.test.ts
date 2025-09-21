@@ -43,7 +43,7 @@ describe("Record-Replay Integration Tests", () => {
 
       // Setup original simulation
       originalEngine.reset(seed)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       // Create some objects
       const _projectile1 = new TestProjectile(
@@ -130,9 +130,9 @@ describe("Record-Replay Integration Tests", () => {
         replayEngine,
       )
       const proxyEngine = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => {
+      replayTicker.add((deltaTicks) => {
         replayStates.push(replayEngine.captureState())
-        proxyEngine.update(deltaFrames)
+        proxyEngine.update(deltaTicks)
       })
 
       // Run replay
@@ -171,21 +171,21 @@ describe("Record-Replay Integration Tests", () => {
       })
 
       originalEngine.reset(seed)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       originalEngine.setGameRecorder(recorder)
       recorder.startRecording(originalEngine.getEventManager(), seed)
       originalEngine.start()
 
       // Run simulation
-      const checkpoints: { frame: number; state: any }[] = []
+      const checkpoints: { tick: number; state: any }[] = []
       for (let frame = 0; frame < 100; frame++) {
         await originalTicker.tick(1)
 
         // Save checkpoints every 10 frames
         if (frame % 10 === 0) {
           checkpoints.push({
-            frame,
+            tick: frame,
             state: originalEngine.captureState(),
           })
         }
@@ -205,15 +205,15 @@ describe("Record-Replay Integration Tests", () => {
       // Replay and verify checkpoints
       replayManager.replay(recording!)
       const proxyEngine2 = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngine2.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngine2.update(deltaTicks))
 
-      const replayCheckpoints: { frame: number; state: any }[] = []
+      const replayCheckpoints: { tick: number; state: any }[] = []
       for (let frame = 0; frame < 100; frame++) {
         await replayTicker.tick(1)
 
         if (frame % 10 === 0) {
           replayCheckpoints.push({
-            frame,
+            tick: frame,
             state: replayEngine.captureState(),
           })
         }
@@ -230,7 +230,7 @@ describe("Record-Replay Integration Tests", () => {
         const original = checkpoints[i]
         const replayed = replayCheckpoints[i]
 
-        expect(replayed.frame).toBe(original.frame)
+        expect(replayed.tick).toBe(original.tick)
 
         const comparison = StateComparator.compare(
           original.state,
@@ -239,7 +239,7 @@ describe("Record-Replay Integration Tests", () => {
         )
         if (!comparison.equal) {
           console.log(
-            `Checkpoint mismatch at frame ${original.frame}:`,
+            `Checkpoint mismatch at tick ${original.tick}:`,
             comparison.differences,
           )
         }
@@ -257,7 +257,7 @@ describe("Record-Replay Integration Tests", () => {
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
 
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       // Create objects that might respond to input
       const _player = new TestProjectile(
@@ -282,7 +282,7 @@ describe("Record-Replay Integration Tests", () => {
         if (frame === 10) {
           const event = {
             type: GameEventType.USER_INPUT,
-            frame: originalEngine.getTotalFrames(),
+            tick: originalEngine.getTotalTicks(),
             inputType: "key_press",
             key: "ArrowUp",
             timestamp: Date.now(),
@@ -294,7 +294,7 @@ describe("Record-Replay Integration Tests", () => {
         if (frame === 25) {
           const event = {
             type: GameEventType.USER_INPUT,
-            frame: originalEngine.getTotalFrames(),
+            tick: originalEngine.getTotalTicks(),
             inputType: "key_press",
             key: "Space",
             timestamp: Date.now(),
@@ -306,7 +306,7 @@ describe("Record-Replay Integration Tests", () => {
         if (frame === 40) {
           const event = {
             type: GameEventType.USER_INPUT,
-            frame: originalEngine.getTotalFrames(),
+            tick: originalEngine.getTotalTicks(),
             inputType: "key_release",
             key: "ArrowUp",
             timestamp: Date.now(),
@@ -343,7 +343,7 @@ describe("Record-Replay Integration Tests", () => {
         replayEngine,
       )
       const proxyEngineReplay = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngineReplay.update(deltaTicks))
 
       const replayStates: any[] = []
       for (let frame = 0; frame < 60; frame++) {
@@ -374,7 +374,7 @@ describe("Record-Replay Integration Tests", () => {
       originalEngine.reset(seed)
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       new TestProjectile(
         "player",
@@ -428,7 +428,7 @@ describe("Record-Replay Integration Tests", () => {
         replayEngine,
       )
       const proxyEngineReplay = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngineReplay.update(deltaTicks))
 
       for (let frame = 0; frame < 50; frame++) {
         await replayTicker.tick(1)
@@ -453,8 +453,8 @@ describe("Record-Replay Integration Tests", () => {
       const emptyRecording = {
         seed: "empty-test",
         events: [],
-        deltaFrames: [],
-        totalFrames: 0,
+        deltaTicks: [],
+        totalTicks: 0,
         metadata: {
           version: "1.0.0",
           timestamp: Date.now(),
@@ -467,7 +467,7 @@ describe("Record-Replay Integration Tests", () => {
 
       // Should finish immediately
       const proxyEngineReplay = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngineReplay.update(deltaTicks))
       replayTicker.tick(1)
 
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
@@ -478,21 +478,21 @@ describe("Record-Replay Integration Tests", () => {
         seed: "corrupt-test",
         events: [
           // Invalid event structure
-          { type: "INVALID_TYPE" as any, frame: 0, timestamp: Date.now() },
+          { type: "INVALID_TYPE" as any, tick: 0, timestamp: Date.now() },
           // Missing required fields
-          { type: GameEventType.USER_INPUT, frame: 0, timestamp: Date.now() },
+          { type: GameEventType.USER_INPUT, tick: 0, timestamp: Date.now() },
         ],
-        deltaFrames: [1, 2, null, 4], // Invalid frame count with null
-        totalFrames: 100, // Doesn't match deltaFrames sum
+        deltaTicks: [1, 2, null, 4], // Invalid frame count with null
+        totalTicks: 100, // Doesn't match deltaTicks sum
         metadata: {
           version: "999.0.0", // Unsupported version
           createdAt: Date.now(),
         },
       } as any
 
-      // Should throw validation error for null in deltaFrames
+      // Should throw validation error for null in deltaTicks
       expect(() => replayManager.replay(corruptedRecording)).toThrow(
-        "Invalid recording: deltaFrames[2] must be a positive number, got null",
+        "Invalid recording: deltaTicks[2] must be a positive number, got null",
       )
     })
 
@@ -502,7 +502,7 @@ describe("Record-Replay Integration Tests", () => {
       originalEngine.reset(seed)
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       new TestProjectile(
         "test",
@@ -534,13 +534,13 @@ describe("Record-Replay Integration Tests", () => {
 
       // Should still be a valid recording
       expect(partialRecording!.events.length).toBeGreaterThan(0)
-      expect(partialRecording!.deltaFrames.length).toBe(10)
-      expect(partialRecording!.totalFrames).toBe(10)
+      expect(partialRecording!.deltaTicks.length).toBe(10)
+      expect(partialRecording!.totalTicks).toBe(10)
 
       // Should be replayable
       replayManager.replay(partialRecording!)
       const proxyEngineReplay = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngineReplay.update(deltaTicks))
 
       let replayFrames = 0
       while (replayManager.isCurrentlyReplaying() && replayFrames < 20) {
@@ -559,7 +559,7 @@ describe("Record-Replay Integration Tests", () => {
       originalEngine.reset(seed)
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       const originalProjectile = new TestProjectile(
         "speed_test",
@@ -584,7 +584,7 @@ describe("Record-Replay Integration Tests", () => {
       const recording = recorder.getCurrentRecording()
       expect(recording).not.toBeNull()
 
-      // Replay at different "speeds" (different deltaFrames per tick)
+      // Replay at different "speeds" (different deltaTicks per tick)
       const speeds = [1, 2, 3, 5]
 
       for (const speed of speeds) {
@@ -594,12 +594,12 @@ describe("Record-Replay Integration Tests", () => {
 
         testReplay.replay(recording!)
         const testProxyEngine = testReplay.getReplayEngine()
-        testTicker.add((deltaFrames) => testProxyEngine.update(deltaFrames))
+        testTicker.add((deltaTicks) => testProxyEngine.update(deltaTicks))
 
-        let totalFramesProcessed = 0
-        while (testReplay.isCurrentlyReplaying() && totalFramesProcessed < 30) {
+        let totalTicksProcessed = 0
+        while (testReplay.isCurrentlyReplaying() && totalTicksProcessed < 30) {
           await testTicker.tick(speed)
-          totalFramesProcessed += speed
+          totalTicksProcessed += speed
         }
 
         // Compare final state instead of looking for specific objects
@@ -607,8 +607,8 @@ describe("Record-Replay Integration Tests", () => {
         const originalFinalState = originalEngine.captureState()
 
         // States should be similar (allowing for minor timing differences)
-        expect(finalReplayState.totalFrames).toBeCloseTo(
-          originalFinalState.totalFrames,
+        expect(finalReplayState.totalTicks).toBeCloseTo(
+          originalFinalState.totalTicks,
           5,
         )
         expect(finalReplayState.gameState).toBe("PAUSED") // Replay engine pauses when replay completes
@@ -623,7 +623,7 @@ describe("Record-Replay Integration Tests", () => {
       originalEngine.reset(seed)
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       // Create objects with Vector2D positions (requires serialization)
       const projectile = new TestProjectile(
@@ -655,7 +655,7 @@ describe("Record-Replay Integration Tests", () => {
           projectile.setPosition(new Vector2D(50, 50))
           recorder.recordEvent({
             type: GameEventType.OBJECT_UPDATE,
-            frame: originalEngine.getTotalFrames(),
+            tick: originalEngine.getTotalTicks(),
             timestamp: Date.now(),
             objectType: "Projectile",
             objectId: "serialize_proj",
@@ -681,11 +681,11 @@ describe("Record-Replay Integration Tests", () => {
       expect(deserializedRecording.events.length).toBe(
         originalRecording!.events.length,
       )
-      expect(deserializedRecording.deltaFrames.length).toBe(
-        originalRecording!.deltaFrames.length,
+      expect(deserializedRecording.deltaTicks.length).toBe(
+        originalRecording!.deltaTicks.length,
       )
-      expect(deserializedRecording.totalFrames).toBe(
-        originalRecording!.totalFrames,
+      expect(deserializedRecording.totalTicks).toBe(
+        originalRecording!.totalTicks,
       )
 
       // Verify events are preserved
@@ -693,13 +693,13 @@ describe("Record-Replay Integration Tests", () => {
         const original = originalRecording!.events[i]
         const deserialized = deserializedRecording.events[i]
         expect(deserialized.type).toBe(original.type)
-        expect(deserialized.frame).toBe(original.frame)
+        expect(deserialized.tick).toBe(original.tick)
       }
 
-      // Verify deltaFrames are preserved
-      for (let i = 0; i < originalRecording!.deltaFrames.length; i++) {
-        expect(deserializedRecording.deltaFrames[i]).toBeCloseTo(
-          originalRecording!.deltaFrames[i],
+      // Verify deltaTicks are preserved
+      for (let i = 0; i < originalRecording!.deltaTicks.length; i++) {
+        expect(deserializedRecording.deltaTicks[i]).toBeCloseTo(
+          originalRecording!.deltaTicks[i],
           10,
         )
       }
@@ -717,23 +717,23 @@ describe("Record-Replay Integration Tests", () => {
       })
 
       originalEngine.reset(seed)
-      originalTicker.add((deltaFrames) => originalEngine.update(deltaFrames))
+      originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       originalEngine.setGameRecorder(recorder)
       recorder.startRecording(originalEngine.getEventManager(), seed)
       originalEngine.start()
 
       // Run for many frames with periodic state checks
-      const checkpoints: { frame: number; state: any }[] = []
-      const totalFrames = 300
+      const checkpoints: { tick: number; state: any }[] = []
+      const totalTicks = 300
 
-      for (let frame = 0; frame < totalFrames; frame++) {
+      for (let frame = 0; frame < totalTicks; frame++) {
         await originalTicker.tick(1)
 
         // Checkpoint every 30 frames
         if (frame % 30 === 0) {
           checkpoints.push({
-            frame,
+            tick: frame,
             state: originalEngine.captureState(),
           })
         }
@@ -744,8 +744,8 @@ describe("Record-Replay Integration Tests", () => {
       expect(recording).not.toBeNull()
 
       // Verify recording integrity
-      expect(recording!.totalFrames).toBe(totalFrames)
-      expect(recording!.deltaFrames.length).toBe(totalFrames)
+      expect(recording!.totalTicks).toBe(totalTicks)
+      expect(recording!.deltaTicks.length).toBe(totalTicks)
 
       // Setup replay engine with same configuration
       replayEngine.setSetupConfig({
@@ -756,16 +756,16 @@ describe("Record-Replay Integration Tests", () => {
       // Replay and verify checkpoints
       replayManager.replay(recording!)
       const proxyEngineReplay = replayManager.getReplayEngine()
-      replayTicker.add((deltaFrames) => proxyEngineReplay.update(deltaFrames))
+      replayTicker.add((deltaTicks) => proxyEngineReplay.update(deltaTicks))
 
-      const replayCheckpoints: { frame: number; state: any }[] = []
+      const replayCheckpoints: { tick: number; state: any }[] = []
 
-      for (let frame = 0; frame < totalFrames; frame++) {
+      for (let frame = 0; frame < totalTicks; frame++) {
         await replayTicker.tick(1)
 
         if (frame % 30 === 0) {
           replayCheckpoints.push({
-            frame,
+            tick: frame,
             state: replayEngine.captureState(),
           })
         }
@@ -789,7 +789,7 @@ describe("Record-Replay Integration Tests", () => {
         )
         if (!comparison.equal) {
           console.log(
-            `Long simulation checkpoint mismatch at frame ${original.frame}`,
+            `Long simulation checkpoint mismatch at tick ${original.tick}`,
           )
         }
         expect(comparison.equal).toBe(true)

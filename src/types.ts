@@ -15,7 +15,7 @@ export enum GameEventType {
 // Event data structures for game state recording
 export interface GameEvent {
   type: GameEventType
-  frame: number
+  tick: number
   timestamp: number
 }
 
@@ -36,8 +36,8 @@ export interface ObjectUpdateEvent extends GameEvent {
 export interface GameRecording {
   seed: string
   events: GameEvent[]
-  deltaFrames: number[]
-  totalFrames: number
+  deltaTicks: number[]
+  totalTicks: number
   metadata?: {
     createdAt: number
     version?: string

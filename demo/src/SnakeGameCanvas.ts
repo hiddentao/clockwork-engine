@@ -64,7 +64,7 @@ export class SnakeGameCanvas extends GameCanvas {
     this.gameContainer.addChildAt(this.gridGraphics, 0) // Add as background layer
   }
 
-  protected render(_deltaFrames: number): void {
+  protected render(_deltaTicks: number): void {
     if (!this.gameEngine) return
 
     // Get all game objects from the engine
