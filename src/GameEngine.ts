@@ -55,7 +55,7 @@ export abstract class GameEngine
    * Clears all game objects, resets tick counter, and prepares for new game
    * @param seed Optional random seed for deterministic gameplay. If not provided, uses existing seed
    */
-  reset(seed?: string): void {
+  async reset(seed?: string): Promise<void> {
     if (seed !== undefined) {
       this.seed = seed
     }
@@ -66,7 +66,7 @@ export abstract class GameEngine
     this.timer.reset()
     this.eventManager.reset()
     this.collisionTree.clear()
-    this.setup()
+    await this.setup()
   }
 
   /**
@@ -74,7 +74,7 @@ export abstract class GameEngine
    * Override in subclasses to create initial game objects and configure game state
    * Called automatically during reset() to set up the game world
    */
-  abstract setup(): void
+  abstract setup(): Promise<void>
 
   /**
    * Start the game by transitioning from READY to PLAYING state

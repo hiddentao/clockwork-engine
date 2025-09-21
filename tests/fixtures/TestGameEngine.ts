@@ -11,7 +11,7 @@ export class TestGameEngine extends GameEngine {
     super(loader)
   }
 
-  setup(): void {
+  async setup(): Promise<void> {
     this.setupCalled = true
     this.setupCallCount++
 

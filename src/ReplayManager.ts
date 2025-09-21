@@ -93,7 +93,7 @@ export class ReplayManager {
    * @param recording Complete game recording with events, deltaFrames, and metadata
    * @throws Error if already replaying or recording is invalid
    */
-  replay(recording: GameRecording): void {
+  async replay(recording: GameRecording): Promise<void> {
     if (this.isReplaying) {
       throw new Error("Already replaying. Stop current replay first.")
     }
@@ -108,7 +108,7 @@ export class ReplayManager {
     this.accumulatedTicks = 0
 
     // Initialize engine with deterministic seed
-    this.__engine.reset(recording.seed)
+    await this.__engine.reset(recording.seed)
 
     // Configure event source for recorded input
     const recordedSource = new RecordedEventSource(

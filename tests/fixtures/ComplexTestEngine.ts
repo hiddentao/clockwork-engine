@@ -29,7 +29,7 @@ export class ComplexTestEngine extends GameEngine {
     this.registerSerializationTypes()
   }
 
-  setup(): void {
+  async setup(): Promise<void> {
     // Engine setup is called automatically on reset
     // Create objects based on setupConfig
 
@@ -580,8 +580,8 @@ export class ComplexTestEngine extends GameEngine {
   }
 
   // Reset counters when engine resets
-  reset(seed?: string): void {
-    super.reset(seed)
+  async reset(seed?: string): Promise<void> {
+    await super.reset(seed)
     this.projectileIdCounter = 0
     this.powerUpIdCounter = 0
     this.enemyIdCounter = 0

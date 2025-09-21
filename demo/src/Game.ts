@@ -39,7 +39,7 @@ export class Game {
     this.replayEngine = new DemoGameEngine(this.loader)
     this.activeEngine = this.playEngine // Start with play engine active
 
-    this.playEngine.reset("demo-seed-" + Date.now())
+    await this.playEngine.reset("demo-seed-" + Date.now())
 
     // Demonstrate loader usage
     await this.demonstrateLoaderCapabilities()
@@ -241,7 +241,7 @@ export class Game {
     })
   }
 
-  private onUIAction(action: string, data?: any): void {
+  private async onUIAction(action: string, data?: any): Promise<void> {
     console.log(`🔧 UI Action: ${action}`, data)
     const currentState = this.activeEngine.getState()
     console.log(`📊 Current state: ${currentState}`)
@@ -251,7 +251,7 @@ export class Game {
         this.handlePauseResume()
         break
       case "reset":
-        this.switchToPlayMode()
+        await this.switchToPlayMode()
         break
       case "record":
         this.startRecording()
@@ -260,10 +260,10 @@ export class Game {
         this.stopRecording()
         break
       case "replay":
-        this.startReplay()
+        await this.startReplay()
         break
       case "stopReplay":
-        this.stopReplay()
+        await this.stopReplay()
         break
       case "replaySpeed":
         this.replaySpeed = data
@@ -298,7 +298,7 @@ export class Game {
     this.playEngine.setGameRecorder(undefined)
   }
 
-  private startReplay(): void {
+  private async startReplay(): Promise<void> {
     if (this.isReplaying) {
       console.log("❌ Cannot start replay - already replaying")
       return
@@ -332,7 +332,7 @@ export class Game {
 
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayManager.getReplayEngine()) {
-      this.replayEngine.reset(recording.seed)
+      await this.replayEngine.reset(recording.seed)
     } else {
       // Switch to replay proxy engine
       this.activeEngine = this.replayManager.getReplayEngine() as DemoGameEngine
@@ -341,10 +341,10 @@ export class Game {
     this.canvas.setGameEngine(this.activeEngine)
 
     // Start replay on the replay engine (this will control the engine internally)
-    this.replayManager.replay(recording)
+    await this.replayManager.replay(recording)
   }
 
-  private stopReplay(switchToPlay: boolean = true): void {
+  private async stopReplay(switchToPlay: boolean = true): Promise<void> {
     if (!this.isReplaying) return
 
     console.log("⏹️ Stopping replay mode...")
@@ -357,25 +357,25 @@ export class Game {
 
     // Switch back to play engine only if requested
     if (switchToPlay) {
-      this.switchToPlayMode()
+      await this.switchToPlayMode()
     } else {
       // If staying in replay mode, restore canvas connection to replay engine for rendering
       this.canvas.setGameEngine(this.activeEngine)
     }
   }
 
-  private switchToPlayMode(): void {
+  private async switchToPlayMode(): Promise<void> {
     console.log("🔄 Switching to play mode...")
 
     // Stop any ongoing recording or replay
     this.stopRecording()
-    this.stopReplay()
+    await this.stopReplay(false)
 
     // Switch to play engine and reset it
     this.activeEngine = this.playEngine
     // Restore GameCanvas engine connection for normal play mode
     this.canvas.setGameEngine(this.activeEngine)
-    this.playEngine.reset("demo-seed-" + Date.now())
+    await this.playEngine.reset("demo-seed-" + Date.now())
   }
 
   /**

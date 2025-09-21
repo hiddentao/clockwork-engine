@@ -132,7 +132,7 @@ export class RecordingValidator {
     const ticker = new MockTicker()
 
     // Start replay
-    replayManager.replay(recording)
+    await replayManager.replay(recording)
 
     // Add ticker callback for replay manager
     const proxyEngine = replayManager.getReplayEngine()

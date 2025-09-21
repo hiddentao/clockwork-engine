@@ -400,9 +400,9 @@ describe("GameRecorder", () => {
     let eventManager: GameEventManager
     let inputSource: UserInputEventSource
 
-    beforeEach(() => {
+    beforeEach(async () => {
       engine = new ComplexTestEngine()
-      engine.reset("recorder-test")
+      await engine.reset("recorder-test")
 
       inputSource = new UserInputEventSource()
       eventManager = new GameEventManager(inputSource, engine)

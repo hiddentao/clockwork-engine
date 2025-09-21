@@ -450,8 +450,8 @@ describe("GameCanvas", () => {
       expect(canvas.getGameEngine()).toBeNull()
     })
 
-    it("should update renderers when engine objects change", () => {
-      engine.reset("test-seed")
+    it("should update renderers when engine objects change", async () => {
+      await engine.reset("test-seed")
       engine.start()
 
       // Create test objects

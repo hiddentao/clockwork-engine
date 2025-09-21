@@ -46,9 +46,11 @@ export class TestScenarioBuilder {
     this.recorder = new GameRecorder()
     this.ticker = new MockTicker()
     this.seed = seed
+  }
 
+  async initialize(): Promise<void> {
     // Reset engine with seed
-    this.engine.reset(seed)
+    await this.engine.reset(this.seed)
   }
 
   // Object creation methods
@@ -439,12 +441,12 @@ export class TestScenarioBuilder {
   }
 
   // Utility methods
-  reset(): this {
+  async reset(): Promise<this> {
     this.scheduledActions = []
     this.movementCommands = []
     this.inputEvents = []
     this.snapshotTicks = []
-    this.engine.reset(this.seed)
+    await this.engine.reset(this.seed)
     this.recorder.reset()
     this.ticker.reset()
     return this

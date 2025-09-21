@@ -85,8 +85,8 @@ describe("ReplayManager", () => {
   })
 
   describe("Starting Replay", () => {
-    it("should initialize replay with recording", () => {
-      replayManager.replay(sampleRecording)
+    it("should initialize replay with recording", async () => {
+      await replayManager.replay(sampleRecording)
 
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
       expect(replayManager.getCurrentTick()).toBe(0)
@@ -98,17 +98,17 @@ describe("ReplayManager", () => {
       expect(progress.hasMoreTicks).toBe(true)
     })
 
-    it("should reset engine with recording seed", () => {
+    it("should reset engine with recording seed", async () => {
       const originalSeed = engine.getSeed()
 
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
 
       expect(engine.getSeed()).toBe(sampleRecording.seed)
       expect(engine.getSeed()).not.toBe(originalSeed)
     })
 
-    it("should set recorded event source on engine", () => {
-      replayManager.replay(sampleRecording)
+    it("should set recorded event source on engine", async () => {
+      await replayManager.replay(sampleRecording)
 
       const eventManager = engine.getEventManager()
       const sourceInfo = eventManager.getSourceInfo()
@@ -116,15 +116,15 @@ describe("ReplayManager", () => {
       expect(sourceInfo.hasMore).toBe(true)
     })
 
-    it("should throw error when already replaying", () => {
-      replayManager.replay(sampleRecording)
+    it("should throw error when already replaying", async () => {
+      await replayManager.replay(sampleRecording)
 
-      expect(() => {
-        replayManager.replay(sampleRecording)
-      }).toThrow("Already replaying. Stop current replay first.")
+      await expect(replayManager.replay(sampleRecording)).rejects.toThrow(
+        "Already replaying. Stop current replay first.",
+      )
     })
 
-    it("should handle empty recording", () => {
+    it("should handle empty recording", async () => {
       const emptyRecording: GameRecording = {
         seed: "empty-seed",
         events: [],
@@ -133,7 +133,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      expect(() => replayManager.replay(emptyRecording)).not.toThrow()
+      await replayManager.replay(emptyRecording)
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       const progress = replayManager.getReplayProgress()
@@ -142,8 +142,8 @@ describe("ReplayManager", () => {
   })
 
   describe("Replay Update Processing", () => {
-    beforeEach(() => {
-      replayManager.replay(sampleRecording)
+    beforeEach(async () => {
+      await replayManager.replay(sampleRecording)
     })
 
     it("should process frames according to recorded deltaTicks", () => {
@@ -226,8 +226,8 @@ describe("ReplayManager", () => {
   })
 
   describe("Stopping Replay", () => {
-    it("should stop active replay", () => {
-      replayManager.replay(sampleRecording)
+    it("should stop active replay", async () => {
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(2) // Process some frames
 
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
@@ -239,8 +239,8 @@ describe("ReplayManager", () => {
       expect(engine.getState()).toBe(GameState.PAUSED)
     })
 
-    it("should reset replay state", () => {
-      replayManager.replay(sampleRecording)
+    it("should reset replay state", async () => {
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(3)
 
       replayManager.stopReplay()
@@ -258,8 +258,8 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should allow new replay after stopping", () => {
-      replayManager.replay(sampleRecording)
+    it("should allow new replay after stopping", async () => {
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(2)
       replayManager.stopReplay()
 
@@ -271,14 +271,14 @@ describe("ReplayManager", () => {
         totalTicks: 2,
       }
 
-      expect(() => replayManager.replay(newRecording)).not.toThrow()
+      await replayManager.replay(newRecording)
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
       expect(engine.getSeed()).toBe("new-seed")
     })
   })
 
   describe("Frame Timing Edge Cases", () => {
-    it("should handle zero deltaTicks in recording", () => {
+    it("should handle zero deltaTicks in recording", async () => {
       const zeroFrameRecording: GameRecording = {
         seed: "zero-frame-test",
         events: [
@@ -296,12 +296,12 @@ describe("ReplayManager", () => {
       }
 
       // Should throw validation error for zero deltaTicks
-      expect(() => replayManager.replay(zeroFrameRecording)).toThrow(
+      await expect(replayManager.replay(zeroFrameRecording)).rejects.toThrow(
         "Invalid recording: deltaTicks[0] must be a positive number, got 0",
       )
     })
 
-    it("should handle fractional deltaTicks in recording", () => {
+    it("should handle fractional deltaTicks in recording", async () => {
       const fractionalRecording: GameRecording = {
         seed: "fractional-test",
         events: [],
@@ -310,7 +310,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(fractionalRecording)
+      await replayManager.replay(fractionalRecording)
 
       proxyEngine.update(0.4) // Should process 0.1 + 0.3 frames
       expect(replayManager.getCurrentTick()).toBeCloseTo(0.4, 2)
@@ -322,7 +322,7 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(2)
     })
 
-    it("should handle large deltaTicks in recording", () => {
+    it("should handle large deltaTicks in recording", async () => {
       const largeFrameRecording: GameRecording = {
         seed: "large-frame-test",
         events: [],
@@ -331,7 +331,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(largeFrameRecording)
+      await replayManager.replay(largeFrameRecording)
 
       proxyEngine.update(15) // Should process first frame (10) with 5 remaining
       expect(replayManager.getCurrentTick()).toBe(10)
@@ -357,7 +357,7 @@ describe("ReplayManager", () => {
       recorder = new GameRecorder()
     })
 
-    it("should replay recorded game session accurately", () => {
+    it("should replay recorded game session accurately", async () => {
       // Create a test player
       const player = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
@@ -403,7 +403,7 @@ describe("ReplayManager", () => {
       const recording = recorder.getCurrentRecording()!
 
       // Replay the session (this will reset the engine)
-      replayManager.replay(recording)
+      await replayManager.replay(recording)
 
       // Create new player for replay AFTER replay starts (engine is already reset by replay())
       const replayPlayer = engine.createTestPlayer(
@@ -424,7 +424,7 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should maintain determinism across multiple replays", () => {
+    it("should maintain determinism across multiple replays", async () => {
       // Create complex recording with PRNG usage
       const complexRecording: GameRecording = {
         seed: "determinism-test",
@@ -457,10 +457,10 @@ describe("ReplayManager", () => {
       const velocities: Vector2D[] = []
 
       // First replay
-      engine.reset("determinism-test")
+      await engine.reset("determinism-test")
       const player1 = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
-      replayManager.replay(complexRecording)
+      await replayManager.replay(complexRecording)
       proxyEngine.update(1)
       positions.push(player1.getPosition())
       proxyEngine.update(1)
@@ -468,10 +468,10 @@ describe("ReplayManager", () => {
 
       // Second replay
       replayManager.stopReplay() // Stop first replay before starting second
-      engine.reset("determinism-test")
+      await engine.reset("determinism-test")
       const player2 = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
-      replayManager.replay(complexRecording)
+      await replayManager.replay(complexRecording)
       proxyEngine.update(1)
       expect(player2.getPosition()).toEqual(positions[0])
       proxyEngine.update(1)
@@ -480,7 +480,7 @@ describe("ReplayManager", () => {
   })
 
   describe("Performance and Stress Testing", () => {
-    it("should handle long recordings efficiently", () => {
+    it("should handle long recordings efficiently", async () => {
       const longRecording: GameRecording = {
         seed: "long-test",
         events: Array.from(
@@ -501,7 +501,7 @@ describe("ReplayManager", () => {
 
       const startTime = performance.now()
 
-      replayManager.replay(longRecording)
+      await replayManager.replay(longRecording)
 
       // Process all frames - should auto-stop immediately
       proxyEngine.update(1000)
@@ -514,7 +514,7 @@ describe("ReplayManager", () => {
       expect(processingTime).toBeLessThan(1000) // Should complete within 1 second
     })
 
-    it("should handle rapid replay cycles", () => {
+    it("should handle rapid replay cycles", async () => {
       const quickRecording: GameRecording = {
         seed: "quick-test",
         events: [],
@@ -524,7 +524,7 @@ describe("ReplayManager", () => {
       }
 
       for (let cycle = 0; cycle < 100; cycle++) {
-        replayManager.replay(quickRecording)
+        await replayManager.replay(quickRecording)
 
         // Process all deltaTicks at once (100 + 100 + 100 = 300) - should auto-stop
         proxyEngine.update(300)
@@ -535,7 +535,7 @@ describe("ReplayManager", () => {
       }
     })
 
-    it("should handle irregular frame timing", () => {
+    it("should handle irregular frame timing", async () => {
       const irregularRecording: GameRecording = {
         seed: "irregular-test",
         events: [],
@@ -544,7 +544,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(irregularRecording)
+      await replayManager.replay(irregularRecording)
 
       // Process with various update sizes
       proxyEngine.update(0.5) // Should process 0.001, still replaying
@@ -560,9 +560,9 @@ describe("ReplayManager", () => {
   })
 
   describe("Advanced Edge Cases", () => {
-    it("should handle rapid start/stop cycles", () => {
+    it("should handle rapid start/stop cycles", async () => {
       for (let i = 0; i < 20; i++) {
-        replayManager.replay(sampleRecording)
+        await replayManager.replay(sampleRecording)
         expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
         replayManager.stopReplay()
@@ -570,8 +570,8 @@ describe("ReplayManager", () => {
       }
     })
 
-    it("should handle concurrent proxy and direct engine access", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle concurrent proxy and direct engine access", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Direct engine updates should not interfere with replay state
       const initialReplayFrame = replayManager.getCurrentTick()
@@ -585,8 +585,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle extremely small deltaTicks accumulation", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle extremely small deltaTicks accumulation", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Accumulate tiny amounts many times
       for (let i = 0; i < 1000; i++) {
@@ -597,20 +597,20 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle replay with engine in different states", () => {
+    it("should handle replay with engine in different states", async () => {
       // Test replay when engine is PAUSED
       engine.start()
       engine.pause()
       expect(engine.getState()).toBe(GameState.PAUSED)
 
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
       expect(engine.getState()).toBe(GameState.PLAYING) // Should start engine
 
       proxyEngine.update(1)
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle exact integer deltaTicks", () => {
+    it("should handle exact integer deltaTicks", async () => {
       const integerRecording: GameRecording = {
         seed: "integer-test",
         events: [],
@@ -619,7 +619,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(integerRecording)
+      await replayManager.replay(integerRecording)
 
       proxyEngine.update(1000) // Should process first tick block exactly
       expect(replayManager.getCurrentTick()).toBe(1000)
@@ -628,8 +628,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(2000)
     })
 
-    it("should handle replay interruption and resumption", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle replay interruption and resumption", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Process some frames
       proxyEngine.update(2)
@@ -640,7 +640,7 @@ describe("ReplayManager", () => {
       const _stoppedFrame = replayManager.getCurrentTick()
 
       // Resume with new replay (should reset)
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
       expect(replayManager.getCurrentTick()).toBe(0)
 
       // Should work normally
@@ -648,7 +648,7 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle empty recording with proxy engine", () => {
+    it("should handle empty recording with proxy engine", async () => {
       const emptyRecording: GameRecording = {
         seed: "empty-test",
         events: [],
@@ -657,7 +657,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(emptyRecording)
+      await replayManager.replay(emptyRecording)
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       // Any update should immediately stop the replay
@@ -665,14 +665,14 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should maintain determinism with proxy engine across multiple runs", () => {
+    it("should maintain determinism with proxy engine across multiple runs", async () => {
       const results: number[] = []
 
       for (let run = 0; run < 3; run++) {
-        engine.reset("determinism-test")
+        await engine.reset("determinism-test")
         const _player = engine.createTestPlayer("test", new Vector2D(0, 0))
 
-        replayManager.replay(sampleRecording)
+        await replayManager.replay(sampleRecording)
         proxyEngine.update(2.5) // Partial replay
 
         results.push(replayManager.getCurrentTick())
@@ -687,7 +687,7 @@ describe("ReplayManager", () => {
   })
 
   describe("Error Handling and Edge Cases", () => {
-    it("should handle corrupted recording data gracefully", () => {
+    it("should handle corrupted recording data gracefully", async () => {
       const corruptedRecording = {
         seed: "corrupted",
         events: null, // Corrupted
@@ -697,12 +697,12 @@ describe("ReplayManager", () => {
       } as any
 
       // Should throw validation error for invalid events array
-      expect(() => replayManager.replay(corruptedRecording)).toThrow(
+      await expect(replayManager.replay(corruptedRecording)).rejects.toThrow(
         "Invalid recording: events must be an array",
       )
     })
 
-    it("should handle missing deltaTicks", () => {
+    it("should handle missing deltaTicks", async () => {
       const missingFramesRecording: GameRecording = {
         seed: "missing-frames",
         events: [
@@ -719,14 +719,14 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(missingFramesRecording)
+      await replayManager.replay(missingFramesRecording)
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
       proxyEngine.update(10) // Should stop immediately due to no frames
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should handle negative totalTicks", () => {
+    it("should handle negative totalTicks", async () => {
       const negativeFramesRecording: GameRecording = {
         seed: "negative-frames",
         events: [],
@@ -736,13 +736,15 @@ describe("ReplayManager", () => {
       }
 
       // Should throw validation error for negative totalTicks
-      expect(() => replayManager.replay(negativeFramesRecording)).toThrow(
+      await expect(
+        replayManager.replay(negativeFramesRecording),
+      ).rejects.toThrow(
         "Invalid recording: totalTicks must be a non-negative number",
       )
     })
 
-    it("should handle stop/start during frame processing", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle stop/start during frame processing", async () => {
+      await replayManager.replay(sampleRecording)
 
       proxyEngine.update(2.5) // Partial processing
       expect(replayManager.getCurrentTick()).toBe(2)
@@ -751,7 +753,7 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(2) // Frame count preserved after stop
 
       // Restart
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(1)
       expect(replayManager.getCurrentTick()).toBe(1)
     })
@@ -783,8 +785,8 @@ describe("ReplayManager", () => {
       expect(engine.getTotalTicks()).toBe(initialFrames + 5)
     })
 
-    it("should intercept update calls during replay", () => {
-      replayManager.replay(sampleRecording)
+    it("should intercept update calls during replay", async () => {
+      await replayManager.replay(sampleRecording)
       const initialEngineFrames = engine.getTotalTicks()
 
       // Update through proxy during replay - should follow recorded deltaTicks
@@ -795,8 +797,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle frame accumulation with floating point tolerance", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle frame accumulation with floating point tolerance", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Test accumulation with very small floating point differences
       proxyEngine.update(0.9999999) // Almost 1 frame but not quite
@@ -806,8 +808,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1) // Should process now
     })
 
-    it("should maintain proxy behavior after replay stops", () => {
-      replayManager.replay(sampleRecording)
+    it("should maintain proxy behavior after replay stops", async () => {
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(5) // Complete all frames and auto-stop
 
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
@@ -819,9 +821,9 @@ describe("ReplayManager", () => {
       expect(engine.getTotalTicks()).toBe(initialFrames + 3)
     })
 
-    it("should handle multiple replay cycles with same proxy", () => {
+    it("should handle multiple replay cycles with same proxy", async () => {
       // First replay
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
       proxyEngine.update(2)
       expect(replayManager.getCurrentTick()).toBe(2)
 
@@ -830,15 +832,15 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
 
       // Second replay with same proxy
-      replayManager.replay(sampleRecording)
+      await replayManager.replay(sampleRecording)
       expect(replayManager.getCurrentTick()).toBe(0) // Should reset
 
       proxyEngine.update(1)
       expect(replayManager.getCurrentTick()).toBe(1) // Should work correctly
     })
 
-    it("should handle proxy update with zero deltaTicks", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle proxy update with zero deltaTicks", async () => {
+      await replayManager.replay(sampleRecording)
       const initialFrame = replayManager.getCurrentTick()
 
       // Update with zero should not process any frames
@@ -846,8 +848,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(initialFrame)
     })
 
-    it("should handle very large deltaTicks input to proxy", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle very large deltaTicks input to proxy", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Provide huge deltaTicks - should only process recorded frames
       proxyEngine.update(1000000)
@@ -859,7 +861,7 @@ describe("ReplayManager", () => {
   })
 
   describe("Progress Tracking", () => {
-    it("should provide accurate progress information", () => {
+    it("should provide accurate progress information", async () => {
       const recording: GameRecording = {
         seed: "progress-test",
         events: [],
@@ -868,7 +870,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(recording)
+      await replayManager.replay(recording)
 
       let progress = replayManager.getReplayProgress()
       expect(progress.progress).toBe(0)
@@ -889,7 +891,7 @@ describe("ReplayManager", () => {
       expect(progress.isReplaying).toBe(false) // Auto-stopped after all frames processed
     })
 
-    it("should clamp progress to 1.0 maximum", () => {
+    it("should clamp progress to 1.0 maximum", async () => {
       const overflowRecording: GameRecording = {
         seed: "overflow-test",
         events: [],
@@ -898,7 +900,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      replayManager.replay(overflowRecording)
+      await replayManager.replay(overflowRecording)
       proxyEngine.update(1)
 
       const progress = replayManager.getReplayProgress()
@@ -907,7 +909,7 @@ describe("ReplayManager", () => {
   })
 
   describe("Comprehensive Validation and Error Handling", () => {
-    it("should validate recording with invalid seed types", () => {
+    it("should validate recording with invalid seed types", async () => {
       const invalidSeedRecording = {
         seed: null,
         events: [],
@@ -916,12 +918,12 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       } as any
 
-      expect(() => replayManager.replay(invalidSeedRecording)).toThrow(
+      await expect(replayManager.replay(invalidSeedRecording)).rejects.toThrow(
         "Invalid recording: missing or invalid seed",
       )
     })
 
-    it("should validate recording with invalid events structure", () => {
+    it("should validate recording with invalid events structure", async () => {
       const invalidEventsRecording = {
         seed: "test",
         events: [
@@ -936,12 +938,12 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       } as any
 
-      expect(() => replayManager.replay(invalidEventsRecording)).toThrow(
-        "Invalid recording: events[0].type must be a string",
-      )
+      await expect(
+        replayManager.replay(invalidEventsRecording),
+      ).rejects.toThrow("Invalid recording: events[0].type must be a string")
     })
 
-    it("should validate recording with invalid frame numbers in events", () => {
+    it("should validate recording with invalid frame numbers in events", async () => {
       const invalidFrameRecording = {
         seed: "test",
         events: [
@@ -958,12 +960,12 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       } as any
 
-      expect(() => replayManager.replay(invalidFrameRecording)).toThrow(
+      await expect(replayManager.replay(invalidFrameRecording)).rejects.toThrow(
         "Invalid recording: events[0].tick must be a non-negative number",
       )
     })
 
-    it("should validate recording with non-numeric deltaTicks", () => {
+    it("should validate recording with non-numeric deltaTicks", async () => {
       const invalidDeltaRecording = {
         seed: "test",
         events: [],
@@ -972,12 +974,12 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       } as any
 
-      expect(() => replayManager.replay(invalidDeltaRecording)).toThrow(
+      await expect(replayManager.replay(invalidDeltaRecording)).rejects.toThrow(
         "Invalid recording: deltaTicks[0] must be a positive number",
       )
     })
 
-    it("should validate recording with infinite deltaTicks", () => {
+    it("should validate recording with infinite deltaTicks", async () => {
       const infiniteRecording = {
         seed: "test",
         events: [],
@@ -987,10 +989,10 @@ describe("ReplayManager", () => {
       } as any
 
       // Infinity is a positive number, so validation passes but behavior should be handled
-      expect(() => replayManager.replay(infiniteRecording)).not.toThrow()
+      await replayManager.replay(infiniteRecording)
     })
 
-    it("should validate recording with NaN deltaTicks", () => {
+    it("should validate recording with NaN deltaTicks", async () => {
       const nanRecording = {
         seed: "test",
         events: [],
@@ -1001,11 +1003,11 @@ describe("ReplayManager", () => {
 
       // NaN doesn't fail the validation currently (NaN <= 0 is false, typeof NaN === 'number' is true)
       // So the recording is accepted but behavior with NaN is undefined
-      expect(() => replayManager.replay(nanRecording)).not.toThrow()
+      await replayManager.replay(nanRecording)
     })
 
-    it("should handle proxy engine edge cases gracefully", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle proxy engine edge cases gracefully", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Test that proxy handles zero deltaTicks without crashing
       expect(() => {
@@ -1021,8 +1023,8 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(1)
     })
 
-    it("should handle engine state changes during replay", () => {
-      replayManager.replay(sampleRecording)
+    it("should handle engine state changes during replay", async () => {
+      await replayManager.replay(sampleRecording)
 
       // Manually change engine state during replay
       engine.pause()
@@ -1034,7 +1036,7 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
     })
 
-    it("should handle very large totalTicks values", () => {
+    it("should handle very large totalTicks values", async () => {
       const largeFramesRecording: GameRecording = {
         seed: "large-test",
         events: [],
@@ -1043,14 +1045,14 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      expect(() => replayManager.replay(largeFramesRecording)).not.toThrow()
+      await replayManager.replay(largeFramesRecording)
 
       proxyEngine.update(1)
       const progress = replayManager.getReplayProgress()
       expect(progress.progress).toBeCloseTo(0, 10) // Should be very close to 0
     })
 
-    it("should handle recording with inconsistent events and deltaTicks", () => {
+    it("should handle recording with inconsistent events and deltaTicks", async () => {
       const inconsistentRecording: GameRecording = {
         seed: "inconsistent-test",
         events: [
@@ -1068,7 +1070,7 @@ describe("ReplayManager", () => {
       }
 
       // Should not throw during validation (events/deltaTicks can be inconsistent)
-      expect(() => replayManager.replay(inconsistentRecording)).not.toThrow()
+      await replayManager.replay(inconsistentRecording)
 
       // Should process the deltaTicks regardless of event timing
       proxyEngine.update(2)
@@ -1076,17 +1078,17 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
-    it("should handle null/undefined recording gracefully", () => {
-      expect(() => replayManager.replay(null as any)).toThrow(
+    it("should handle null/undefined recording gracefully", async () => {
+      await expect(replayManager.replay(null as any)).rejects.toThrow(
         "Invalid recording: recording is null or undefined",
       )
 
-      expect(() => replayManager.replay(undefined as any)).toThrow(
+      await expect(replayManager.replay(undefined as any)).rejects.toThrow(
         "Invalid recording: recording is null or undefined",
       )
     })
 
-    it("should handle memory pressure with large recordings", () => {
+    it("should handle memory pressure with large recordings", async () => {
       // Create a recording with many events to test memory handling
       const largeEventRecording: GameRecording = {
         seed: "memory-test",
@@ -1102,7 +1104,7 @@ describe("ReplayManager", () => {
         metadata: { createdAt: Date.now() },
       }
 
-      expect(() => replayManager.replay(largeEventRecording)).not.toThrow()
+      await replayManager.replay(largeEventRecording)
 
       // Should handle the large recording without issues
       proxyEngine.update(100)

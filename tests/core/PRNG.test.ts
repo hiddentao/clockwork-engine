@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { PRNG } from "../../src/PRNG"
 
 describe("PRNG", () => {
@@ -780,6 +780,271 @@ describe("PRNG", () => {
       expect(veryLow).toBeLessThan(150)
       expect(veryHigh).toBeGreaterThan(50)
       expect(veryLow).toBeGreaterThan(50)
+    })
+  })
+
+  describe("Debug Functionality", () => {
+    let originalConsoleLog: typeof console.log
+    let consoleOutput: string[]
+
+    beforeEach(() => {
+      // Reset debug state
+      PRNG.debug = false
+      prng.reset("debug-test")
+
+      // Mock console.log to capture output
+      consoleOutput = []
+      originalConsoleLog = console.log
+      console.log = (...args: any[]) => {
+        consoleOutput.push(args.join(" "))
+      }
+    })
+
+    afterEach(() => {
+      // Restore original console.log
+      console.log = originalConsoleLog
+      PRNG.debug = false
+    })
+
+    it("should have debug property defaulting to false", () => {
+      expect(PRNG.debug).toBe(false)
+    })
+
+    it("should be accessible as static property", () => {
+      expect(typeof PRNG.debug).toBe("boolean")
+
+      PRNG.debug = true
+      expect(PRNG.debug).toBe(true)
+
+      PRNG.debug = false
+      expect(PRNG.debug).toBe(false)
+    })
+
+    it("should not log when debug is false", () => {
+      PRNG.debug = false
+
+      prng.random()
+      prng.randomInt(1, 10)
+      prng.randomFloat(1.0, 5.0)
+      prng.randomChoice(["a", "b", "c"])
+      prng.randomBoolean()
+
+      expect(consoleOutput).toHaveLength(0)
+    })
+
+    it("should log random() calls when debug is true", () => {
+      PRNG.debug = true
+
+      const value = prng.random()
+
+      expect(consoleOutput).toHaveLength(1)
+      expect(consoleOutput[0]).toMatch(/^PRNG\.random\(\): 0\.\d+$/)
+      expect(consoleOutput[0]).toContain(value.toString())
+    })
+
+    it("should log randomInt() calls when debug is true", () => {
+      PRNG.debug = true
+
+      const value = prng.randomInt(5, 15)
+
+      expect(consoleOutput).toHaveLength(2) // random() + randomInt()
+      expect(consoleOutput[1]).toMatch(/^PRNG\.randomInt\(5, 15\): \d+$/)
+      expect(consoleOutput[1]).toContain(value.toString())
+    })
+
+    it("should log randomFloat() calls when debug is true", () => {
+      PRNG.debug = true
+
+      const value = prng.randomFloat(2.5, 7.8)
+
+      expect(consoleOutput).toHaveLength(2) // random() + randomFloat()
+      expect(consoleOutput[1]).toMatch(
+        /^PRNG\.randomFloat\(2\.5, 7\.8\): \d+\.?\d*$/,
+      )
+      expect(consoleOutput[1]).toContain(value.toString())
+    })
+
+    it("should log randomChoice() calls when debug is true", () => {
+      PRNG.debug = true
+
+      const array = ["apple", "banana", "cherry"]
+      const value = prng.randomChoice(array)
+
+      expect(consoleOutput).toHaveLength(3) // random() + randomInt() + randomChoice()
+      expect(consoleOutput[2]).toMatch(
+        /^PRNG\.randomChoice\(array\[3\]\): index=\d+, value=\w+$/,
+      )
+      expect(consoleOutput[2]).toContain(value)
+      expect(consoleOutput[2]).toContain("index=")
+    })
+
+    it("should log randomBoolean() calls when debug is true", () => {
+      PRNG.debug = true
+
+      const value = prng.randomBoolean(0.7)
+
+      expect(consoleOutput).toHaveLength(2) // random() + randomBoolean()
+      expect(consoleOutput[1]).toMatch(
+        /^PRNG\.randomBoolean\(0\.7\): (true|false)$/,
+      )
+      expect(consoleOutput[1]).toContain(value.toString())
+    })
+
+    it("should log randomBoolean() with default threshold", () => {
+      PRNG.debug = true
+
+      const value = prng.randomBoolean()
+
+      expect(consoleOutput).toHaveLength(2) // random() + randomBoolean()
+      expect(consoleOutput[1]).toMatch(
+        /^PRNG\.randomBoolean\(0\.5\): (true|false)$/,
+      )
+      expect(consoleOutput[1]).toContain(value.toString())
+    })
+
+    it("should handle complex randomChoice objects in debug output", () => {
+      PRNG.debug = true
+
+      const objects = [
+        { id: 1, name: "first" },
+        { id: 2, name: "second" },
+      ]
+      const _value = prng.randomChoice(objects)
+
+      expect(consoleOutput).toHaveLength(3) // random() + randomInt() + randomChoice()
+      expect(consoleOutput[2]).toContain("PRNG.randomChoice(array[2])")
+      expect(consoleOutput[2]).toContain("index=")
+      expect(consoleOutput[2]).toContain("value=")
+    })
+
+    it("should show nested calls in debug output", () => {
+      PRNG.debug = true
+
+      // This will call random() internally
+      prng.randomInt(1, 10)
+
+      expect(consoleOutput).toHaveLength(2)
+      expect(consoleOutput[0]).toMatch(/^PRNG\.random\(\): 0\.\d+$/)
+      expect(consoleOutput[1]).toMatch(/^PRNG\.randomInt\(1, 10\): \d+$/)
+    })
+
+    it("should be toggleable during execution", () => {
+      // Start with debug off
+      PRNG.debug = false
+      prng.random()
+      expect(consoleOutput).toHaveLength(0)
+
+      // Turn debug on
+      PRNG.debug = true
+      prng.random()
+      expect(consoleOutput).toHaveLength(1)
+
+      // Turn debug off again
+      PRNG.debug = false
+      prng.random()
+      expect(consoleOutput).toHaveLength(1) // Should not increase
+    })
+
+    it("should work across different PRNG instances", () => {
+      // Create instances before enabling debug to avoid reset() logs
+      const prng1 = new PRNG("instance1")
+      const prng2 = new PRNG("instance2")
+
+      // Clear any accumulated output and enable debug
+      consoleOutput = []
+      PRNG.debug = true
+
+      prng1.random()
+      prng2.random()
+
+      expect(consoleOutput).toHaveLength(2)
+      expect(consoleOutput[0]).toMatch(/^PRNG\.random\(\): 0\.\d+$/)
+      expect(consoleOutput[1]).toMatch(/^PRNG\.random\(\): 0\.\d+$/)
+    })
+
+    it("should handle extreme values in debug output", () => {
+      PRNG.debug = true
+
+      // Test with large numbers
+      prng.randomInt(-1000000, 1000000)
+
+      // Test with very small float range
+      prng.randomFloat(0.999999, 1.000001)
+
+      // Test with empty-like array
+      prng.randomChoice([null, undefined, "", 0])
+
+      expect(consoleOutput.length).toBeGreaterThan(0)
+      consoleOutput.forEach((output) => {
+        expect(output).toContain("PRNG.")
+      })
+    })
+
+    it("should maintain determinism when debug is enabled", () => {
+      const seed = "determinism-debug-test"
+
+      // Generate sequence with debug off
+      PRNG.debug = false
+      const prng1 = new PRNG(seed)
+      const sequence1 = [
+        prng1.random(),
+        prng1.randomInt(1, 100),
+        prng1.randomFloat(0, 10),
+        prng1.randomBoolean(),
+      ]
+
+      // Generate sequence with debug on
+      PRNG.debug = true
+      const prng2 = new PRNG(seed)
+      const sequence2 = [
+        prng2.random(),
+        prng2.randomInt(1, 100),
+        prng2.randomFloat(0, 10),
+        prng2.randomBoolean(),
+      ]
+
+      expect(sequence1).toEqual(sequence2)
+    })
+
+    it("should handle rapid successive calls with debug enabled", () => {
+      PRNG.debug = true
+
+      for (let i = 0; i < 100; i++) {
+        prng.random()
+      }
+
+      expect(consoleOutput).toHaveLength(100)
+      consoleOutput.forEach((output, _index) => {
+        expect(output).toMatch(/^PRNG\.random\(\): 0\.\d+$/)
+      })
+    })
+
+    it("should format debug output consistently", () => {
+      PRNG.debug = true
+
+      // Clear any previous output
+      consoleOutput = []
+
+      prng.random()
+      expect(consoleOutput[0]).toMatch(/^PRNG\.random\(\): /)
+
+      consoleOutput = []
+      prng.randomInt(0, 10)
+      expect(consoleOutput[1]).toMatch(/^PRNG\.randomInt\(\d+, \d+\): /)
+
+      consoleOutput = []
+      prng.randomFloat(0.0, 1.0)
+      expect(consoleOutput[1]).toMatch(
+        /^PRNG\.randomFloat\(\d+\.?\d*, \d+\.?\d*\): /,
+      )
+
+      consoleOutput = []
+      prng.randomChoice(["test"])
+      expect(consoleOutput[2]).toMatch(/^PRNG\.randomChoice\(array\[\d+\]\): /)
+
+      consoleOutput = []
+      prng.randomBoolean(0.3)
+      expect(consoleOutput[1]).toMatch(/^PRNG\.randomBoolean\(\d+\.?\d*\): /)
     })
   })
 })

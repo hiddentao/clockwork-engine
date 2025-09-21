@@ -8,9 +8,9 @@ describe("GameObject", () => {
   let player: TestPlayer
   let enemy: TestEnemy
 
-  beforeEach(() => {
+  beforeEach(async () => {
     engine = new ComplexTestEngine()
-    engine.reset("gameobject-test")
+    await engine.reset("gameobject-test")
 
     player = engine.createTestPlayer("test-player", new Vector2D(10, 20))
     enemy = engine.createTestEnemy("test-enemy", new Vector2D(50, 60))

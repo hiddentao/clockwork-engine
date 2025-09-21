@@ -12,10 +12,10 @@ describe("GameObjectGroup", () => {
   let players: TestPlayer[]
   let enemies: TestEnemy[]
 
-  beforeEach(() => {
+  beforeEach(async () => {
     group = new GameObjectGroup()
     engine = new ComplexTestEngine()
-    engine.reset("group-test")
+    await engine.reset("group-test")
 
     // Create test objects but don't auto-register them
     players = [

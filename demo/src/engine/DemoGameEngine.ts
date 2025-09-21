@@ -20,9 +20,9 @@ export class DemoGameEngine extends GameEngine {
     super(loader)
   }
 
-  setup(): void {
+  async setup(): Promise<void> {
     // Load configuration if loader is available
-    this.loadGameConfiguration()
+    await this.loadGameConfiguration()
 
     // Set up input handling
     this.setupInputHandling()
@@ -351,15 +351,15 @@ export class DemoGameEngine extends GameEngine {
     this.lastAppleSpawnFrame = -1
   }
 
-  public reset(seed?: string): void {
-    super.reset(seed)
+  public async reset(seed?: string): Promise<void> {
+    await super.reset(seed)
     this.resetGameState()
   }
 
   /**
    * Load game configuration from the loader
    */
-  private loadGameConfiguration(): void {
+  private async loadGameConfiguration(): Promise<void> {
     const loader = this.getLoader()
     if (!loader) {
       console.log("🔧 No loader available, using default configuration")
@@ -367,20 +367,11 @@ export class DemoGameEngine extends GameEngine {
     }
 
     try {
-      // Note: Since this is called during setup and we need to maintain determinism,
-      // we don't await this in the current implementation. In a real game, you might
-      // want to load configuration before calling setup(), or handle async loading differently.
-      loader
-        .fetchData("game", { type: "config" })
-        .then((configData) => {
-          this.loadedConfig = JSON.parse(configData)
-          console.log("🔧 Loaded game configuration:", this.loadedConfig)
-        })
-        .catch((error) => {
-          console.warn("⚠️ Failed to load game configuration:", error.message)
-        })
+      const configData = await loader.fetchData("game", { type: "config" })
+      this.loadedConfig = JSON.parse(configData)
+      console.log("🔧 Loaded game configuration:", this.loadedConfig)
     } catch (error) {
-      console.warn("⚠️ Error loading game configuration:", error)
+      console.warn("⚠️ Failed to load game configuration:", error)
     }
   }
 

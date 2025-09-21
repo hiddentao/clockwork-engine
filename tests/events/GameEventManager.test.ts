@@ -32,9 +32,9 @@ describe("GameEventManager", () => {
   let eventManager: GameEventManager
   let mockRecorder: MockGameRecorder
 
-  beforeEach(() => {
+  beforeEach(async () => {
     engine = new ComplexTestEngine()
-    engine.reset("event-manager-test")
+    await engine.reset("event-manager-test")
 
     inputSource = new UserInputEventSource()
     eventManager = new GameEventManager(inputSource, engine)

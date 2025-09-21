@@ -20,18 +20,18 @@ describe("GameEngine", () => {
       expect(engine.getState()).toBe(GameState.READY)
     })
 
-    it("should initialize with seed and call setup", () => {
+    it("should initialize with seed and call setup", async () => {
       const setupSpy = spyOn(engine, "setup")
-      engine.reset("test-seed")
+      await engine.reset("test-seed")
 
       expect(engine.getSeed()).toBe("test-seed")
       expect(engine.getTotalTicks()).toBe(0)
       expect(setupSpy).toHaveBeenCalled()
     })
 
-    it("should reset properly and clear all state", () => {
+    it("should reset properly and clear all state", async () => {
       // Set up initial state
-      engine.reset("initial-seed")
+      await engine.reset("initial-seed")
       engine.start()
       engine.createAutoPlayer(new Vector2D(50, 50))
       engine.createAutoEnemy(new Vector2D(100, 100))
@@ -44,25 +44,25 @@ describe("GameEngine", () => {
       expect(engine.getTotalObjectCount()).toBeGreaterThan(0)
 
       // Reset
-      engine.reset()
+      await engine.reset()
 
       expect(engine.getState()).toBe(GameState.READY)
       expect(engine.getTotalTicks()).toBe(0)
       expect(engine.getTotalObjectCount()).toBe(0)
     })
 
-    it("should create PRNG with deterministic behavior", () => {
+    it("should create PRNG with deterministic behavior", async () => {
       const seed = "prng-determinism-test"
 
       // First run
-      engine.reset(seed)
+      await engine.reset(seed)
       const values1: number[] = []
       for (let i = 0; i < 10; i++) {
         values1.push(engine.getPRNG().random())
       }
 
       // Reset and run again
-      engine.reset(seed)
+      await engine.reset(seed)
       const values2: number[] = []
       for (let i = 0; i < 10; i++) {
         values2.push(engine.getPRNG().random())
@@ -71,14 +71,14 @@ describe("GameEngine", () => {
       expect(values1).toEqual(values2)
     })
 
-    it("should emit state change events", () => {
+    it("should emit state change events", async () => {
       const stateChanges: Array<{ old: GameState; new: GameState }> = []
 
       engine.on("stateChange", (newState, oldState) => {
         stateChanges.push({ old: oldState, new: newState })
       })
 
-      engine.reset("test")
+      await engine.reset("test")
       expect(stateChanges).toHaveLength(1)
       expect(stateChanges[0]).toEqual({
         old: GameState.READY,
@@ -102,8 +102,8 @@ describe("GameEngine", () => {
   })
 
   describe("State Management", () => {
-    beforeEach(() => {
-      engine.reset("state-test")
+    beforeEach(async () => {
+      await engine.reset("state-test")
     })
 
     it("should handle all valid state transitions", () => {
@@ -134,7 +134,7 @@ describe("GameEngine", () => {
       expect(engine.getState()).toBe(GameState.ENDED)
     })
 
-    it("should throw errors for invalid state transitions", () => {
+    it("should throw errors for invalid state transitions", async () => {
       // Cannot start from non-READY state
       engine.start()
       expect(() => engine.start()).toThrow(
@@ -142,7 +142,7 @@ describe("GameEngine", () => {
       )
 
       // Cannot pause from non-PLAYING state
-      engine.reset()
+      await engine.reset()
       expect(() => engine.pause()).toThrow(
         "Cannot pause game: expected PLAYING state, got READY",
       )
@@ -158,7 +158,7 @@ describe("GameEngine", () => {
       )
 
       // Cannot end from READY state
-      engine.reset()
+      await engine.reset()
       expect(() => engine.end()).toThrow(
         "Cannot end game: expected PLAYING or PAUSED state, got READY",
       )
@@ -189,8 +189,8 @@ describe("GameEngine", () => {
   })
 
   describe("Getter Methods", () => {
-    beforeEach(() => {
-      engine.reset("getter-test")
+    beforeEach(async () => {
+      await engine.reset("getter-test")
     })
 
     it("should return timer instance via getTimer", () => {
@@ -215,8 +215,8 @@ describe("GameEngine", () => {
   })
 
   describe("GameObject Registry", () => {
-    beforeEach(() => {
-      engine.reset("registry-test")
+    beforeEach(async () => {
+      await engine.reset("registry-test")
     })
 
     it("should register and manage different object types", () => {
@@ -288,8 +288,8 @@ describe("GameEngine", () => {
   })
 
   describe("Game Loop and Updates", () => {
-    beforeEach(() => {
-      engine.reset("update-test")
+    beforeEach(async () => {
+      await engine.reset("update-test")
     })
 
     it("should only update when in PLAYING state", async () => {
@@ -411,8 +411,8 @@ describe("GameEngine", () => {
   })
 
   describe("Timer System Integration", () => {
-    beforeEach(() => {
-      engine.reset("timer-test")
+    beforeEach(async () => {
+      await engine.reset("timer-test")
     })
 
     it("should execute setTimeout callbacks at correct ticks", async () => {
@@ -476,7 +476,7 @@ describe("GameEngine", () => {
         executed = true
       }, 2)
 
-      engine.reset()
+      await engine.reset()
       engine.start()
 
       ticker.add((deltaTicks) => engine.update(deltaTicks))
@@ -513,8 +513,8 @@ describe("GameEngine", () => {
   })
 
   describe("Event System Integration", () => {
-    beforeEach(() => {
-      engine.reset("event-test")
+    beforeEach(async () => {
+      await engine.reset("event-test")
     })
 
     it("should have event manager", () => {
@@ -522,11 +522,11 @@ describe("GameEngine", () => {
       expect(eventManager).toBeDefined()
     })
 
-    it("should reset event manager on engine reset", () => {
+    it("should reset event manager on engine reset", async () => {
       const eventManager = engine.getEventManager()
       const _originalSource = eventManager.getSource()
 
-      engine.reset()
+      await engine.reset()
 
       // Event manager should still exist but be reset
       expect(engine.getEventManager()).toBe(eventManager)
@@ -549,8 +549,8 @@ describe("GameEngine", () => {
   })
 
   describe("Memory Management", () => {
-    beforeEach(() => {
-      engine.reset("memory-test")
+    beforeEach(async () => {
+      await engine.reset("memory-test")
     })
 
     it("should not leak memory during normal operations", async () => {
@@ -606,7 +606,7 @@ describe("GameEngine", () => {
 
       // First run
       const engine1 = new ComplexTestEngine()
-      engine1.reset(seed)
+      await engine1.reset(seed)
       engine1.start()
 
       const ticker1 = new MockTicker()
@@ -634,7 +634,7 @@ describe("GameEngine", () => {
 
       // Second run with same seed
       const engine2 = new ComplexTestEngine()
-      engine2.reset(seed)
+      await engine2.reset(seed)
       engine2.start()
 
       const ticker2 = new MockTicker()
@@ -674,7 +674,7 @@ describe("GameEngine", () => {
     it("should produce different results with different seeds", async () => {
       const createEngineSnapshot = async (seed: string) => {
         const engine = new ComplexTestEngine()
-        engine.reset(seed)
+        await engine.reset(seed)
         engine.start()
 
         const ticker = new MockTicker()
@@ -700,8 +700,8 @@ describe("GameEngine", () => {
   })
 
   describe("Edge Cases", () => {
-    beforeEach(() => {
-      engine.reset("edge-case-test")
+    beforeEach(async () => {
+      await engine.reset("edge-case-test")
     })
 
     it("should handle zero delta ticks", async () => {
@@ -737,14 +737,14 @@ describe("GameEngine", () => {
       expect(profile.memoryGrowth).toBeLessThan(50 * 1024 * 1024) // Less than 50MB
     })
 
-    it("should handle rapid state changes", () => {
+    it("should handle rapid state changes", async () => {
       // Rapid state transitions
       for (let i = 0; i < 100; i++) {
         engine.start()
         engine.pause()
         engine.resume()
         engine.end()
-        engine.reset()
+        await engine.reset()
       }
 
       expect(engine.getState()).toBe(GameState.READY)
@@ -763,8 +763,8 @@ describe("GameEngine", () => {
   })
 
   describe("Override Type Registration", () => {
-    beforeEach(() => {
-      engine.reset("override-test")
+    beforeEach(async () => {
+      await engine.reset("override-test")
     })
 
     it("should register objects with default type when no override provided", () => {

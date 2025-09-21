@@ -29,8 +29,8 @@ describe("Determinism Integration Tests", () => {
       const seed = "determinism-test-123"
 
       // Initialize both engines with identical setup
-      engine1.reset(seed)
-      engine2.reset(seed)
+      await engine1.reset(seed)
+      await engine2.reset(seed)
 
       // Add identical objects
       for (let i = 0; i < 5; i++) {
@@ -95,8 +95,8 @@ describe("Determinism Integration Tests", () => {
 
     test("should produce different results with different seeds", async () => {
       // Initialize with different seeds
-      engine1.reset("seed-A")
-      engine2.reset("seed-B")
+      await engine1.reset("seed-A")
+      await engine2.reset("seed-B")
 
       // Test that different seeds produce different random sequences
       const randomValues1 = []
@@ -120,7 +120,7 @@ describe("Determinism Integration Tests", () => {
         const engine = new ComplexTestEngine()
         const ticker = new MockTicker()
 
-        engine.reset(seed)
+        await engine.reset(seed)
 
         // Add objects with some randomization that should be deterministic
         for (let i = 0; i < 5; i++) {
