@@ -351,7 +351,7 @@ class TestGameCanvas extends GameCanvas {
     this.testRenderers.set("TestObject", testRenderer)
   }
 
-  protected render(_deltaTime: number): void {
+  protected render(_deltaTicks: number): void {
     // Test implementation - no-op
   }
 
