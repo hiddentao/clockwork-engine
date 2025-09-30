@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, spyOn } from "bun:test"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { GameState } from "../../src/types"
+import { type GameConfig, GameState } from "../../src/types"
 import { ComplexTestEngine } from "../fixtures/ComplexTestEngine"
 import { MemoryProfiler, MockTicker, StateComparator } from "../helpers"
 
@@ -20,18 +20,19 @@ describe("GameEngine", () => {
       expect(engine.getState()).toBe(GameState.READY)
     })
 
-    it("should initialize with seed and call setup", async () => {
+    it("should initialize with gameConfig and call setup", async () => {
       const setupSpy = spyOn(engine, "setup")
-      await engine.reset("test-seed")
+      const gameConfig: GameConfig = { prngSeed: "test-seed" }
+      await engine.reset(gameConfig)
 
       expect(engine.getSeed()).toBe("test-seed")
       expect(engine.getTotalTicks()).toBe(0)
-      expect(setupSpy).toHaveBeenCalled()
+      expect(setupSpy).toHaveBeenCalledWith(gameConfig)
     })
 
     it("should reset properly and clear all state", async () => {
       // Set up initial state
-      await engine.reset("initial-seed")
+      await engine.reset({ prngSeed: "initial-seed" })
       engine.start()
       engine.createAutoPlayer(new Vector2D(50, 50))
       engine.createAutoEnemy(new Vector2D(100, 100))
@@ -44,7 +45,7 @@ describe("GameEngine", () => {
       expect(engine.getTotalObjectCount()).toBeGreaterThan(0)
 
       // Reset
-      await engine.reset()
+      await engine.reset({})
 
       expect(engine.getState()).toBe(GameState.READY)
       expect(engine.getTotalTicks()).toBe(0)
@@ -55,14 +56,14 @@ describe("GameEngine", () => {
       const seed = "prng-determinism-test"
 
       // First run
-      await engine.reset(seed)
+      await engine.reset({ prngSeed: seed })
       const values1: number[] = []
       for (let i = 0; i < 10; i++) {
         values1.push(engine.getPRNG().random())
       }
 
       // Reset and run again
-      await engine.reset(seed)
+      await engine.reset({ prngSeed: seed })
       const values2: number[] = []
       for (let i = 0; i < 10; i++) {
         values2.push(engine.getPRNG().random())
@@ -78,7 +79,7 @@ describe("GameEngine", () => {
         stateChanges.push({ old: oldState, new: newState })
       })
 
-      await engine.reset("test")
+      await engine.reset({ prngSeed: "test" })
       expect(stateChanges).toHaveLength(1)
       expect(stateChanges[0]).toEqual({
         old: GameState.READY,
@@ -103,7 +104,7 @@ describe("GameEngine", () => {
 
   describe("State Management", () => {
     beforeEach(async () => {
-      await engine.reset("state-test")
+      await engine.reset({ prngSeed: "state-test" })
     })
 
     it("should handle all valid state transitions", () => {
@@ -142,7 +143,7 @@ describe("GameEngine", () => {
       )
 
       // Cannot pause from non-PLAYING state
-      await engine.reset()
+      await engine.reset({})
       expect(() => engine.pause()).toThrow(
         "Cannot pause game: expected PLAYING state, got READY",
       )
@@ -158,7 +159,7 @@ describe("GameEngine", () => {
       )
 
       // Cannot end from READY state
-      await engine.reset()
+      await engine.reset({})
       expect(() => engine.end()).toThrow(
         "Cannot end game: expected PLAYING or PAUSED state, got READY",
       )
@@ -190,7 +191,7 @@ describe("GameEngine", () => {
 
   describe("Getter Methods", () => {
     beforeEach(async () => {
-      await engine.reset("getter-test")
+      await engine.reset({ prngSeed: "getter-test" })
     })
 
     it("should return timer instance via getTimer", () => {
@@ -216,7 +217,7 @@ describe("GameEngine", () => {
 
   describe("GameObject Registry", () => {
     beforeEach(async () => {
-      await engine.reset("registry-test")
+      await engine.reset({ prngSeed: "registry-test" })
     })
 
     it("should register and manage different object types", () => {
@@ -289,7 +290,7 @@ describe("GameEngine", () => {
 
   describe("Game Loop and Updates", () => {
     beforeEach(async () => {
-      await engine.reset("update-test")
+      await engine.reset({ prngSeed: "update-test" })
     })
 
     it("should only update when in PLAYING state", async () => {
@@ -412,7 +413,7 @@ describe("GameEngine", () => {
 
   describe("Timer System Integration", () => {
     beforeEach(async () => {
-      await engine.reset("timer-test")
+      await engine.reset({ prngSeed: "timer-test" })
     })
 
     it("should execute setTimeout callbacks at correct ticks", async () => {
@@ -476,7 +477,7 @@ describe("GameEngine", () => {
         executed = true
       }, 2)
 
-      await engine.reset()
+      await engine.reset({})
       engine.start()
 
       ticker.add((deltaTicks) => engine.update(deltaTicks))
@@ -514,7 +515,7 @@ describe("GameEngine", () => {
 
   describe("Event System Integration", () => {
     beforeEach(async () => {
-      await engine.reset("event-test")
+      await engine.reset({ prngSeed: "event-test" })
     })
 
     it("should have event manager", () => {
@@ -526,7 +527,7 @@ describe("GameEngine", () => {
       const eventManager = engine.getEventManager()
       const _originalSource = eventManager.getSource()
 
-      await engine.reset()
+      await engine.reset({})
 
       // Event manager should still exist but be reset
       expect(engine.getEventManager()).toBe(eventManager)
@@ -550,7 +551,7 @@ describe("GameEngine", () => {
 
   describe("Memory Management", () => {
     beforeEach(async () => {
-      await engine.reset("memory-test")
+      await engine.reset({ prngSeed: "memory-test" })
     })
 
     it("should not leak memory during normal operations", async () => {
@@ -606,7 +607,7 @@ describe("GameEngine", () => {
 
       // First run
       const engine1 = new ComplexTestEngine()
-      await engine1.reset(seed)
+      await engine1.reset({ prngSeed: seed })
       engine1.start()
 
       const ticker1 = new MockTicker()
@@ -634,7 +635,7 @@ describe("GameEngine", () => {
 
       // Second run with same seed
       const engine2 = new ComplexTestEngine()
-      await engine2.reset(seed)
+      await engine2.reset({ prngSeed: seed })
       engine2.start()
 
       const ticker2 = new MockTicker()
@@ -674,7 +675,7 @@ describe("GameEngine", () => {
     it("should produce different results with different seeds", async () => {
       const createEngineSnapshot = async (seed: string) => {
         const engine = new ComplexTestEngine()
-        await engine.reset(seed)
+        await engine.reset({ prngSeed: seed })
         engine.start()
 
         const ticker = new MockTicker()
@@ -701,7 +702,7 @@ describe("GameEngine", () => {
 
   describe("Edge Cases", () => {
     beforeEach(async () => {
-      await engine.reset("edge-case-test")
+      await engine.reset({ prngSeed: "edge-case-test" })
     })
 
     it("should handle zero delta ticks", async () => {
@@ -744,7 +745,7 @@ describe("GameEngine", () => {
         engine.pause()
         engine.resume()
         engine.end()
-        await engine.reset()
+        await engine.reset({})
       }
 
       expect(engine.getState()).toBe(GameState.READY)
@@ -764,7 +765,7 @@ describe("GameEngine", () => {
 
   describe("Override Type Registration", () => {
     beforeEach(async () => {
-      await engine.reset("override-test")
+      await engine.reset({ prngSeed: "override-test" })
     })
 
     it("should register objects with default type when no override provided", () => {

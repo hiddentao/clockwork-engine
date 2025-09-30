@@ -8,7 +8,7 @@ import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
 import { CollisionGrid } from "./geometry"
-import { GameState } from "./types"
+import { type GameConfig, GameState } from "./types"
 
 export enum GameEngineEventType {
   STATE_CHANGE = "stateChange",
@@ -30,6 +30,7 @@ export abstract class GameEngine
   protected totalTicks: number = 0
   protected state: GameState = GameState.READY
   protected seed: string = ""
+  protected gameConfig: GameConfig = {}
   protected prng: PRNG = new PRNG()
   protected timer: Timer = new Timer()
   protected eventManager: GameEventManager
@@ -53,11 +54,12 @@ export abstract class GameEngine
   /**
    * Reset the game engine to initial state
    * Clears all game objects, resets tick counter, and prepares for new game
-   * @param seed Optional random seed for deterministic gameplay. If not provided, uses existing seed
+   * @param gameConfig Game configuration containing seed and initial state
    */
-  async reset(seed?: string): Promise<void> {
-    if (seed !== undefined) {
-      this.seed = seed
+  async reset(gameConfig: GameConfig): Promise<void> {
+    this.gameConfig = gameConfig
+    if (gameConfig.prngSeed !== undefined) {
+      this.seed = gameConfig.prngSeed
     }
     this.setState(GameState.READY)
     this.prng.reset(this.seed)
@@ -66,15 +68,16 @@ export abstract class GameEngine
     this.timer.reset()
     this.eventManager.reset()
     this.collisionTree.clear()
-    await this.setup()
+    await this.setup(gameConfig)
   }
 
   /**
    * Abstract method for game-specific initialization
    * Override in subclasses to create initial game objects and configure game state
    * Called automatically during reset() to set up the game world
+   * @param gameConfig Game configuration containing seed and initial state
    */
-  abstract setup(): Promise<void>
+  abstract setup(gameConfig: GameConfig): Promise<void>
 
   /**
    * Start the game by transitioning from READY to PLAYING state
@@ -207,6 +210,13 @@ export abstract class GameEngine
    */
   getSeed(): string {
     return this.seed
+  }
+
+  /**
+   * Get the game configuration
+   */
+  getGameConfig(): GameConfig {
+    return this.gameConfig
   }
 
   /**

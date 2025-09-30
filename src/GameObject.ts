@@ -7,6 +7,7 @@ import { Vector2D } from "./geometry/Vector2D"
 export interface GameEngineInterface {
   registerGameObject(gameObject: GameObject): void
   getTotalTicks(): number
+  getPRNG(): any
 }
 
 export enum GameObjectEventType {

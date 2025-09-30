@@ -29,8 +29,8 @@ describe("Determinism Integration Tests", () => {
       const seed = "determinism-test-123"
 
       // Initialize both engines with identical setup
-      await engine1.reset(seed)
-      await engine2.reset(seed)
+      await engine1.reset({ prngSeed: seed })
+      await engine2.reset({ prngSeed: seed })
 
       // Add identical objects
       for (let i = 0; i < 5; i++) {
@@ -95,8 +95,8 @@ describe("Determinism Integration Tests", () => {
 
     test("should produce different results with different seeds", async () => {
       // Initialize with different seeds
-      await engine1.reset("seed-A")
-      await engine2.reset("seed-B")
+      await engine1.reset({ prngSeed: "seed-A" })
+      await engine2.reset({ prngSeed: "seed-B" })
 
       // Test that different seeds produce different random sequences
       const randomValues1 = []
@@ -120,7 +120,7 @@ describe("Determinism Integration Tests", () => {
         const engine = new ComplexTestEngine()
         const ticker = new MockTicker()
 
-        await engine.reset(seed)
+        await engine.reset({ prngSeed: seed })
 
         // Add objects with some randomization that should be deterministic
         for (let i = 0; i < 5; i++) {
@@ -164,8 +164,8 @@ describe("Determinism Integration Tests", () => {
       const seed = "frame-timing-test"
 
       // Initialize engines
-      engine1.reset(seed)
-      engine2.reset(seed)
+      engine1.reset({ prngSeed: seed })
+      engine2.reset({ prngSeed: seed })
 
       // Add identical objects
       const _proj1 = new TestProjectile(
@@ -219,7 +219,7 @@ describe("Determinism Integration Tests", () => {
 
     test("should handle zero-frame updates correctly", async () => {
       const seed = "zero-frame-test"
-      engine1.reset(seed)
+      engine1.reset({ prngSeed: seed })
 
       const _proj = new TestProjectile(
         "proj",
@@ -263,8 +263,8 @@ describe("Determinism Integration Tests", () => {
     test("should handle object creation and destruction deterministically", async () => {
       const seed = "lifecycle-test"
 
-      engine1.reset(seed)
-      engine2.reset(seed)
+      engine1.reset({ prngSeed: seed })
+      engine2.reset({ prngSeed: seed })
 
       ticker1.add((deltaTicks) => engine1.update(deltaTicks))
       ticker2.add((deltaTicks) => engine2.update(deltaTicks))
@@ -335,7 +335,7 @@ describe("Determinism Integration Tests", () => {
     test("should handle rapid object creation/destruction cycles", async () => {
       const seed = "rapid-cycle-test"
 
-      engine1.reset(seed)
+      engine1.reset({ prngSeed: seed })
       ticker1.add((deltaTicks) => engine1.update(deltaTicks))
       engine1.start()
 
@@ -378,8 +378,8 @@ describe("Determinism Integration Tests", () => {
     test("should produce identical random sequences", async () => {
       const seed = "prng-test-123"
 
-      engine1.reset(seed)
-      engine2.reset(seed)
+      engine1.reset({ prngSeed: seed })
+      engine2.reset({ prngSeed: seed })
 
       // Generate identical random sequences
       const sequence1: number[] = []
@@ -397,7 +397,7 @@ describe("Determinism Integration Tests", () => {
     test("should maintain PRNG state across engine operations", async () => {
       const seed = "prng-state-test"
 
-      engine1.reset(seed)
+      engine1.reset({ prngSeed: seed })
       ticker1.add((deltaTicks) => engine1.update(deltaTicks))
 
       // Get some random numbers before starting
@@ -434,7 +434,7 @@ describe("Determinism Integration Tests", () => {
       }
 
       // Now create second engine and repeat exactly
-      engine2.reset(seed)
+      engine2.reset({ prngSeed: seed })
       ticker2.add((deltaTicks) => engine2.update(deltaTicks))
 
       // Should get same pre-start sequence
@@ -486,8 +486,8 @@ describe("Determinism Integration Tests", () => {
     test("should handle complex object interactions deterministically", async () => {
       const seed = "interaction-test"
 
-      engine1.reset(seed)
-      engine2.reset(seed)
+      engine1.reset({ prngSeed: seed })
+      engine2.reset({ prngSeed: seed })
 
       // Create complex scenario with multiple interacting objects
       const projectiles1: TestProjectile[] = []

@@ -4,6 +4,7 @@ import { GameRecorder } from "../../src/GameRecorder"
 import { UserInputEventSource } from "../../src/UserInputEventSource"
 import {
   type AnyGameEvent,
+  type GameConfig,
   GameEventType,
   type ObjectUpdateEvent,
   type UserInputEvent,
@@ -35,17 +36,17 @@ describe("GameRecorder", () => {
     })
 
     it("should start recording with metadata", () => {
-      const seed = "test-seed-123"
+      const gameConfig: GameConfig = { prngSeed: "test-seed-123" }
       const description = "Test recording session"
 
-      recorder.startRecording(mockEventManager as any, seed, description)
+      recorder.startRecording(mockEventManager as any, gameConfig, description)
 
       expect(recorder.isCurrentlyRecording()).toBe(true)
       expect(mockEventManager.recorder).toBe(recorder)
 
       const recording = recorder.getCurrentRecording()
       expect(recording).not.toBeNull()
-      expect(recording!.seed).toBe(seed)
+      expect(recording!.gameConfig).toEqual(gameConfig)
       expect(recording!.events).toEqual([])
       expect(recording!.deltaTicks).toEqual([])
       expect(recording!.totalTicks).toBe(0)
@@ -55,17 +56,19 @@ describe("GameRecorder", () => {
     })
 
     it("should start recording without optional description", () => {
-      const seed = "minimal-test"
+      const gameConfig: GameConfig = { prngSeed: "minimal-test" }
 
-      recorder.startRecording(mockEventManager as any, seed)
+      recorder.startRecording(mockEventManager as any, gameConfig)
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.description).toBeUndefined()
-      expect(recording!.seed).toBe(seed)
+      expect(recording!.gameConfig).toEqual(gameConfig)
     })
 
     it("should stop recording and preserve data", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "test-seed",
+      })
 
       // Record some test data
       const testEvent: UserInputEvent = {
@@ -97,7 +100,7 @@ describe("GameRecorder", () => {
 
     it("should allow multiple recording sessions", () => {
       // First recording session
-      recorder.startRecording(mockEventManager as any, "session1")
+      recorder.startRecording(mockEventManager as any, { prngSeed: "session1" })
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
         tick: 1,
@@ -109,10 +112,10 @@ describe("GameRecorder", () => {
 
       const firstRecording = recorder.getCurrentRecording()
       expect(firstRecording!.events).toHaveLength(1)
-      expect(firstRecording!.seed).toBe("session1")
+      expect(firstRecording!.gameConfig.prngSeed).toBe("session1")
 
       // Second recording session
-      recorder.startRecording(mockEventManager as any, "session2")
+      recorder.startRecording(mockEventManager as any, { prngSeed: "session2" })
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
         tick: 1,
@@ -131,7 +134,7 @@ describe("GameRecorder", () => {
 
       const secondRecording = recorder.getCurrentRecording()
       expect(secondRecording!.events).toHaveLength(2)
-      expect(secondRecording!.seed).toBe("session2")
+      expect(secondRecording!.gameConfig.prngSeed).toBe("session2")
 
       // First recording should not be affected
       expect(firstRecording!.events).toHaveLength(1)
@@ -140,7 +143,9 @@ describe("GameRecorder", () => {
 
   describe("Event Recording", () => {
     beforeEach(() => {
-      recorder.startRecording(mockEventManager as any, "test-seed")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "test-seed",
+      })
     })
 
     it("should record user input events", () => {
@@ -283,7 +288,9 @@ describe("GameRecorder", () => {
 
   describe("Frame Recording", () => {
     beforeEach(() => {
-      recorder.startRecording(mockEventManager as any, "test-seed")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "test-seed",
+      })
     })
 
     it("should record frame updates", () => {
@@ -344,7 +351,9 @@ describe("GameRecorder", () => {
 
   describe("Reset Functionality", () => {
     it("should reset all recording state", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "test-seed",
+      })
 
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
@@ -368,7 +377,7 @@ describe("GameRecorder", () => {
     })
 
     it("should allow new recording after reset", () => {
-      recorder.startRecording(mockEventManager as any, "first")
+      recorder.startRecording(mockEventManager as any, { prngSeed: "first" })
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
         tick: 1,
@@ -379,7 +388,7 @@ describe("GameRecorder", () => {
 
       recorder.reset()
 
-      recorder.startRecording(mockEventManager as any, "second")
+      recorder.startRecording(mockEventManager as any, { prngSeed: "second" })
       recorder.recordEvent({
         type: GameEventType.USER_INPUT,
         tick: 1,
@@ -389,7 +398,7 @@ describe("GameRecorder", () => {
       } as UserInputEvent)
 
       const recording = recorder.getCurrentRecording()
-      expect(recording!.seed).toBe("second")
+      expect(recording!.gameConfig.prngSeed).toBe("second")
       expect(recording!.events).toHaveLength(1)
       expect((recording!.events[0] as UserInputEvent).inputType).toBe("test2")
     })
@@ -402,14 +411,14 @@ describe("GameRecorder", () => {
 
     beforeEach(async () => {
       engine = new ComplexTestEngine()
-      await engine.reset("recorder-test")
+      await engine.reset({ prngSeed: "recorder-test" })
 
       inputSource = new UserInputEventSource()
       eventManager = new GameEventManager(inputSource, engine)
     })
 
     it("should record events from GameEventManager", () => {
-      recorder.startRecording(eventManager, "integration-test")
+      recorder.startRecording(eventManager, { prngSeed: "integration-test" })
 
       // Queue input events
       inputSource.queueInput("keyboard", { key: "A", pressed: true })
@@ -433,7 +442,7 @@ describe("GameRecorder", () => {
     })
 
     it("should stop recording events after stopRecording", () => {
-      recorder.startRecording(eventManager, "stop-test")
+      recorder.startRecording(eventManager, { prngSeed: "stop-test" })
 
       inputSource.queueInput("test1", {})
       eventManager.update(1, 1)
@@ -452,7 +461,9 @@ describe("GameRecorder", () => {
   describe("Edge Cases and Error Handling", () => {
     it("should handle rapid start/stop cycles", () => {
       for (let i = 0; i < 10; i++) {
-        recorder.startRecording(mockEventManager as any, `seed${i}`)
+        recorder.startRecording(mockEventManager as any, {
+          prngSeed: `seed${i}`,
+        })
         recorder.recordEvent({
           type: GameEventType.USER_INPUT,
           tick: 1,
@@ -463,13 +474,15 @@ describe("GameRecorder", () => {
         recorder.stopRecording()
 
         const recording = recorder.getCurrentRecording()
-        expect(recording!.seed).toBe(`seed${i}`)
+        expect(recording!.gameConfig.prngSeed).toBe(`seed${i}`)
         expect(recording!.events).toHaveLength(1)
       }
     })
 
     it("should handle empty recordings", () => {
-      recorder.startRecording(mockEventManager as any, "empty-test")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "empty-test",
+      })
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
@@ -479,7 +492,9 @@ describe("GameRecorder", () => {
     })
 
     it("should handle very long recordings", () => {
-      recorder.startRecording(mockEventManager as any, "long-test")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "long-test",
+      })
 
       // Record many events
       for (let i = 0; i < 10000; i++) {
@@ -503,7 +518,9 @@ describe("GameRecorder", () => {
     })
 
     it("should handle concurrent operations", () => {
-      recorder.startRecording(mockEventManager as any, "concurrent-test")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "concurrent-test",
+      })
 
       // Simulate concurrent event recording
       const events: AnyGameEvent[] = []
@@ -532,7 +549,9 @@ describe("GameRecorder", () => {
     it("should maintain event order across recording sessions", () => {
       const timestamps = [1000, 1100, 1200, 1050, 1150]
 
-      recorder.startRecording(mockEventManager as any, "order-test")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "order-test",
+      })
 
       timestamps.forEach((timestamp, index) => {
         recorder.recordEvent({
@@ -552,7 +571,9 @@ describe("GameRecorder", () => {
     })
 
     it("should create shallow copies of recording data", () => {
-      recorder.startRecording(mockEventManager as any, "copy-test")
+      recorder.startRecording(mockEventManager as any, {
+        prngSeed: "copy-test",
+      })
 
       const originalEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
@@ -590,13 +611,17 @@ describe("GameRecorder", () => {
     })
 
     it("should accept arbitrary metadata properties as object", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed", {
-        description: "Test recording",
-        gameMode: "survival",
-        difficulty: "hard",
-        playerName: "Alice",
-        customField: { nested: "value" },
-      })
+      recorder.startRecording(
+        mockEventManager as any,
+        { prngSeed: "test-seed" },
+        {
+          description: "Test recording",
+          gameMode: "survival",
+          difficulty: "hard",
+          playerName: "Alice",
+          customField: { nested: "value" },
+        },
+      )
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.description).toBe("Test recording")
@@ -611,7 +636,7 @@ describe("GameRecorder", () => {
     it("should still support backward compatible string description", () => {
       recorder.startRecording(
         mockEventManager as any,
-        "test-seed",
+        { prngSeed: "test-seed" },
         "Simple description",
       )
 
@@ -624,7 +649,7 @@ describe("GameRecorder", () => {
     it("should support description string with additional metadata", () => {
       recorder.startRecording(
         mockEventManager as any,
-        "test-seed",
+        { prngSeed: "test-seed" },
         "Description",
         {
           gameMode: "arcade",
@@ -639,10 +664,14 @@ describe("GameRecorder", () => {
     })
 
     it("should override default version if provided in metadata", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed", {
-        version: "2.0.0",
-        customField: "test",
-      })
+      recorder.startRecording(
+        mockEventManager as any,
+        { prngSeed: "test-seed" },
+        {
+          version: "2.0.0",
+          customField: "test",
+        },
+      )
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.version).toBe("2.0.0")
@@ -651,17 +680,25 @@ describe("GameRecorder", () => {
 
     it("should preserve createdAt if provided in metadata", () => {
       const customTime = Date.now() - 10000
-      recorder.startRecording(mockEventManager as any, "test-seed", {
-        createdAt: customTime,
-        description: "Custom time",
-      })
+      recorder.startRecording(
+        mockEventManager as any,
+        { prngSeed: "test-seed" },
+        {
+          createdAt: customTime,
+          description: "Custom time",
+        },
+      )
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.createdAt).toBe(customTime)
     })
 
     it("should handle empty metadata object", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed", {})
+      recorder.startRecording(
+        mockEventManager as any,
+        { prngSeed: "test-seed" },
+        {},
+      )
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.version).toBe("1.0.0")
@@ -669,7 +706,11 @@ describe("GameRecorder", () => {
     })
 
     it("should handle null and undefined metadata gracefully", () => {
-      recorder.startRecording(mockEventManager as any, "test-seed", undefined)
+      recorder.startRecording(
+        mockEventManager as any,
+        { prngSeed: "test-seed" },
+        undefined,
+      )
 
       const recording = recorder.getCurrentRecording()
       expect(recording!.metadata?.version).toBe("1.0.0")

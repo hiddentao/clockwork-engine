@@ -42,7 +42,7 @@ describe("Record-Replay Integration Tests", () => {
       const seed = "simple-record-test"
 
       // Setup original simulation
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       // Create some objects
@@ -76,7 +76,9 @@ describe("Record-Replay Integration Tests", () => {
 
       // Start recording
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Run original simulation and capture states
@@ -170,11 +172,13 @@ describe("Record-Replay Integration Tests", () => {
         dynamicInteractions: true,
       })
 
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Run simulation
@@ -253,7 +257,7 @@ describe("Record-Replay Integration Tests", () => {
       const seed = "input-test"
 
       // Setup with user input
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
 
@@ -271,7 +275,9 @@ describe("Record-Replay Integration Tests", () => {
       )
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       const inputEvents = []
@@ -371,7 +377,7 @@ describe("Record-Replay Integration Tests", () => {
     test("should handle rapid input sequences", async () => {
       const seed = "rapid-input-test"
 
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
@@ -387,7 +393,9 @@ describe("Record-Replay Integration Tests", () => {
       )
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Generate rapid input sequence
@@ -451,7 +459,7 @@ describe("Record-Replay Integration Tests", () => {
   describe("edge cases and error conditions", () => {
     test("should handle empty recordings", async () => {
       const emptyRecording = {
-        seed: "empty-test",
+        gameConfig: { prngSeed: "empty-test" },
         events: [],
         deltaTicks: [],
         totalTicks: 0,
@@ -475,7 +483,7 @@ describe("Record-Replay Integration Tests", () => {
 
     test("should handle corrupted recordings gracefully", async () => {
       const corruptedRecording = {
-        seed: "corrupt-test",
+        gameConfig: { prngSeed: "corrupt-test" },
         events: [
           // Invalid event structure
           { type: "INVALID_TYPE" as any, tick: 0, timestamp: Date.now() },
@@ -499,7 +507,7 @@ describe("Record-Replay Integration Tests", () => {
     test("should handle recording interruption", async () => {
       const seed = "interruption-test"
 
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
@@ -515,7 +523,9 @@ describe("Record-Replay Integration Tests", () => {
       )
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Run for a few frames with some inputs to record
@@ -556,7 +566,7 @@ describe("Record-Replay Integration Tests", () => {
       const seed = "speed-test"
 
       // Record original
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
@@ -572,7 +582,9 @@ describe("Record-Replay Integration Tests", () => {
       )
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       for (let i = 0; i < 30; i++) {
@@ -620,7 +632,7 @@ describe("Record-Replay Integration Tests", () => {
     test("should serialize and deserialize recordings", async () => {
       const seed = "serialize-test"
 
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       const inputSource = new UserInputEventSource()
       originalEngine.getEventManager().setSource(inputSource)
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
@@ -646,7 +658,9 @@ describe("Record-Replay Integration Tests", () => {
       )
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Add some object updates that will require serialization
@@ -677,7 +691,9 @@ describe("Record-Replay Integration Tests", () => {
       const deserializedRecording = serializer.deserialize(serialized)
 
       // Verify serialization integrity
-      expect(deserializedRecording.seed).toBe(originalRecording!.seed)
+      expect(deserializedRecording.gameConfig.prngSeed).toBe(
+        originalRecording!.gameConfig.prngSeed,
+      )
       expect(deserializedRecording.events.length).toBe(
         originalRecording!.events.length,
       )
@@ -716,11 +732,13 @@ describe("Record-Replay Integration Tests", () => {
         velocityModifications: true,
       })
 
-      await originalEngine.reset(seed)
+      await originalEngine.reset({ prngSeed: seed })
       originalTicker.add((deltaTicks) => originalEngine.update(deltaTicks))
 
       originalEngine.setGameRecorder(recorder)
-      recorder.startRecording(originalEngine.getEventManager(), seed)
+      recorder.startRecording(originalEngine.getEventManager(), {
+        prngSeed: seed,
+      })
       originalEngine.start()
 
       // Run for many frames with periodic state checks

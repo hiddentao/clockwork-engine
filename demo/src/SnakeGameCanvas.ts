@@ -3,8 +3,11 @@ import {
   type GameCanvasOptions,
   PIXI,
 } from "@hiddentao/clockwork-engine"
-import { Apple, Snake, Wall } from "./gameObjects"
+import { Apple, Bomb, Snake, Wall } from "./gameObjects"
+import { ExplosionEffect } from "./gameObjects/ExplosionEffect"
 import { AppleRenderer } from "./renderers/AppleRenderer"
+import { BombRenderer } from "./renderers/BombRenderer"
+import { ExplosionRenderer } from "./renderers/ExplosionRenderer"
 import { SnakeRenderer } from "./renderers/SnakeRenderer"
 import { WallRenderer } from "./renderers/WallRenderer"
 import { GAME_CONFIG } from "./utils/constants"
@@ -12,8 +15,10 @@ import { GAME_CONFIG } from "./utils/constants"
 export class SnakeGameCanvas extends GameCanvas {
   private gridGraphics: PIXI.Graphics | null = null
   private appleRenderer: AppleRenderer | null = null
+  private bombRenderer: BombRenderer | null = null
   private snakeRenderer: SnakeRenderer | null = null
   private wallRenderer: WallRenderer | null = null
+  private explosionRenderer: ExplosionRenderer | null = null
 
   constructor(options: GameCanvasOptions) {
     super(options)
@@ -25,8 +30,10 @@ export class SnakeGameCanvas extends GameCanvas {
 
     // Initialize renderers for game objects
     this.appleRenderer = new AppleRenderer(this.gameContainer)
+    this.bombRenderer = new BombRenderer(this.gameContainer)
     this.snakeRenderer = new SnakeRenderer(this.gameContainer)
     this.wallRenderer = new WallRenderer(this.gameContainer)
+    this.explosionRenderer = new ExplosionRenderer(this.gameContainer)
   }
 
   private drawGrid(): void {
@@ -72,6 +79,9 @@ export class SnakeGameCanvas extends GameCanvas {
       (this.gameEngine
         .getGameObjectGroup("Apple")
         ?.getAllActive() as Apple[]) || []
+    const bombs =
+      (this.gameEngine.getGameObjectGroup("Bomb")?.getAllActive() as Bomb[]) ||
+      []
     const snakes =
       (this.gameEngine
         .getGameObjectGroup("Snake")
@@ -79,16 +89,26 @@ export class SnakeGameCanvas extends GameCanvas {
     const walls =
       (this.gameEngine.getGameObjectGroup("Wall")?.getAllActive() as Wall[]) ||
       []
+    const explosions =
+      (this.gameEngine
+        .getGameObjectGroup("ExplosionEffect")
+        ?.getAllActive() as ExplosionEffect[]) || []
 
     // Update renderers with current game state
     if (this.appleRenderer) {
       this.appleRenderer.setItems(apples)
+    }
+    if (this.bombRenderer) {
+      this.bombRenderer.setItems(bombs)
     }
     if (this.snakeRenderer) {
       this.snakeRenderer.setItems(snakes)
     }
     if (this.wallRenderer) {
       this.wallRenderer.setItems(walls)
+    }
+    if (this.explosionRenderer) {
+      this.explosionRenderer.setItems(explosions)
     }
   }
 
@@ -98,6 +118,10 @@ export class SnakeGameCanvas extends GameCanvas {
       this.appleRenderer.clear()
       this.appleRenderer = null
     }
+    if (this.bombRenderer) {
+      this.bombRenderer.clear()
+      this.bombRenderer = null
+    }
     if (this.snakeRenderer) {
       this.snakeRenderer.clear()
       this.snakeRenderer = null
@@ -105,6 +129,10 @@ export class SnakeGameCanvas extends GameCanvas {
     if (this.wallRenderer) {
       this.wallRenderer.clear()
       this.wallRenderer = null
+    }
+    if (this.explosionRenderer) {
+      this.explosionRenderer.clear()
+      this.explosionRenderer = null
     }
 
     // Clean up grid

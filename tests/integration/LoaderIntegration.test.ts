@@ -23,7 +23,7 @@ describe("Loader Integration", () => {
     })
 
     it("should maintain loader reference through reset", async () => {
-      await engine.reset("test-seed")
+      await engine.reset({ prngSeed: "test-seed" })
       expect(engine.getLoader()).toBe(loader)
       expect(engine.getState()).toBe(GameState.READY)
     })
@@ -31,7 +31,7 @@ describe("Loader Integration", () => {
     it("should allow loader usage during game setup", async () => {
       loader.setMockData("test-config", '{"value": 42}', "config")
 
-      await engine.reset("test-seed")
+      await engine.reset({ prngSeed: "test-seed" })
 
       // The loader should be available during setup
       expect(engine.getLoader()).toBe(loader)
@@ -51,7 +51,7 @@ describe("Loader Integration", () => {
       )
 
       // First playthrough
-      await engine.reset("determinism-test")
+      await engine.reset({ prngSeed: "determinism-test" })
       engine.start()
 
       // Simulate some game actions
@@ -63,7 +63,7 @@ describe("Loader Integration", () => {
 
       // Second playthrough with same seed
       const engine2 = new ComplexTestEngine(loader)
-      await engine2.reset("determinism-test")
+      await engine2.reset({ prngSeed: "determinism-test" })
       engine2.start()
 
       // Same actions
@@ -93,7 +93,7 @@ describe("Loader Integration", () => {
         "level",
       )
 
-      await engine.reset("loader-test")
+      await engine.reset({ prngSeed: "loader-test" })
       engine.start()
 
       // Create some game objects and simulate gameplay
@@ -122,7 +122,7 @@ describe("Loader Integration", () => {
       loader.setMockData("config", '{"test": true}', "game")
       loader.setFailureIds("bad-config")
 
-      await engine.reset("error-test")
+      await engine.reset({ prngSeed: "error-test" })
       engine.start()
       engine.update(5)
 
@@ -145,7 +145,7 @@ describe("Loader Integration", () => {
   describe("Serialization Integration", () => {
     it("should handle loader in serialized game state", async () => {
       // The loader itself shouldn't be serialized, but should be available
-      await engine.reset("serialization-test")
+      await engine.reset({ prngSeed: "serialization-test" })
       engine.start()
 
       // Engine should maintain loader reference
@@ -172,7 +172,7 @@ describe("Loader Integration", () => {
         "game",
       )
 
-      await engine.reset("serialization-test")
+      await engine.reset({ prngSeed: "serialization-test" })
 
       // The loader should be accessible and return valid data
       const fetchedData = await loader.fetchData("custom-data", {
@@ -192,7 +192,7 @@ describe("Loader Integration", () => {
         loader.setMockData(`data-${i}`, `value-${i}`, "performance")
       }
 
-      await engine.reset("performance-test")
+      await engine.reset({ prngSeed: "performance-test" })
       engine.start()
 
       // Create several game objects
@@ -243,7 +243,7 @@ describe("Loader Integration", () => {
     it("should handle loader failures gracefully during engine operation", async () => {
       loader.setFailureIds("critical-config")
 
-      await engine.reset("error-handling-test")
+      await engine.reset({ prngSeed: "error-handling-test" })
 
       // Engine should still function even if loader fails
       expect(engine.getState()).toBe(GameState.READY)
@@ -260,7 +260,7 @@ describe("Loader Integration", () => {
       loader.setMockData("good-data", "valid")
       loader.setFailureIds("bad-data")
 
-      await engine.reset("mixed-data-test")
+      await engine.reset({ prngSeed: "mixed-data-test" })
       engine.start()
 
       // Good data should work
@@ -279,7 +279,7 @@ describe("Loader Integration", () => {
 
   describe("State Management Integration", () => {
     it("should preserve loader through all game states", async () => {
-      await engine.reset("state-test")
+      await engine.reset({ prngSeed: "state-test" })
       expect(engine.getLoader()).toBe(loader)
       expect(engine.getState()).toBe(GameState.READY)
 
@@ -303,7 +303,7 @@ describe("Loader Integration", () => {
     it("should handle loader data across state transitions", async () => {
       loader.setMockData("persistent-data", "persistent-value", "state")
 
-      await engine.reset("persistent-test")
+      await engine.reset({ prngSeed: "persistent-test" })
 
       // Data should be accessible in READY state
       let data = await loader.fetchData("persistent-data", { type: "state" })

@@ -27,7 +27,7 @@ describe("ReplayManager", () => {
 
     // Create a sample recording for testing
     sampleRecording = {
-      seed: "test-replay-seed",
+      gameConfig: { prngSeed: "test-replay-seed" },
       events: [
         {
           type: GameEventType.USER_INPUT,
@@ -103,7 +103,7 @@ describe("ReplayManager", () => {
 
       await replayManager.replay(sampleRecording)
 
-      expect(engine.getSeed()).toBe(sampleRecording.seed)
+      expect(engine.getSeed()).toBe(sampleRecording.gameConfig.prngSeed!)
       expect(engine.getSeed()).not.toBe(originalSeed)
     })
 
@@ -126,7 +126,7 @@ describe("ReplayManager", () => {
 
     it("should handle empty recording", async () => {
       const emptyRecording: GameRecording = {
-        seed: "empty-seed",
+        gameConfig: { prngSeed: "empty-seed" },
         events: [],
         deltaTicks: [],
         totalTicks: 0,
@@ -266,7 +266,7 @@ describe("ReplayManager", () => {
       // Start new replay
       const newRecording: GameRecording = {
         ...sampleRecording,
-        seed: "new-seed",
+        gameConfig: { prngSeed: "new-seed" },
         deltaTicks: [0.5, 0.5, 0.5, 0.5],
         totalTicks: 2,
       }
@@ -280,7 +280,7 @@ describe("ReplayManager", () => {
   describe("Frame Timing Edge Cases", () => {
     it("should handle zero deltaTicks in recording", async () => {
       const zeroFrameRecording: GameRecording = {
-        seed: "zero-frame-test",
+        gameConfig: { prngSeed: "zero-frame-test" },
         events: [
           {
             type: GameEventType.USER_INPUT,
@@ -303,7 +303,7 @@ describe("ReplayManager", () => {
 
     it("should handle fractional deltaTicks in recording", async () => {
       const fractionalRecording: GameRecording = {
-        seed: "fractional-test",
+        gameConfig: { prngSeed: "fractional-test" },
         events: [],
         deltaTicks: [0.1, 0.3, 0.5, 1.1],
         totalTicks: 2,
@@ -324,7 +324,7 @@ describe("ReplayManager", () => {
 
     it("should handle large deltaTicks in recording", async () => {
       const largeFrameRecording: GameRecording = {
-        seed: "large-frame-test",
+        gameConfig: { prngSeed: "large-frame-test" },
         events: [],
         deltaTicks: [10, 20, 30],
         totalTicks: 60,
@@ -364,7 +364,7 @@ describe("ReplayManager", () => {
       // Set recorder on engine before starting recording
       engine.setGameRecorder(recorder)
       // Record a session
-      recorder.startRecording(eventManager, "integration-test")
+      recorder.startRecording(eventManager, { prngSeed: "integration-test" })
 
       // Start the engine so it processes frames
       engine.start()
@@ -427,7 +427,7 @@ describe("ReplayManager", () => {
     it("should maintain determinism across multiple replays", async () => {
       // Create complex recording with PRNG usage
       const complexRecording: GameRecording = {
-        seed: "determinism-test",
+        gameConfig: { prngSeed: "determinism-test" },
         events: [
           {
             type: GameEventType.OBJECT_UPDATE,
@@ -457,7 +457,7 @@ describe("ReplayManager", () => {
       const velocities: Vector2D[] = []
 
       // First replay
-      await engine.reset("determinism-test")
+      await engine.reset({ prngSeed: "determinism-test" })
       const player1 = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
       await replayManager.replay(complexRecording)
@@ -468,7 +468,7 @@ describe("ReplayManager", () => {
 
       // Second replay
       replayManager.stopReplay() // Stop first replay before starting second
-      await engine.reset("determinism-test")
+      await engine.reset({ prngSeed: "determinism-test" })
       const player2 = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
       await replayManager.replay(complexRecording)
@@ -482,7 +482,7 @@ describe("ReplayManager", () => {
   describe("Performance and Stress Testing", () => {
     it("should handle long recordings efficiently", async () => {
       const longRecording: GameRecording = {
-        seed: "long-test",
+        gameConfig: { prngSeed: "long-test" },
         events: Array.from(
           { length: 1000 },
           (_, i) =>
@@ -516,7 +516,7 @@ describe("ReplayManager", () => {
 
     it("should handle rapid replay cycles", async () => {
       const quickRecording: GameRecording = {
-        seed: "quick-test",
+        gameConfig: { prngSeed: "quick-test" },
         events: [],
         deltaTicks: [100, 100, 100], // Integer ticks
         totalTicks: 300,
@@ -537,7 +537,7 @@ describe("ReplayManager", () => {
 
     it("should handle irregular frame timing", async () => {
       const irregularRecording: GameRecording = {
-        seed: "irregular-test",
+        gameConfig: { prngSeed: "irregular-test" },
         events: [],
         deltaTicks: [0.001, 10, 0.1, 5, 0.01, 2],
         totalTicks: 17.111,
@@ -612,7 +612,7 @@ describe("ReplayManager", () => {
 
     it("should handle exact integer deltaTicks", async () => {
       const integerRecording: GameRecording = {
-        seed: "integer-test",
+        gameConfig: { prngSeed: "integer-test" },
         events: [],
         deltaTicks: [1000, 1000], // Integer ticks for precise determinism
         totalTicks: 2000,
@@ -650,7 +650,7 @@ describe("ReplayManager", () => {
 
     it("should handle empty recording with proxy engine", async () => {
       const emptyRecording: GameRecording = {
-        seed: "empty-test",
+        gameConfig: { prngSeed: "empty-test" },
         events: [],
         deltaTicks: [],
         totalTicks: 0,
@@ -669,7 +669,7 @@ describe("ReplayManager", () => {
       const results: number[] = []
 
       for (let run = 0; run < 3; run++) {
-        await engine.reset("determinism-test")
+        await engine.reset({ prngSeed: "determinism-test" })
         const _player = engine.createTestPlayer("test", new Vector2D(0, 0))
 
         await replayManager.replay(sampleRecording)
@@ -689,7 +689,7 @@ describe("ReplayManager", () => {
   describe("Error Handling and Edge Cases", () => {
     it("should handle corrupted recording data gracefully", async () => {
       const corruptedRecording = {
-        seed: "corrupted",
+        gameConfig: { prngSeed: "corrupted" },
         events: null, // Corrupted
         deltaTicks: [1, 2, 3],
         totalTicks: 6,
@@ -704,7 +704,7 @@ describe("ReplayManager", () => {
 
     it("should handle missing deltaTicks", async () => {
       const missingFramesRecording: GameRecording = {
-        seed: "missing-frames",
+        gameConfig: { prngSeed: "missing-frames" },
         events: [
           {
             type: GameEventType.USER_INPUT,
@@ -728,7 +728,7 @@ describe("ReplayManager", () => {
 
     it("should handle negative totalTicks", async () => {
       const negativeFramesRecording: GameRecording = {
-        seed: "negative-frames",
+        gameConfig: { prngSeed: "negative-frames" },
         events: [],
         deltaTicks: [1, 1],
         totalTicks: -5, // Invalid
@@ -863,7 +863,7 @@ describe("ReplayManager", () => {
   describe("Progress Tracking", () => {
     it("should provide accurate progress information", async () => {
       const recording: GameRecording = {
-        seed: "progress-test",
+        gameConfig: { prngSeed: "progress-test" },
         events: [],
         deltaTicks: [2, 3, 5], // Total of 10 frames
         totalTicks: 10,
@@ -893,7 +893,7 @@ describe("ReplayManager", () => {
 
     it("should clamp progress to 1.0 maximum", async () => {
       const overflowRecording: GameRecording = {
-        seed: "overflow-test",
+        gameConfig: { prngSeed: "overflow-test" },
         events: [],
         deltaTicks: [1],
         totalTicks: 0.5, // Less than deltaTicks sum
@@ -911,7 +911,7 @@ describe("ReplayManager", () => {
   describe("Comprehensive Validation and Error Handling", () => {
     it("should validate recording with invalid seed types", async () => {
       const invalidSeedRecording = {
-        seed: null,
+        gameConfig: null,
         events: [],
         deltaTicks: [1],
         totalTicks: 1,
@@ -919,13 +919,13 @@ describe("ReplayManager", () => {
       } as any
 
       await expect(replayManager.replay(invalidSeedRecording)).rejects.toThrow(
-        "Invalid recording: missing or invalid seed",
+        "Invalid recording: missing or invalid gameConfig",
       )
     })
 
     it("should validate recording with invalid events structure", async () => {
       const invalidEventsRecording = {
-        seed: "test",
+        gameConfig: { prngSeed: "test" },
         events: [
           {
             type: "", // Invalid empty type
@@ -945,7 +945,7 @@ describe("ReplayManager", () => {
 
     it("should validate recording with invalid frame numbers in events", async () => {
       const invalidFrameRecording = {
-        seed: "test",
+        gameConfig: { prngSeed: "test" },
         events: [
           {
             type: GameEventType.USER_INPUT,
@@ -967,7 +967,7 @@ describe("ReplayManager", () => {
 
     it("should validate recording with non-numeric deltaTicks", async () => {
       const invalidDeltaRecording = {
-        seed: "test",
+        gameConfig: { prngSeed: "test" },
         events: [],
         deltaTicks: ["1", 2, "3"], // Mixed types
         totalTicks: 6,
@@ -981,7 +981,7 @@ describe("ReplayManager", () => {
 
     it("should validate recording with infinite deltaTicks", async () => {
       const infiniteRecording = {
-        seed: "test",
+        gameConfig: { prngSeed: "test" },
         events: [],
         deltaTicks: [1, Infinity, 2],
         totalTicks: 4,
@@ -994,7 +994,7 @@ describe("ReplayManager", () => {
 
     it("should validate recording with NaN deltaTicks", async () => {
       const nanRecording = {
-        seed: "test",
+        gameConfig: { prngSeed: "test" },
         events: [],
         deltaTicks: [1, NaN, 2],
         totalTicks: 4,
@@ -1038,7 +1038,7 @@ describe("ReplayManager", () => {
 
     it("should handle very large totalTicks values", async () => {
       const largeFramesRecording: GameRecording = {
-        seed: "large-test",
+        gameConfig: { prngSeed: "large-test" },
         events: [],
         deltaTicks: [1],
         totalTicks: Number.MAX_SAFE_INTEGER,
@@ -1054,7 +1054,7 @@ describe("ReplayManager", () => {
 
     it("should handle recording with inconsistent events and deltaTicks", async () => {
       const inconsistentRecording: GameRecording = {
-        seed: "inconsistent-test",
+        gameConfig: { prngSeed: "inconsistent-test" },
         events: [
           {
             type: GameEventType.USER_INPUT,
@@ -1091,7 +1091,7 @@ describe("ReplayManager", () => {
     it("should handle memory pressure with large recordings", async () => {
       // Create a recording with many events to test memory handling
       const largeEventRecording: GameRecording = {
-        seed: "memory-test",
+        gameConfig: { prngSeed: "memory-test" },
         events: Array.from({ length: 10000 }, (_, i) => ({
           type: GameEventType.USER_INPUT,
           tick: i,

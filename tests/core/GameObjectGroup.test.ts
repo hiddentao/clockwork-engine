@@ -15,7 +15,7 @@ describe("GameObjectGroup", () => {
   beforeEach(async () => {
     group = new GameObjectGroup()
     engine = new ComplexTestEngine()
-    await engine.reset("group-test")
+    await engine.reset({ prngSeed: "group-test" })
 
     // Create test objects but don't auto-register them
     players = [

@@ -107,8 +107,8 @@ export class ReplayManager {
     this.currentReplayTick = 0
     this.accumulatedTicks = 0
 
-    // Initialize engine with deterministic seed
-    await this.__engine.reset(recording.seed)
+    // Initialize engine with game configuration
+    await this.__engine.reset(recording.gameConfig)
 
     // Configure event source for recorded input
     const recordedSource = new RecordedEventSource(
@@ -194,9 +194,9 @@ export class ReplayManager {
       throw new Error("Invalid recording: recording is null or undefined")
     }
 
-    // Validate seed
-    if (!recording.seed || typeof recording.seed !== "string") {
-      throw new Error("Invalid recording: missing or invalid seed")
+    // Validate gameConfig
+    if (!recording.gameConfig || typeof recording.gameConfig !== "object") {
+      throw new Error("Invalid recording: missing or invalid gameConfig")
     }
 
     // Validate events array

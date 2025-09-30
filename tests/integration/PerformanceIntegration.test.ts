@@ -24,7 +24,7 @@ describe("Performance Integration Tests", () => {
 
   describe("engine performance", () => {
     test("should handle large numbers of objects efficiently", async () => {
-      await engine.reset("performance-test")
+      await engine.reset({ prngSeed: "performance-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const startTime = performance.now()
@@ -74,7 +74,7 @@ describe("Performance Integration Tests", () => {
     })
 
     test("should maintain consistent frame times", async () => {
-      await engine.reset("frame-time-test")
+      await engine.reset({ prngSeed: "frame-time-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Create moderate number of objects
@@ -127,7 +127,7 @@ describe("Performance Integration Tests", () => {
         const testEngine = new ComplexTestEngine()
         const testTicker = new MockTicker()
 
-        testEngine.reset(`scale-test-${count}`)
+        testEngine.reset({ prngSeed: `scale-test-${count}` })
         testTicker.add((deltaTicks) => testEngine.update(deltaTicks))
 
         // Create objects
@@ -179,7 +179,7 @@ describe("Performance Integration Tests", () => {
 
   describe("memory management", () => {
     test("should not leak memory with object lifecycle", async () => {
-      await engine.reset("memory-test")
+      await engine.reset({ prngSeed: "memory-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()
@@ -240,7 +240,7 @@ describe("Performance Integration Tests", () => {
     })
 
     test("should handle rapid object creation/destruction", async () => {
-      await engine.reset("rapid-memory-test")
+      await engine.reset({ prngSeed: "rapid-memory-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()
@@ -295,7 +295,7 @@ describe("Performance Integration Tests", () => {
     test("should handle recording with minimal performance impact", async () => {
       const recorder = new GameRecorder()
 
-      await engine.reset("recording-perf-test")
+      await engine.reset({ prngSeed: "recording-perf-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       // Create objects
@@ -317,7 +317,7 @@ describe("Performance Integration Tests", () => {
       }
 
       // Reset and measure with recording
-      await engine.reset("recording-perf-test")
+      await engine.reset({ prngSeed: "recording-perf-test" })
       for (let i = 0; i < 300; i++) {
         const pos = new Vector2D(i % 30, Math.floor(i / 30))
         const velocity = new Vector2D(1, 0.5)
@@ -325,7 +325,9 @@ describe("Performance Integration Tests", () => {
       }
 
       engine.setGameRecorder(recorder)
-      recorder.startRecording(engine.getEventManager(), "recording-perf-test")
+      recorder.startRecording(engine.getEventManager(), {
+        prngSeed: "recording-perf-test",
+      })
       engine.start()
 
       const recordingTimes: number[] = []
@@ -436,7 +438,7 @@ describe("Performance Integration Tests", () => {
 
   describe("collision performance", () => {
     test("should handle spatial partitioning efficiently", async () => {
-      await engine.reset("collision-perf-test")
+      await engine.reset({ prngSeed: "collision-perf-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       const startTime = performance.now()
@@ -483,7 +485,7 @@ describe("Performance Integration Tests", () => {
 
   describe("stress testing", () => {
     test("should handle extreme object counts", async () => {
-      await engine.reset("stress-test")
+      await engine.reset({ prngSeed: "stress-test" })
       ticker.add((deltaTicks) => engine.update(deltaTicks))
 
       profiler.start()

@@ -1,5 +1,5 @@
 import type { GameEventManager } from "./GameEventManager"
-import type { AnyGameEvent, GameRecording } from "./types"
+import type { AnyGameEvent, GameConfig, GameRecording } from "./types"
 
 export class GameRecorder {
   protected recording: GameRecording | null = null
@@ -14,7 +14,7 @@ export class GameRecorder {
    */
   startRecording(
     eventManager: GameEventManager,
-    seed: string,
+    gameConfig: GameConfig,
     descriptionOrMetadata?: string | Record<string, any>,
     additionalMetadata?: Record<string, any>,
   ): void {
@@ -43,7 +43,7 @@ export class GameRecorder {
     }
 
     this.recording = {
-      seed,
+      gameConfig,
       events: [],
       deltaTicks: [],
       totalTicks: 0,

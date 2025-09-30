@@ -16,8 +16,8 @@ export class RecordingValidator {
     const warnings: string[] = []
 
     // Basic structure validation
-    if (!recording.seed) {
-      errors.push("Missing seed")
+    if (!recording.gameConfig) {
+      errors.push("Missing gameConfig")
     }
 
     if (!Array.isArray(recording.events)) {
@@ -210,7 +210,7 @@ export class RecordingValidator {
   static generateChecksum(recording: GameRecording): string {
     // Simple checksum for recording integrity
     const data = JSON.stringify({
-      seed: recording.seed,
+      seed: recording.gameConfig.prngSeed,
       eventCount: recording.events.length,
       totalTicks: recording.totalTicks,
       deltaSum: recording.deltaTicks.reduce((sum, delta) => sum + delta, 0),

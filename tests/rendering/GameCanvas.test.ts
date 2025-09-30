@@ -451,7 +451,7 @@ describe("GameCanvas", () => {
     })
 
     it("should update renderers when engine objects change", async () => {
-      await engine.reset("test-seed")
+      await engine.reset({ prngSeed: "test-seed" })
       engine.start()
 
       // Create test objects

@@ -50,7 +50,7 @@ export class TestScenarioBuilder {
 
   async initialize(): Promise<void> {
     // Reset engine with seed
-    await this.engine.reset(this.seed)
+    await this.engine.reset({ prngSeed: this.seed })
   }
 
   // Object creation methods
@@ -344,7 +344,7 @@ export class TestScenarioBuilder {
     // Start recording
     this.recorder.startRecording(
       this.engine.getEventManager(),
-      this.seed,
+      { prngSeed: this.seed },
       "Test scenario",
     )
 
@@ -446,7 +446,7 @@ export class TestScenarioBuilder {
     this.movementCommands = []
     this.inputEvents = []
     this.snapshotTicks = []
-    await this.engine.reset(this.seed)
+    await this.engine.reset({ prngSeed: this.seed })
     this.recorder.reset()
     this.ticker.reset()
     return this

@@ -1,9 +1,11 @@
 import {
+  type GameConfig,
   GameEngineEventType,
   GameRecorder,
   GameState,
   ReplayManager,
   UserInputEventSource,
+  Vector2D,
 } from "@hiddentao/clockwork-engine"
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
@@ -39,7 +41,8 @@ export class Game {
     this.replayEngine = new DemoGameEngine(this.loader)
     this.activeEngine = this.playEngine // Start with play engine active
 
-    await this.playEngine.reset("demo-seed-" + Date.now())
+    const gameConfig = this.generateGameConfig()
+    await this.playEngine.reset(gameConfig)
 
     // Demonstrate loader usage
     await this.demonstrateLoaderCapabilities()
@@ -284,7 +287,7 @@ export class Game {
 
     this.recorder.startRecording(
       this.playEngine.getEventManager(),
-      this.playEngine.getSeed(),
+      this.playEngine.getGameConfig(),
       description,
     )
   }
@@ -332,7 +335,7 @@ export class Game {
 
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayManager.getReplayEngine()) {
-      await this.replayEngine.reset(recording.seed)
+      await this.replayEngine.reset(recording.gameConfig)
     } else {
       // Switch to replay proxy engine
       this.activeEngine = this.replayManager.getReplayEngine() as DemoGameEngine
@@ -375,7 +378,8 @@ export class Game {
     this.activeEngine = this.playEngine
     // Restore GameCanvas engine connection for normal play mode
     this.canvas.setGameEngine(this.activeEngine)
-    await this.playEngine.reset("demo-seed-" + Date.now())
+    const gameConfig = this.generateGameConfig()
+    await this.playEngine.reset(gameConfig)
   }
 
   /**
@@ -431,5 +435,21 @@ export class Game {
    */
   public getLoader(): DemoLoader {
     return this.loader
+  }
+
+  /**
+   * Generate a game configuration with random bomb position
+   */
+  private generateGameConfig(): GameConfig {
+    // Generate random bomb position
+    const bombX = Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE)
+    const bombY = Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE)
+
+    return {
+      prngSeed: "demo-seed-" + Date.now(),
+      initialState: {
+        bombPosition: new Vector2D(bombX, bombY),
+      },
+    }
   }
 }

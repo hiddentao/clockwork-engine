@@ -1,3 +1,5 @@
 export { Apple } from "./Apple"
+export { Bomb } from "./Bomb"
+export { ExplosionEffect } from "./ExplosionEffect"
 export { Snake } from "./Snake"
 export { Wall } from "./Wall"

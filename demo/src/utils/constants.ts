@@ -21,6 +21,10 @@ export const GAME_CONFIG = {
   TARGET_APPLES: 50,
   WALL_SIZE: 2, // 2x1 blocks
 
+  // Explosion settings
+  EXPLOSION_DURATION: millisecondsToTicks(1000), // 1 seconds
+  EXPLOSION_PARTICLES: 30,
+
   // Colors
   COLORS: {
     BACKGROUND: 0x1a1a2e,
@@ -29,6 +33,10 @@ export const GAME_CONFIG = {
     SNAKE_BODY: 0x00cc00,
     APPLE: 0xff0000,
     WALL: 0x666666,
+    BOMB: 0xff6600,
+    EXPLOSION_START: 0xffff00, // Yellow
+    EXPLOSION_MID: 0xff6600, // Orange
+    EXPLOSION_END: 0x330000, // Dark red
   },
 } as const
 

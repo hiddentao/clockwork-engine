@@ -10,7 +10,7 @@ describe("GameObject", () => {
 
   beforeEach(async () => {
     engine = new ComplexTestEngine()
-    await engine.reset("gameobject-test")
+    await engine.reset({ prngSeed: "gameobject-test" })
 
     player = engine.createTestPlayer("test-player", new Vector2D(10, 20))
     enemy = engine.createTestEnemy("test-enemy", new Vector2D(50, 60))

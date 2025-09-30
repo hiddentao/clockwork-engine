@@ -1,10 +1,12 @@
 import {
+  type GameConfig,
   GameEngine,
   GameState,
   Loader,
   Vector2D,
 } from "@hiddentao/clockwork-engine"
-import { Apple, Snake, Wall } from "../gameObjects"
+import { Apple, Bomb, Snake, Wall } from "../gameObjects"
+import { ExplosionEffect } from "../gameObjects/ExplosionEffect"
 import { Direction, GAME_CONFIG } from "../utils/constants"
 
 export class DemoGameEngine extends GameEngine {
@@ -15,12 +17,14 @@ export class DemoGameEngine extends GameEngine {
   private appleCounter: number = 0
   private lastAppleSpawnFrame: number = -1
   private loadedConfig: any = null
+  private isEnding: boolean = false
+  private activeExplosion: ExplosionEffect | null = null
 
   constructor(loader?: Loader) {
     super(loader)
   }
 
-  async setup(): Promise<void> {
+  async setup(gameConfig: GameConfig): Promise<void> {
     // Load configuration if loader is available
     await this.loadGameConfiguration()
 
@@ -42,6 +46,9 @@ export class DemoGameEngine extends GameEngine {
     for (const segment of segments) {
       this.getCollisionTree().add(segment.position, snake)
     }
+
+    // Spawn bomb from gameConfig
+    this.spawnBomb(gameConfig)
 
     // Spawn initial apple
     this.spawnApple()
@@ -95,6 +102,8 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private moveSnake() {
+    if (this.isEnding) return // Snake frozen during explosion
+
     const snake = this.getSnake()
     if (!snake) return
 
@@ -108,9 +117,21 @@ export class DemoGameEngine extends GameEngine {
     if (this.getState() === GameState.PLAYING) {
       this.checkCollisions()
     }
+
+    // Check if explosion finished during ending state
+    if (this.isEnding && this.activeExplosion) {
+      if (this.activeExplosion.isComplete()) {
+        this.activeExplosion.destroy() // Clean up the explosion
+        this.activeExplosion = null
+        this.end() // Now end the game officially
+      }
+    }
   }
 
   private checkCollisions() {
+    // Don't check collisions during ending sequence
+    if (this.isEnding) return
+
     const snake = this.getSnake()
     if (!snake) return
 
@@ -147,6 +168,27 @@ export class DemoGameEngine extends GameEngine {
         this.gameLost = true
         this.end()
         return // Game ended, don't spawn anything
+      }
+
+      // Bomb collision
+      if (sourceId.startsWith("bomb-")) {
+        this.gameLost = true
+        this.isEnding = true
+
+        // Create explosion at bomb position
+        const bomb = this.getBombs().find((b) => b.getId() === sourceId)
+        if (bomb) {
+          this.activeExplosion = new ExplosionEffect(
+            "explosion-0",
+            bomb.getPosition().clone(),
+            GAME_CONFIG.EXPLOSION_DURATION,
+            GAME_CONFIG.EXPLOSION_PARTICLES,
+            this,
+          )
+        }
+
+        // Don't call end() yet - wait for explosion to complete
+        return
       }
 
       // Apple collision
@@ -201,7 +243,7 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private spawnWall(): void {
-    if (this.getState() !== GameState.PLAYING) return
+    if (this.getState() !== GameState.PLAYING || this.isEnding) return
 
     const position = this.findEmptyPosition()
     if (position) {
@@ -211,6 +253,23 @@ export class DemoGameEngine extends GameEngine {
       // Add wall to collision tree
       this.getCollisionTree().add(position, wall)
     }
+  }
+
+  private spawnBomb(gameConfig: GameConfig): void {
+    // Get bomb position from gameConfig.initialState
+    if (!gameConfig.initialState?.bombPosition) {
+      console.warn("No bomb position provided in gameConfig.initialState")
+      return
+    }
+
+    const bombPosition = gameConfig.initialState.bombPosition
+    const position = new Vector2D(bombPosition.x, bombPosition.y)
+
+    // Create bomb at specified position
+    const bomb = new Bomb("bomb-0", position, this)
+
+    // Add bomb to collision tree
+    this.getCollisionTree().add(position, bomb)
   }
 
   private cleanupExpiredApples(): void {
@@ -311,6 +370,11 @@ export class DemoGameEngine extends GameEngine {
     return (wallGroup?.getAllActive() as Wall[]) || []
   }
 
+  private getBombs(): Bomb[] {
+    const bombGroup = this.getGameObjectGroup("Bomb")
+    return (bombGroup?.getAllActive() as Bomb[]) || []
+  }
+
   // Public getters for UI
   public getApplesEaten(): number {
     return this.applesEaten
@@ -337,6 +401,7 @@ export class DemoGameEngine extends GameEngine {
     return {
       snake: this.getSnake(),
       apples: this.getApples(),
+      bombs: this.getBombs(),
       walls: this.getWalls(),
     }
   }
@@ -349,10 +414,12 @@ export class DemoGameEngine extends GameEngine {
     this.gameLost = false
     this.appleCounter = 0
     this.lastAppleSpawnFrame = -1
+    this.isEnding = false
+    this.activeExplosion = null
   }
 
-  public async reset(seed?: string): Promise<void> {
-    await super.reset(seed)
+  public async reset(gameConfig: GameConfig): Promise<void> {
+    await super.reset(gameConfig)
     this.resetGameState()
   }
 

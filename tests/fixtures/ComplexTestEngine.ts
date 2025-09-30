@@ -2,6 +2,7 @@ import { GameEngine } from "../../src/GameEngine"
 import { Loader } from "../../src/Loader"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
+import type { GameConfig } from "../../src/types"
 import { TestEnemy } from "./TestEnemy"
 import { TestPlayer } from "./TestPlayer"
 import { type PowerUpType, TestPowerUp } from "./TestPowerUp"
@@ -29,7 +30,7 @@ export class ComplexTestEngine extends GameEngine {
     this.registerSerializationTypes()
   }
 
-  async setup(): Promise<void> {
+  async setup(_gameConfig: GameConfig): Promise<void> {
     // Engine setup is called automatically on reset
     // Create objects based on setupConfig
 
@@ -580,8 +581,8 @@ export class ComplexTestEngine extends GameEngine {
   }
 
   // Reset counters when engine resets
-  async reset(seed?: string): Promise<void> {
-    await super.reset(seed)
+  async reset(gameConfig: GameConfig): Promise<void> {
+    await super.reset(gameConfig)
     this.projectileIdCounter = 0
     this.powerUpIdCounter = 0
     this.enemyIdCounter = 0

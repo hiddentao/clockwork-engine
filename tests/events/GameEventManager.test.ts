@@ -34,7 +34,7 @@ describe("GameEventManager", () => {
 
   beforeEach(async () => {
     engine = new ComplexTestEngine()
-    await engine.reset("event-manager-test")
+    await engine.reset({ prngSeed: "event-manager-test" })
 
     inputSource = new UserInputEventSource()
     eventManager = new GameEventManager(inputSource, engine)

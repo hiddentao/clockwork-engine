@@ -1,3 +1,5 @@
 export * from "./AppleRenderer"
+export * from "./BombRenderer"
+export * from "./ExplosionRenderer"
 export * from "./SnakeRenderer"
 export * from "./WallRenderer"

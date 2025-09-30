@@ -34,7 +34,7 @@ export interface ObjectUpdateEvent extends GameEvent {
 }
 
 export interface GameRecording {
-  seed: string
+  gameConfig: GameConfig
   events: GameEvent[]
   deltaTicks: number[]
   totalTicks: number
@@ -47,3 +47,8 @@ export interface GameRecording {
 }
 
 export type AnyGameEvent = UserInputEvent | ObjectUpdateEvent
+
+export interface GameConfig {
+  prngSeed?: string
+  initialState?: any
+}
