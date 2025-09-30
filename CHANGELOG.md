@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.8.0](https://github.com/hiddentao/clockwork-engine/compare/v1.7.0...v1.8.0) (2025-09-30)
+
+
+### Features
+
+* add bomb explosion effect with particle system ([f264f0c](https://github.com/hiddentao/clockwork-engine/commit/f264f0c85b4a25ecd582374a393dc846c10d49c2))
+
 ## [1.7.0](https://github.com/hiddentao/clockwork-engine/compare/v1.6.1...v1.7.0) (2025-09-21)
 
 
