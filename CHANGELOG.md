@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.8.1](https://github.com/hiddentao/clockwork-engine/compare/v1.8.0...v1.8.1) (2025-10-19)
+
+
+### Code Refactoring
+
+* rename GameConfig.initialState to gameSpecific and remove snake-specific properties ([5a7b073](https://github.com/hiddentao/clockwork-engine/commit/5a7b073e5b702d14eab7aee09f2b1de82e2c8804))
+
 ## [1.8.0](https://github.com/hiddentao/clockwork-engine/compare/v1.7.0...v1.8.0) (2025-09-30)
 
 
