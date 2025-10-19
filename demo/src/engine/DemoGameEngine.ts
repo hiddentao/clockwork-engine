@@ -256,13 +256,13 @@ export class DemoGameEngine extends GameEngine {
   }
 
   private spawnBomb(gameConfig: GameConfig): void {
-    // Get bomb position from gameConfig.initialState
-    if (!gameConfig.initialState?.bombPosition) {
-      console.warn("No bomb position provided in gameConfig.initialState")
+    // Get bomb position from gameConfig.gameSpecific
+    if (!gameConfig.gameSpecific?.bombPosition) {
+      console.warn("No bomb position provided in gameConfig.gameSpecific")
       return
     }
 
-    const bombPosition = gameConfig.initialState.bombPosition
+    const bombPosition = gameConfig.gameSpecific.bombPosition
     const position = new Vector2D(bombPosition.x, bombPosition.y)
 
     // Create bomb at specified position

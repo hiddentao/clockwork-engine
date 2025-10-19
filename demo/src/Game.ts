@@ -447,7 +447,7 @@ export class Game {
 
     return {
       prngSeed: "demo-seed-" + Date.now(),
-      initialState: {
+      gameSpecific: {
         bombPosition: new Vector2D(bombX, bombY),
       },
     }

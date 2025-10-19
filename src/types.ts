@@ -50,5 +50,5 @@ export type AnyGameEvent = UserInputEvent | ObjectUpdateEvent
 
 export interface GameConfig {
   prngSeed?: string
-  initialState?: any
+  gameSpecific?: Record<string, any>
 }
