@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.0](https://github.com/hiddentao/clockwork-engine/compare/v1.8.1...v1.9.0) (2025-10-22)
+
+
+### Features
+
+* add color utility functions for hex parsing and darkening ([ed06c6b](https://github.com/hiddentao/clockwork-engine/commit/ed06c6bded90196395b404760f521e07a225e456))
+
 ## [1.8.1](https://github.com/hiddentao/clockwork-engine/compare/v1.8.0...v1.8.1) (2025-10-19)
 
 
