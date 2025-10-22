@@ -1,15 +1,22 @@
 import { beforeEach, describe, expect, it } from "bun:test"
 import { GameObjectEventType } from "../../src/GameObject"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { ComplexTestEngine, TestEnemy, TestPlayer } from "../fixtures"
+import {
+  ComplexTestEngine,
+  MockLoader,
+  TestEnemy,
+  TestPlayer,
+} from "../fixtures"
 
 describe("GameObject", () => {
   let engine: ComplexTestEngine
   let player: TestPlayer
   let enemy: TestEnemy
+  let loader: MockLoader
 
   beforeEach(async () => {
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     await engine.reset({ prngSeed: "gameobject-test" })
 
     player = engine.createTestPlayer("test-player", new Vector2D(10, 20))

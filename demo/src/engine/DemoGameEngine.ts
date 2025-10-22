@@ -20,12 +20,12 @@ export class DemoGameEngine extends GameEngine {
   private isEnding: boolean = false
   private activeExplosion: ExplosionEffect | null = null
 
-  constructor(loader?: Loader) {
+  constructor(loader: Loader) {
     super(loader)
   }
 
   async setup(gameConfig: GameConfig): Promise<void> {
-    // Load configuration if loader is available
+    // Load game configuration
     await this.loadGameConfiguration()
 
     // Set up input handling
@@ -428,10 +428,6 @@ export class DemoGameEngine extends GameEngine {
    */
   private async loadGameConfiguration(): Promise<void> {
     const loader = this.getLoader()
-    if (!loader) {
-      console.log("🔧 No loader available, using default configuration")
-      return
-    }
 
     try {
       const configData = await loader.fetchData("game", { type: "config" })
@@ -448,9 +444,6 @@ export class DemoGameEngine extends GameEngine {
    */
   public async loadLevel(levelId: string): Promise<any> {
     const loader = this.getLoader()
-    if (!loader) {
-      throw new Error("No loader available for loading level data")
-    }
 
     try {
       const levelData = await loader.fetchData(levelId, { type: "level" })
@@ -469,9 +462,6 @@ export class DemoGameEngine extends GameEngine {
    */
   public async loadAsset(assetId: string): Promise<any> {
     const loader = this.getLoader()
-    if (!loader) {
-      throw new Error("No loader available for loading asset data")
-    }
 
     try {
       const assetData = await loader.fetchData(assetId, { type: "asset" })
@@ -496,10 +486,6 @@ export class DemoGameEngine extends GameEngine {
    */
   public async demonstrateLoaderUsage(): Promise<void> {
     const loader = this.getLoader()
-    if (!loader) {
-      console.log("🚫 No loader available for demonstration")
-      return
-    }
 
     try {
       console.log("🔄 Demonstrating loader usage...")

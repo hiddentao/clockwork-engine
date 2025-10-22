@@ -4,17 +4,24 @@ import {
   GameObjectGroupEventType,
 } from "../../src/GameObjectGroup"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { ComplexTestEngine, TestEnemy, TestPlayer } from "../fixtures"
+import {
+  ComplexTestEngine,
+  MockLoader,
+  TestEnemy,
+  TestPlayer,
+} from "../fixtures"
 
 describe("GameObjectGroup", () => {
   let group: GameObjectGroup
   let engine: ComplexTestEngine
   let players: TestPlayer[]
   let enemies: TestEnemy[]
+  let loader: MockLoader
 
   beforeEach(async () => {
     group = new GameObjectGroup()
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     await engine.reset({ prngSeed: "group-test" })
 
     // Create test objects but don't auto-register them

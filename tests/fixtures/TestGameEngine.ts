@@ -7,7 +7,7 @@ export class TestGameEngine extends GameEngine {
   public setupCalled = false
   public setupCallCount = 0
 
-  constructor(loader?: Loader) {
+  constructor(loader: Loader) {
     super(loader)
   }
 

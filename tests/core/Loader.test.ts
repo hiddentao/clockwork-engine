@@ -125,11 +125,6 @@ describe("Loader", () => {
   })
 
   describe("GameEngine Integration", () => {
-    it("should initialize GameEngine without loader", () => {
-      const engineWithoutLoader = new TestGameEngine()
-      expect(engineWithoutLoader.getLoader()).toBeUndefined()
-    })
-
     it("should initialize GameEngine with loader", () => {
       expect(engine.getLoader()).toBe(mockLoader)
     })

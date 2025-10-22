@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, spyOn } from "bun:test"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { type GameConfig, GameState } from "../../src/types"
-import { ComplexTestEngine } from "../fixtures/ComplexTestEngine"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 import { MemoryProfiler, MockTicker, StateComparator } from "../helpers"
 
 describe("GameEngine", () => {
   let engine: ComplexTestEngine
   let ticker: MockTicker
   let memoryProfiler: MemoryProfiler
+  let loader: MockLoader
 
   beforeEach(() => {
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     ticker = new MockTicker()
     memoryProfiler = new MemoryProfiler()
   })
@@ -606,7 +608,8 @@ describe("GameEngine", () => {
       const operations = 50
 
       // First run
-      const engine1 = new ComplexTestEngine()
+      const loader1 = new MockLoader()
+      const engine1 = new ComplexTestEngine(loader1)
       await engine1.reset({ prngSeed: seed })
       engine1.start()
 
@@ -634,7 +637,8 @@ describe("GameEngine", () => {
       }
 
       // Second run with same seed
-      const engine2 = new ComplexTestEngine()
+      const loader2 = new MockLoader()
+      const engine2 = new ComplexTestEngine(loader2)
       await engine2.reset({ prngSeed: seed })
       engine2.start()
 
@@ -674,7 +678,8 @@ describe("GameEngine", () => {
 
     it("should produce different results with different seeds", async () => {
       const createEngineSnapshot = async (seed: string) => {
-        const engine = new ComplexTestEngine()
+        const engineLoader = new MockLoader()
+        const engine = new ComplexTestEngine(engineLoader)
         await engine.reset({ prngSeed: seed })
         engine.start()
 

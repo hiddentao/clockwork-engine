@@ -9,7 +9,7 @@ import {
   type ObjectUpdateEvent,
   type UserInputEvent,
 } from "../../src/types"
-import { ComplexTestEngine } from "../fixtures"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 
 // Mock GameEventManager for testing
 class MockGameEventManager {
@@ -410,7 +410,8 @@ describe("GameRecorder", () => {
     let inputSource: UserInputEventSource
 
     beforeEach(async () => {
-      engine = new ComplexTestEngine()
+      const testLoader = new MockLoader()
+      engine = new ComplexTestEngine(testLoader)
       await engine.reset({ prngSeed: "recorder-test" })
 
       inputSource = new UserInputEventSource()

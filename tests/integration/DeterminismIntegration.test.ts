@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { ComplexTestEngine } from "../fixtures/ComplexTestEngine"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 import { TestProjectile } from "../fixtures/TestProjectile"
 import { MockTicker } from "../helpers/MockTicker"
 import { StateComparator } from "../helpers/StateComparator"
@@ -12,10 +12,14 @@ describe("Determinism Integration Tests", () => {
   let ticker1: MockTicker
   let ticker2: MockTicker
   let serializer: Serializer
+  let loader1: MockLoader
+  let loader2: MockLoader
 
   beforeEach(() => {
-    engine1 = new ComplexTestEngine()
-    engine2 = new ComplexTestEngine()
+    loader1 = new MockLoader()
+    loader2 = new MockLoader()
+    engine1 = new ComplexTestEngine(loader1)
+    engine2 = new ComplexTestEngine(loader2)
     ticker1 = new MockTicker()
     ticker2 = new MockTicker()
     serializer = new Serializer()
@@ -117,7 +121,8 @@ describe("Determinism Integration Tests", () => {
 
       // Run the same simulation 3 times
       for (let run = 0; run < 3; run++) {
-        const engine = new ComplexTestEngine()
+        const testLoader = new MockLoader()
+        const engine = new ComplexTestEngine(testLoader)
         const ticker = new MockTicker()
 
         await engine.reset({ prngSeed: seed })

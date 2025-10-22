@@ -12,16 +12,18 @@ import {
   type ObjectUpdateEvent,
   type UserInputEvent,
 } from "../../src/types"
-import { ComplexTestEngine } from "../fixtures"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 
 describe("ReplayManager", () => {
   let engine: ComplexTestEngine
   let replayManager: ReplayManager
   let proxyEngine: GameEngine
   let sampleRecording: GameRecording
+  let loader: MockLoader
 
   beforeEach(() => {
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     replayManager = new ReplayManager(engine)
     proxyEngine = replayManager.getReplayEngine()
 

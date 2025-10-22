@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test"
 import { GameRecorder } from "../../src/GameRecorder"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { ComplexTestEngine } from "../fixtures/ComplexTestEngine"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 import { TestProjectile } from "../fixtures/TestProjectile"
 import { MemoryProfiler } from "../helpers/MemoryProfiler"
 import { MockTicker } from "../helpers/MockTicker"
@@ -12,9 +12,11 @@ describe("Performance Integration Tests", () => {
   let ticker: MockTicker
   let profiler: MemoryProfiler
   let serializer: Serializer
+  let loader: MockLoader
 
   beforeEach(() => {
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     ticker = new MockTicker()
     profiler = new MemoryProfiler()
     serializer = new Serializer()
@@ -124,7 +126,8 @@ describe("Performance Integration Tests", () => {
       const results: { count: number; avgFrameTime: number }[] = []
 
       for (const count of objectCounts) {
-        const testEngine = new ComplexTestEngine()
+        const testLoader = new MockLoader()
+        const testEngine = new ComplexTestEngine(testLoader)
         const testTicker = new MockTicker()
 
         testEngine.reset({ prngSeed: `scale-test-${count}` })

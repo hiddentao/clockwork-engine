@@ -5,7 +5,7 @@ import { Serializer } from "../../src/Serializer"
 import { UserInputEventSource } from "../../src/UserInputEventSource"
 import { Vector2D } from "../../src/geometry/Vector2D"
 import { GameEventType } from "../../src/types"
-import { ComplexTestEngine } from "../fixtures/ComplexTestEngine"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 import { TestPowerUp } from "../fixtures/TestPowerUp"
 import { TestProjectile } from "../fixtures/TestProjectile"
 import { MockTicker } from "../helpers/MockTicker"
@@ -20,10 +20,14 @@ describe("Record-Replay Integration Tests", () => {
   let recorder: GameRecorder
   let replayManager: ReplayManager
   let serializer: Serializer
+  let originalLoader: MockLoader
+  let replayLoader: MockLoader
 
   beforeEach(() => {
-    originalEngine = new ComplexTestEngine()
-    replayEngine = new ComplexTestEngine()
+    originalLoader = new MockLoader()
+    replayLoader = new MockLoader()
+    originalEngine = new ComplexTestEngine(originalLoader)
+    replayEngine = new ComplexTestEngine(replayLoader)
     originalTicker = new MockTicker()
     replayTicker = new MockTicker()
     recorder = new GameRecorder()
@@ -600,7 +604,8 @@ describe("Record-Replay Integration Tests", () => {
       const speeds = [1, 2, 3, 5]
 
       for (const speed of speeds) {
-        const testEngine = new ComplexTestEngine()
+        const testLoader = new MockLoader()
+        const testEngine = new ComplexTestEngine(testLoader)
         const testReplay = new ReplayManager(testEngine)
         const testTicker = new MockTicker()
 

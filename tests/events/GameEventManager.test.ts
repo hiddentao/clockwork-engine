@@ -10,7 +10,7 @@ import {
   type ObjectUpdateEvent,
   type UserInputEvent,
 } from "../../src/types"
-import { ComplexTestEngine } from "../fixtures"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 
 // Mock GameRecorder for testing
 class MockGameRecorder extends GameRecorder {
@@ -31,9 +31,11 @@ describe("GameEventManager", () => {
   let inputSource: UserInputEventSource
   let eventManager: GameEventManager
   let mockRecorder: MockGameRecorder
+  let loader: MockLoader
 
   beforeEach(async () => {
-    engine = new ComplexTestEngine()
+    loader = new MockLoader()
+    engine = new ComplexTestEngine(loader)
     await engine.reset({ prngSeed: "event-manager-test" })
 
     inputSource = new UserInputEventSource()

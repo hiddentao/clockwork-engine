@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test"
 import { Vector2D } from "../../src/geometry/Vector2D"
-import { ComplexTestEngine } from "../fixtures"
+import { ComplexTestEngine, MockLoader } from "../fixtures"
 
 // Mock PIXI.js classes and functions
 class MockContainer {
@@ -387,7 +387,8 @@ describe("GameCanvas", () => {
 
   beforeEach(async () => {
     mockContainer = new MockHTMLElement()
-    engine = new ComplexTestEngine()
+    const testLoader = new MockLoader()
+    engine = new ComplexTestEngine(testLoader)
 
     // Create canvas with test configuration
     canvas = await TestGameCanvas.create(mockContainer as any, {
@@ -440,7 +441,8 @@ describe("GameCanvas", () => {
 
   describe("Game Engine Integration", () => {
     it("should set and get game engine correctly", () => {
-      const newEngine = new ComplexTestEngine()
+      const newLoader = new MockLoader()
+      const newEngine = new ComplexTestEngine(newLoader)
       canvas.setGameEngine(newEngine)
       expect(canvas.getGameEngine()).toBe(newEngine)
     })

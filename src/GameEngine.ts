@@ -36,9 +36,9 @@ export abstract class GameEngine
   protected eventManager: GameEventManager
   protected recorder: GameRecorder | undefined = undefined
   protected collisionTree: CollisionGrid
-  protected loader: Loader | undefined = undefined
+  protected loader: Loader
 
-  constructor(loader?: Loader) {
+  constructor(loader: Loader) {
     super()
     this.loader = loader
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
@@ -299,7 +299,7 @@ export abstract class GameEngine
   /**
    * Get the loader instance for data loading
    */
-  getLoader(): Loader | undefined {
+  getLoader(): Loader {
     return this.loader
   }
 }

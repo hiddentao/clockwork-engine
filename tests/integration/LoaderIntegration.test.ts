@@ -17,11 +17,6 @@ describe("Loader Integration", () => {
       expect(engine.getLoader()).toBe(loader)
     })
 
-    it("should work without loader", () => {
-      const engineWithoutLoader = new ComplexTestEngine()
-      expect(engineWithoutLoader.getLoader()).toBeUndefined()
-    })
-
     it("should maintain loader reference through reset", async () => {
       await engine.reset({ prngSeed: "test-seed" })
       expect(engine.getLoader()).toBe(loader)

@@ -24,7 +24,7 @@ export class ComplexTestEngine extends GameEngine {
   private serializer: Serializer
   private setupConfig: SetupConfig = {}
 
-  constructor(loader?: Loader) {
+  constructor(loader: Loader) {
     super(loader)
     this.serializer = new Serializer()
     this.registerSerializationTypes()
