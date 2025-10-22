@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.1](https://github.com/hiddentao/clockwork-engine/compare/v1.9.0...v1.9.1) (2025-10-22)
+
+
+### Code Refactoring
+
+* loader is now mandatory ([8a725f7](https://github.com/hiddentao/clockwork-engine/commit/8a725f76d578bc21ded0653030daa9a660c58f2c))
+
 ## [1.9.0](https://github.com/hiddentao/clockwork-engine/compare/v1.8.1...v1.9.0) (2025-10-22)
 
 
