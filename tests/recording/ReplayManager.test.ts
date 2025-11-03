@@ -1032,10 +1032,16 @@ describe("ReplayManager", () => {
       engine.pause()
       expect(engine.getState()).toBe(GameState.PAUSED)
 
-      // Proxy should still track replay state correctly
+      // When paused, proxy should NOT process ticks but should maintain replay state
       proxyEngine.update(1)
-      expect(replayManager.getCurrentTick()).toBe(1)
-      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+      expect(replayManager.getCurrentTick()).toBe(0) // No ticks processed when paused
+      expect(replayManager.isCurrentlyReplaying()).toBe(true) // Still replaying
+
+      // Resume and then ticks should be processed
+      engine.resume()
+      expect(engine.getState()).toBe(GameState.PLAYING)
+      proxyEngine.update(1)
+      expect(replayManager.getCurrentTick()).toBe(1) // Now ticks are processed
     })
 
     it("should handle very large totalTicks values", async () => {

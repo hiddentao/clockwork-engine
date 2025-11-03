@@ -19,6 +19,8 @@ export class DemoGameEngine extends GameEngine {
   private loadedConfig: any = null
   private isEnding: boolean = false
   private activeExplosion: ExplosionEffect | null = null
+  private debugMode: boolean = false
+  private lastDebugTick: number = 0
 
   constructor(loader: Loader) {
     super(loader)
@@ -114,6 +116,12 @@ export class DemoGameEngine extends GameEngine {
   update(deltaTicks: number): void {
     super.update(deltaTicks)
 
+    // Log game state every 100 ticks for debugging
+    if (this.debugMode && this.getTotalTicks() - this.lastDebugTick >= 100) {
+      this.logGameState("periodic")
+      this.lastDebugTick = this.getTotalTicks()
+    }
+
     if (this.getState() === GameState.PLAYING) {
       this.checkCollisions()
     }
@@ -159,6 +167,7 @@ export class DemoGameEngine extends GameEngine {
       // Self-collision: head hit snake body (not head)
       if (sourceId === snake.getId()) {
         this.gameLost = true
+        this.logGameState("self_collision")
         this.end()
         return // Game ended, don't spawn anything
       }
@@ -166,6 +175,7 @@ export class DemoGameEngine extends GameEngine {
       // Wall collision
       if (sourceId.startsWith("wall-")) {
         this.gameLost = true
+        this.logGameState("wall_collision")
         this.end()
         return // Game ended, don't spawn anything
       }
@@ -173,6 +183,7 @@ export class DemoGameEngine extends GameEngine {
       // Bomb collision
       if (sourceId.startsWith("bomb-")) {
         this.gameLost = true
+        this.logGameState("bomb_collision")
         this.isEnding = true
 
         // Create explosion at bomb position
@@ -198,10 +209,12 @@ export class DemoGameEngine extends GameEngine {
           snake.grow()
           replaceApples.push(apple)
           this.applesEaten++
+          this.logGameState("apple_eaten")
 
           // Check win condition
           if (this.applesEaten >= GAME_CONFIG.TARGET_APPLES) {
             this.gameWon = true
+            this.logGameState("game_won")
             this.end()
             return // Game ended, don't spawn anything
           }
@@ -355,11 +368,6 @@ export class DemoGameEngine extends GameEngine {
   }
 
   // Getter methods for game objects
-  private getSnake(): Snake | undefined {
-    const snakeGroup = this.getGameObjectGroup("Snake")
-    return snakeGroup?.getAllActive()[0] as Snake
-  }
-
   private getApples(): Apple[] {
     const appleGroup = this.getGameObjectGroup("Apple")
     return (appleGroup?.getAllActive() as Apple[]) || []
@@ -376,6 +384,11 @@ export class DemoGameEngine extends GameEngine {
   }
 
   // Public getters for UI
+  public getSnake(): Snake | undefined {
+    const snakeGroup = this.getGameObjectGroup("Snake")
+    return snakeGroup?.getAllActive()[0] as Snake
+  }
+
   public getApplesEaten(): number {
     return this.applesEaten
   }
@@ -395,6 +408,33 @@ export class DemoGameEngine extends GameEngine {
   public getSnakeLength(): number {
     const snake = this.getSnake()
     return snake ? snake.getLength() : 0
+  }
+
+  /**
+   * Enable debug logging for game state
+   */
+  public setDebugMode(enabled: boolean): void {
+    this.debugMode = enabled
+  }
+
+  /**
+   * Log current game state for debugging
+   */
+  private logGameState(reason: string): void {
+    if (!this.debugMode) return
+
+    const snake = this.getSnake()
+    const gameState = {
+      tick: this.getTotalTicks(),
+      reason,
+      applesEaten: this.applesEaten,
+      snakeLength: this.getSnakeLength(),
+      snakePosition: snake?.getPosition(),
+      gameWon: this.gameWon,
+      gameLost: this.gameLost,
+      state: this.getState(),
+    }
+    console.log(`GAME_STATE:`, JSON.stringify(gameState))
   }
 
   public getAllGameObjects() {
@@ -490,19 +530,13 @@ export class DemoGameEngine extends GameEngine {
     try {
       console.log("🔄 Demonstrating loader usage...")
 
-      // Load different types of data
-      const easyLevel = await this.loadLevel("easy")
-      const snakeSprites = await this.loadAsset("snake_sprites")
-
-      console.log("✅ Loaded level:", easyLevel ? "easy level data" : "none")
-      console.log("✅ Loaded sprites:", snakeSprites ? "snake sprites" : "none")
-
-      // Load high scores
-      const scoresData = await loader.fetchData("leaderboard", {
-        type: "scores",
-      })
-      const scores = JSON.parse(scoresData)
-      console.log("🏆 High scores:", scores)
+      // Load game configuration
+      const configData = await loader.fetchData("game", { type: "config" })
+      const config = JSON.parse(configData)
+      console.log(
+        "✅ Loaded game config:",
+        config ? "configuration data" : "none",
+      )
     } catch (error) {
       console.error("❌ Loader demonstration failed:", error)
     }

@@ -27,6 +27,7 @@ export class Game {
   private isRecording = false
   private isReplaying = false
   private replaySpeed = 1
+  private debugMode = false
 
   public async initialize(): Promise<void> {
     // Calculate responsive canvas size
@@ -39,7 +40,7 @@ export class Game {
     // Initialize engines with loader
     this.playEngine = new DemoGameEngine(this.loader)
     this.replayEngine = new DemoGameEngine(this.loader)
-    this.activeEngine = this.playEngine // Start with play engine active
+    this.activeEngine = this.playEngine
 
     const gameConfig = this.generateGameConfig()
     await this.playEngine.reset(gameConfig)
@@ -93,6 +94,19 @@ export class Game {
 
     // Setup responsive canvas
     this.setupResponsiveCanvas()
+
+    this.setDebugMode(true)
+  }
+
+  /**
+   * Enable debug logging across all systems
+   */
+  public setDebugMode(enabled: boolean): void {
+    this.debugMode = enabled
+    this.playEngine.setDebugMode(enabled)
+    this.replayEngine.setDebugMode(enabled)
+    this.replayManager.setDebugMode(enabled)
+    console.log(`🐛 Debug mode ${enabled ? "enabled" : "disabled"}`)
   }
 
   private calculateCanvasSize(): { width: number; height: number } {
@@ -142,6 +156,19 @@ export class Game {
         ) {
           console.log("🛑 Auto-stopping recording...")
           this.stopRecording()
+
+          // oupput final game state and recording a single JSON
+          console.log(
+            `Final game state and recording`,
+            JSON.stringify({
+              finalState: {
+                applesEaten: this.activeEngine.getApplesEaten(),
+                snakeLength: this.activeEngine.getSnakeLength(),
+                snakePosition: this.activeEngine.getSnake()!.getPosition(),
+              },
+              recording: this.recorder.getCurrentRecording(),
+            }),
+          )
         }
       },
     )
@@ -230,7 +257,17 @@ export class Game {
 
   private setupGameLoop(): void {
     const ticker = this.canvas.getApp().ticker
-    ticker.add(() => {
+    let frameCount = 0
+    ticker.add((ticker) => {
+      frameCount++
+
+      // Log ticker timing during replay for debugging
+      if (this.debugMode && this.isReplaying && frameCount % 30 === 0) {
+        console.log(
+          `TICKER: frame=${frameCount}, deltaTime=${ticker.deltaTime}, speed=${ticker.speed}, FPS=${ticker.FPS}`,
+        )
+      }
+
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         tick: this.isReplaying
@@ -333,6 +370,12 @@ export class Game {
     // Set ticker speed for replay
     this.canvas.getApp().ticker.speed = this.replaySpeed
 
+    if (this.debugMode) {
+      console.log(
+        `REPLAY_START: speed=${this.replaySpeed}, ticker.speed=${this.canvas.getApp().ticker.speed}`,
+      )
+    }
+
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayManager.getReplayEngine()) {
       await this.replayEngine.reset(recording.gameConfig)
@@ -355,6 +398,10 @@ export class Game {
 
     // Reset ticker speed
     this.canvas.getApp().ticker.speed = 1
+
+    if (this.debugMode) {
+      console.log(`REPLAY_STOP: ticker.speed reset to 1`)
+    }
 
     this.replayManager.stopReplay()
 
@@ -395,19 +442,11 @@ export class Game {
 
       // List data by type
       const configKeys = await this.loader.listDataKeys("config")
-      const levelKeys = await this.loader.listDataKeys("level")
-      const assetKeys = await this.loader.listDataKeys("asset")
-
       console.log("🔧 Config keys:", configKeys)
-      console.log("🎮 Level keys:", levelKeys)
-      console.log("🎨 Asset keys:", assetKeys)
 
       // Load sample data
       const gameConfig = await this.loader.fetchData("game", { type: "config" })
       console.log("⚙️ Game config:", JSON.parse(gameConfig))
-
-      const easyLevel = await this.loader.fetchData("easy", { type: "level" })
-      console.log("🎯 Easy level:", JSON.parse(easyLevel))
 
       // Test data storage
       const userPrefs = {
@@ -435,6 +474,13 @@ export class Game {
    */
   public getLoader(): DemoLoader {
     return this.loader
+  }
+
+  /**
+   * Get the game instance for external access (for debugging)
+   */
+  public static getInstance(): Game | undefined {
+    return (window as any).gameInstance
   }
 
   /**
