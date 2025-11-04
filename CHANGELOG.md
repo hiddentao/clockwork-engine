@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.2](https://github.com/hiddentao/clockwork-engine/compare/v1.9.1...v1.9.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* prevent replay tick processing during state transitions ([#1](https://github.com/hiddentao/clockwork-engine/issues/1)) ([e186003](https://github.com/hiddentao/clockwork-engine/commit/e186003cb97d5f270a9480aecdb0eae9bad02119))
+
 ## [1.9.1](https://github.com/hiddentao/clockwork-engine/compare/v1.9.0...v1.9.1) (2025-10-22)
 
 
