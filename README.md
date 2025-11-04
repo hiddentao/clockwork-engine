@@ -9,7 +9,7 @@
 
 **A TypeScript game engine for deterministic, replayable games with built-in recording, replay, and rendering capabilities.**
 
-[Documentation](./docs) • [API Reference](./docs/api.md)
+[Documentation](./docs)
 
 </div>
 
