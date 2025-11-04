@@ -22,11 +22,11 @@ jobs:
     - name: Install dependencies
       run: bun install
 
-    - name: Run linting and type checking
-      run: bun run lint
-
     - name: Build engine
       run: bun run build
+
+    - name: Run linting and type checking
+      run: bun run lint
 
     - name: Install demo dependencies
       run: cd demo && bun i
