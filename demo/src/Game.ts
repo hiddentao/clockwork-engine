@@ -27,7 +27,6 @@ export class Game {
   private isRecording = false
   private isReplaying = false
   private replaySpeed = 1
-  private debugMode = false
 
   public async initialize(): Promise<void> {
     // Calculate responsive canvas size
@@ -94,19 +93,6 @@ export class Game {
 
     // Setup responsive canvas
     this.setupResponsiveCanvas()
-
-    this.setDebugMode(true)
-  }
-
-  /**
-   * Enable debug logging across all systems
-   */
-  public setDebugMode(enabled: boolean): void {
-    this.debugMode = enabled
-    this.playEngine.setDebugMode(enabled)
-    this.replayEngine.setDebugMode(enabled)
-    this.replayManager.setDebugMode(enabled)
-    console.log(`🐛 Debug mode ${enabled ? "enabled" : "disabled"}`)
   }
 
   private calculateCanvasSize(): { width: number; height: number } {
@@ -257,17 +243,7 @@ export class Game {
 
   private setupGameLoop(): void {
     const ticker = this.canvas.getApp().ticker
-    let frameCount = 0
     ticker.add((ticker) => {
-      frameCount++
-
-      // Log ticker timing during replay for debugging
-      if (this.debugMode && this.isReplaying && frameCount % 30 === 0) {
-        console.log(
-          `TICKER: frame=${frameCount}, deltaTime=${ticker.deltaTime}, speed=${ticker.speed}, FPS=${ticker.FPS}`,
-        )
-      }
-
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         tick: this.isReplaying
@@ -370,12 +346,6 @@ export class Game {
     // Set ticker speed for replay
     this.canvas.getApp().ticker.speed = this.replaySpeed
 
-    if (this.debugMode) {
-      console.log(
-        `REPLAY_START: speed=${this.replaySpeed}, ticker.speed=${this.canvas.getApp().ticker.speed}`,
-      )
-    }
-
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayManager.getReplayEngine()) {
       await this.replayEngine.reset(recording.gameConfig)
@@ -398,10 +368,6 @@ export class Game {
 
     // Reset ticker speed
     this.canvas.getApp().ticker.speed = 1
-
-    if (this.debugMode) {
-      console.log(`REPLAY_STOP: ticker.speed reset to 1`)
-    }
 
     this.replayManager.stopReplay()
 

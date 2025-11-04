@@ -12,19 +12,10 @@ export class ReplayManager {
   protected recording: GameRecording | null = null
   protected currentReplayTick: number = 0
   protected accumulatedTicks: number = 0
-  protected debugMode: boolean = false
-  protected replayRunId: string = ""
 
   constructor(engine: GameEngine) {
     this.__engine = engine
     this.engine = this.createProxyEngine()
-  }
-
-  /**
-   * Enable debug logging for replay tick processing
-   */
-  setDebugMode(enabled: boolean): void {
-    this.debugMode = enabled
   }
 
   /**
@@ -48,20 +39,8 @@ export class ReplayManager {
               return
             }
 
-            const beforeAccumulated = replayManager.accumulatedTicks
-            const beforeIndex = replayManager.deltaTicksIndex
-
-            if (replayManager.debugMode) {
-              console.log(
-                `[${replayManager.replayRunId}] INCOMING: deltaTicks=${deltaTicks}, accumulated=${beforeAccumulated}, index=${beforeIndex}`,
-              )
-            }
-
             // Accumulate incoming ticks
             replayManager.accumulatedTicks += deltaTicks
-
-            let processedInThisUpdate = 0
-            const processedTicks: number[] = []
 
             // Process recorded ticks while we have enough accumulated ticks
             while (
@@ -87,15 +66,6 @@ export class ReplayManager {
 
               // Track current tick
               replayManager.currentReplayTick += recordedDeltaTicks
-
-              processedInThisUpdate++
-              processedTicks.push(recordedDeltaTicks)
-            }
-
-            if (replayManager.debugMode && processedInThisUpdate > 0) {
-              console.log(
-                `[${replayManager.replayRunId}] PROCESSED: count=${processedInThisUpdate}, ticks=[${processedTicks.join(",")}], newAccumulated=${replayManager.accumulatedTicks}, newIndex=${replayManager.deltaTicksIndex}`,
-              )
             }
 
             // Check if replay is complete after processing
@@ -104,11 +74,6 @@ export class ReplayManager {
               replayManager.deltaTicksIndex >=
                 replayManager.recording!.deltaTicks.length
             ) {
-              if (replayManager.debugMode) {
-                console.log(
-                  `[${replayManager.replayRunId}] REPLAY COMPLETE: finalTick=${replayManager.currentReplayTick}`,
-                )
-              }
               replayManager.stopReplay()
             }
           }
@@ -146,13 +111,6 @@ export class ReplayManager {
     this.deltaTicksIndex = 0
     this.currentReplayTick = 0
     this.accumulatedTicks = 0
-    this.replayRunId = `R${Date.now()}`
-
-    if (this.debugMode) {
-      console.log(
-        `[${this.replayRunId}] REPLAY START: totalTicks=${recording.totalTicks}, deltaTicks.length=${recording.deltaTicks.length}`,
-      )
-    }
 
     // Initialize engine with game configuration
     await this.__engine.reset(recording.gameConfig)
