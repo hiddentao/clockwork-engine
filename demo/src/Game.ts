@@ -39,7 +39,7 @@ export class Game {
     // Initialize engines with loader
     this.playEngine = new DemoGameEngine(this.loader)
     this.replayEngine = new DemoGameEngine(this.loader)
-    this.activeEngine = this.playEngine // Start with play engine active
+    this.activeEngine = this.playEngine
 
     const gameConfig = this.generateGameConfig()
     await this.playEngine.reset(gameConfig)
@@ -142,6 +142,19 @@ export class Game {
         ) {
           console.log("🛑 Auto-stopping recording...")
           this.stopRecording()
+
+          // oupput final game state and recording a single JSON
+          console.log(
+            `Final game state and recording`,
+            JSON.stringify({
+              finalState: {
+                applesEaten: this.activeEngine.getApplesEaten(),
+                snakeLength: this.activeEngine.getSnakeLength(),
+                snakePosition: this.activeEngine.getSnake()!.getPosition(),
+              },
+              recording: this.recorder.getCurrentRecording(),
+            }),
+          )
         }
       },
     )
@@ -230,7 +243,7 @@ export class Game {
 
   private setupGameLoop(): void {
     const ticker = this.canvas.getApp().ticker
-    ticker.add(() => {
+    ticker.add((ticker) => {
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         tick: this.isReplaying
@@ -395,19 +408,11 @@ export class Game {
 
       // List data by type
       const configKeys = await this.loader.listDataKeys("config")
-      const levelKeys = await this.loader.listDataKeys("level")
-      const assetKeys = await this.loader.listDataKeys("asset")
-
       console.log("🔧 Config keys:", configKeys)
-      console.log("🎮 Level keys:", levelKeys)
-      console.log("🎨 Asset keys:", assetKeys)
 
       // Load sample data
       const gameConfig = await this.loader.fetchData("game", { type: "config" })
       console.log("⚙️ Game config:", JSON.parse(gameConfig))
-
-      const easyLevel = await this.loader.fetchData("easy", { type: "level" })
-      console.log("🎯 Easy level:", JSON.parse(easyLevel))
 
       // Test data storage
       const userPrefs = {
@@ -435,6 +440,13 @@ export class Game {
    */
   public getLoader(): DemoLoader {
     return this.loader
+  }
+
+  /**
+   * Get the game instance for external access (for debugging)
+   */
+  public static getInstance(): Game | undefined {
+    return (window as any).gameInstance
   }
 
   /**

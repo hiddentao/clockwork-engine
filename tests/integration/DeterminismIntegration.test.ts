@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test } from "bun:test"
+import { GameRecorder } from "../../src/GameRecorder"
+import { ReplayManager } from "../../src/ReplayManager"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
+import { GameState } from "../../src/types"
 import { ComplexTestEngine, MockLoader } from "../fixtures"
 import { TestProjectile } from "../fixtures/TestProjectile"
 import { MockTicker } from "../helpers/MockTicker"
@@ -586,6 +589,120 @@ describe("Determinism Integration Tests", () => {
           }
           expect(comparison.equal).toBe(true)
         }
+      }
+    })
+  })
+
+  describe("replay state transition determinism", () => {
+    test("should not process ticks before PLAYING state during replay", async () => {
+      const seed = "replay-state-test"
+
+      // Create a recording engine to generate test data
+      const recordingLoader = new MockLoader()
+      const recordingEngine = new ComplexTestEngine(recordingLoader)
+      const recorder = new GameRecorder()
+      const recordingTicker = new MockTicker()
+
+      // Setup recording
+      await recordingEngine.reset({ prngSeed: seed })
+      recordingEngine.setGameRecorder(recorder)
+      recorder.startRecording(recordingEngine.getEventManager(), {
+        prngSeed: seed,
+      })
+
+      // Add some objects to create meaningful deltaTicks
+      for (let i = 0; i < 3; i++) {
+        new TestProjectile(
+          `proj${i}`,
+          new Vector2D(i * 10, i * 5),
+          new Vector2D(1, 1),
+          10,
+          100,
+          "",
+          recordingEngine,
+        )
+      }
+
+      recordingTicker.add((deltaTicks) => recordingEngine.update(deltaTicks))
+      recordingEngine.start()
+
+      // Record some ticks
+      for (let i = 0; i < 10; i++) {
+        await recordingTicker.tick(1)
+      }
+
+      recorder.stopRecording()
+      const recording = recorder.getCurrentRecording()
+      expect(recording).toBeDefined()
+      expect(recording!.deltaTicks.length).toBeGreaterThan(0)
+
+      // Setup replay with direct state monitoring
+      const replayLoader = new MockLoader()
+      const replayEngine = new ComplexTestEngine(replayLoader)
+      const replayManager = new ReplayManager(replayEngine)
+      const replayTicker = new MockTicker()
+
+      // Track when ticks are processed vs game state
+      let ticksProcessedInReadyState = 0
+      let gameStateWhenFirstTickProcessed: GameState | null = null
+
+      // Monitor the proxy engine's update calls by wrapping the engine update
+      const originalUpdate = replayEngine.update.bind(replayEngine)
+      replayEngine.update = (deltaTicks: number) => {
+        const currentState = replayEngine.getState()
+
+        // Track the first tick processing and state at that time
+        if (gameStateWhenFirstTickProcessed === null) {
+          gameStateWhenFirstTickProcessed = currentState
+        }
+
+        // Count ticks processed while in READY state
+        if (currentState === GameState.READY) {
+          ticksProcessedInReadyState++
+        }
+
+        return originalUpdate(deltaTicks)
+      }
+
+      // Simulate the race condition by starting the ticker BEFORE the replay is fully set up
+      // This mimics the real-world scenario where PIXI ticker is already running
+      const proxyEngine = replayManager.getReplayEngine()
+
+      // Set up the ticker to call update during replay initialization
+      replayTicker.add((deltaTicks) => {
+        proxyEngine.update(deltaTicks)
+      })
+
+      // Start the replay process but immediately start ticking to create race condition
+      const replayPromise = replayManager.replay(recording!)
+
+      // Immediately start processing ticks while replay is setting up
+      // This simulates PIXI ticker running during replay initialization
+      const tickPromises = []
+      for (let i = 0; i < 3; i++) {
+        tickPromises.push(replayTicker.tick(1))
+      }
+
+      // Wait for both replay setup and initial ticks to complete
+      await Promise.all([replayPromise, ...tickPromises])
+
+      // Process a few more ticks normally
+      for (let i = 0; i < 2; i++) {
+        await replayTicker.tick(1)
+        if (!replayManager.isCurrentlyReplaying()) break
+      }
+
+      // Restore original update
+      replayEngine.update = originalUpdate
+
+      // Verify no ticks were processed while in READY state
+      expect(ticksProcessedInReadyState).toBe(0)
+
+      // If any ticks were processed, the game should have been in PLAYING state
+      if (gameStateWhenFirstTickProcessed !== null) {
+        expect(gameStateWhenFirstTickProcessed as GameState).toBe(
+          GameState.PLAYING,
+        )
       }
     })
   })

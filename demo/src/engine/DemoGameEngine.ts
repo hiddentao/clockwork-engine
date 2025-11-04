@@ -355,11 +355,6 @@ export class DemoGameEngine extends GameEngine {
   }
 
   // Getter methods for game objects
-  private getSnake(): Snake | undefined {
-    const snakeGroup = this.getGameObjectGroup("Snake")
-    return snakeGroup?.getAllActive()[0] as Snake
-  }
-
   private getApples(): Apple[] {
     const appleGroup = this.getGameObjectGroup("Apple")
     return (appleGroup?.getAllActive() as Apple[]) || []
@@ -376,6 +371,11 @@ export class DemoGameEngine extends GameEngine {
   }
 
   // Public getters for UI
+  public getSnake(): Snake | undefined {
+    const snakeGroup = this.getGameObjectGroup("Snake")
+    return snakeGroup?.getAllActive()[0] as Snake
+  }
+
   public getApplesEaten(): number {
     return this.applesEaten
   }
@@ -490,19 +490,13 @@ export class DemoGameEngine extends GameEngine {
     try {
       console.log("🔄 Demonstrating loader usage...")
 
-      // Load different types of data
-      const easyLevel = await this.loadLevel("easy")
-      const snakeSprites = await this.loadAsset("snake_sprites")
-
-      console.log("✅ Loaded level:", easyLevel ? "easy level data" : "none")
-      console.log("✅ Loaded sprites:", snakeSprites ? "snake sprites" : "none")
-
-      // Load high scores
-      const scoresData = await loader.fetchData("leaderboard", {
-        type: "scores",
-      })
-      const scores = JSON.parse(scoresData)
-      console.log("🏆 High scores:", scores)
+      // Load game configuration
+      const configData = await loader.fetchData("game", { type: "config" })
+      const config = JSON.parse(configData)
+      console.log(
+        "✅ Loaded game config:",
+        config ? "configuration data" : "none",
+      )
     } catch (error) {
       console.error("❌ Loader demonstration failed:", error)
     }

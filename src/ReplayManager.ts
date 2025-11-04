@@ -34,6 +34,11 @@ export class ReplayManager {
         ) {
           // Intercept update() calls during replay
           return function (deltaTicks: number) {
+            // Only process ticks when engine is in PLAYING state
+            if (target.getState() !== GameState.PLAYING) {
+              return
+            }
+
             // Accumulate incoming ticks
             replayManager.accumulatedTicks += deltaTicks
 

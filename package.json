@@ -32,6 +32,7 @@
     "LICENSE.md",
     "README.md",
     "docs/",
+    "CLAUDE.md",
     "package.json",
     "bun.lock"
   ],
