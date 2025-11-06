@@ -1,6 +1,6 @@
 {
   "name": "@hiddentao/clockwork-engine",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "A TypeScript/PIXI.js game engine for deterministic, replayable games with built-in rendering",
   "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
   "license": "MIT",

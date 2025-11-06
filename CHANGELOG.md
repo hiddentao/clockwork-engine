@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.3](https://github.com/hiddentao/clockwork-engine/compare/v1.9.2...v1.9.3) (2025-11-06)
+
+
+### Tests
+
+* add replay pause/resume functionality tests ([4ce0151](https://github.com/hiddentao/clockwork-engine/commit/4ce0151431cdc1f506b98242067f69de4c9d5163))
+
 ## [1.9.2](https://github.com/hiddentao/clockwork-engine/compare/v1.9.1...v1.9.2) (2025-11-04)
 
 
