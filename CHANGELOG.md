@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.4](https://github.com/hiddentao/clockwork-engine/compare/v1.9.3...v1.9.4) (2025-11-06)
+
+
+### Code Refactoring
+
+* remove unneeded end check ([2a2f6a7](https://github.com/hiddentao/clockwork-engine/commit/2a2f6a7f3ff82b3c1e39bab815bec604ce7abfcd))
+
 ## [1.9.3](https://github.com/hiddentao/clockwork-engine/compare/v1.9.2...v1.9.3) (2025-11-06)
 
 
