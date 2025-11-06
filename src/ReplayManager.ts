@@ -44,10 +44,11 @@ export class ReplayManager {
 
             // Process recorded ticks while we have enough accumulated ticks
             while (
-              replayManager.isReplaying && // Check again in case stopReplay was called
+              replayManager.isReplaying && // if we are replaying
+              target.getState() === GameState.PLAYING && // if the engine is in the playing state
               replayManager.deltaTicksIndex <
-                replayManager.recording!.deltaTicks.length &&
-              replayManager.accumulatedTicks >=
+                replayManager.recording!.deltaTicks.length && // if we have more ticks to process
+              replayManager.accumulatedTicks >= // if we have enough accumulated ticks
                 replayManager.recording!.deltaTicks[
                   replayManager.deltaTicksIndex
                 ]
@@ -70,9 +71,10 @@ export class ReplayManager {
 
             // Check if replay is complete after processing
             if (
-              replayManager.isReplaying &&
-              replayManager.deltaTicksIndex >=
-                replayManager.recording!.deltaTicks.length
+              target.getState() === GameState.ENDED ||
+              (replayManager.isReplaying &&
+                replayManager.deltaTicksIndex >=
+                  replayManager.recording!.deltaTicks.length)
             ) {
               replayManager.stopReplay()
             }

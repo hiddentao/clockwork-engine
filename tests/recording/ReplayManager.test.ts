@@ -1120,4 +1120,149 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
     })
   })
+
+  describe("Pause/Resume During Replay", () => {
+    it("should not process ticks while engine is paused during replay with periodic pause/resume cycles", async () => {
+      // Create a recording with 100 frames to allow multiple pause/resume cycles
+      const longRecording: GameRecording = {
+        gameConfig: { prngSeed: "pause-resume-test" },
+        events: Array.from({ length: 20 }, (_, i) => ({
+          type: GameEventType.USER_INPUT,
+          tick: i * 5 + 1, // Events at ticks 1, 6, 11, 16, etc.
+          timestamp: 1000 + i * 5,
+          inputType: `input${i}`,
+          params: { index: i },
+        })) as UserInputEvent[],
+        deltaTicks: Array.from({ length: 100 }, () => 1), // 100 frames, 1 tick each
+        totalTicks: 100,
+        metadata: {
+          createdAt: Date.now(),
+          description: "Pause/Resume test recording",
+        },
+      }
+
+      await replayManager.replay(longRecording)
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      const startTime = performance.now()
+      let totalPausedTime = 0
+
+      // Test pause/resume cycles at different points in the replay
+      const pausePoints = [20, 40, 60, 80] // Pause at these tick counts
+
+      for (const pausePoint of pausePoints) {
+        // Process ticks up to the pause point
+        const currentTick = replayManager.getCurrentTick()
+        const ticksToProcess = pausePoint - currentTick
+
+        if (ticksToProcess > 0) {
+          // Process frames in chunks to simulate fast replay
+          // Since each deltaTick is 1, provide exactly what we need to reach the pause point
+          proxyEngine.update(ticksToProcess)
+          expect(replayManager.getCurrentTick()).toBe(pausePoint)
+        }
+
+        // Pause the engine
+        engine.pause()
+        expect(engine.getState()).toBe(GameState.PAUSED)
+
+        const pauseStartTime = performance.now()
+        const ticksBeforePause = replayManager.getCurrentTick()
+
+        // Try to process ticks while paused - should not advance
+        proxyEngine.update(10) // Attempt to process 10 ticks while paused
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause) // Should not advance
+        expect(replayManager.isCurrentlyReplaying()).toBe(true) // Should still be replaying
+
+        // Wait 1 second while paused
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        const pauseEndTime = performance.now()
+        const pauseDuration = pauseEndTime - pauseStartTime
+        totalPausedTime += pauseDuration
+
+        // Verify ticks still haven't advanced during the pause
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause)
+        expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+        // Verify pause duration was approximately 1 second (within 100ms tolerance)
+        expect(pauseDuration).toBeGreaterThanOrEqual(950)
+        expect(pauseDuration).toBeLessThanOrEqual(1150)
+
+        // Resume the engine
+        engine.resume()
+        expect(engine.getState()).toBe(GameState.PLAYING)
+
+        // Now ticks should process again
+        proxyEngine.update(5)
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause + 5)
+      }
+
+      // Complete the remaining replay
+      const remainingTicks = 100 - replayManager.getCurrentTick()
+      if (remainingTicks > 0) {
+        proxyEngine.update(remainingTicks)
+      }
+
+      // Verify replay completed
+      expect(replayManager.getCurrentTick()).toBe(100)
+      expect(replayManager.isCurrentlyReplaying()).toBe(false) // Should auto-stop
+
+      const totalTime = performance.now() - startTime
+
+      // Verify that the total time includes the pause durations
+      // Should have taken approximately 4+ seconds (4 pauses × 1 second each)
+      expect(totalTime).toBeGreaterThanOrEqual(3800) // Allow some tolerance
+      expect(totalPausedTime).toBeGreaterThanOrEqual(3800) // Should be ~4000ms total pause time
+    })
+
+    it("should handle rapid pause/resume cycles without losing replay state", async () => {
+      const rapidTestRecording: GameRecording = {
+        gameConfig: { prngSeed: "rapid-pause-test" },
+        events: [],
+        deltaTicks: Array.from({ length: 50 }, () => 1),
+        totalTicks: 50,
+        metadata: {
+          createdAt: Date.now(),
+          description: "Rapid pause/resume test",
+        },
+      }
+
+      await replayManager.replay(rapidTestRecording)
+
+      // Perform rapid pause/resume cycles
+      for (let i = 0; i < 10; i++) {
+        // Process a few ticks
+        proxyEngine.update(5)
+        const ticksBeforePause = replayManager.getCurrentTick()
+
+        // Rapid pause/resume
+        engine.pause()
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause)
+
+        // Try to process while paused
+        proxyEngine.update(2)
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause) // No advancement
+
+        // Immediate resume
+        engine.resume()
+
+        // Should be able to continue processing
+        proxyEngine.update(1)
+        expect(replayManager.getCurrentTick()).toBe(ticksBeforePause + 1)
+
+        // Stop before we exceed the total ticks
+        if (replayManager.getCurrentTick() >= 45) break
+      }
+
+      // Should still be able to complete the replay
+      const remainingTicks = 50 - replayManager.getCurrentTick()
+      if (remainingTicks > 0) {
+        proxyEngine.update(remainingTicks)
+      }
+
+      expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.getCurrentTick()).toBe(50)
+    })
+  })
 })
