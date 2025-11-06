@@ -71,10 +71,9 @@ export class ReplayManager {
 
             // Check if replay is complete after processing
             if (
-              target.getState() === GameState.ENDED ||
-              (replayManager.isReplaying &&
-                replayManager.deltaTicksIndex >=
-                  replayManager.recording!.deltaTicks.length)
+              replayManager.isReplaying &&
+              replayManager.deltaTicksIndex >=
+                replayManager.recording!.deltaTicks.length
             ) {
               replayManager.stopReplay()
             }
