@@ -5,9 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This project is a browser-based game engine focused on deterministic, replayable games. The `./docs/engine.md` file contains a high-level overview of the engine and coding guidelines that should be adhered to for anyone building games with this engine.
 
 ## Project Overview
+
 Clockwork is a TypeScript/PIXI.js game engine focused on deterministic, replayable games. It provides deterministic game loops, recording/replay functionality, spatial collision systems, and a complete 2D rendering system with GameCanvas, AbstractRenderer, and BaseRenderer classes.
 
 ## Build System & Commands
+
 - **Package manager**: Bun
 - **Build**: `bun run build` - Compiles TypeScript to dist/
 - **Development**: `bun run dev` - Watch mode compilation
@@ -18,6 +20,7 @@ Clockwork is a TypeScript/PIXI.js game engine focused on deterministic, replayab
 ## Architecture Overview
 
 ### Core Systems
+
 - **GameEngine**: Abstract base class providing game state management (READY/PLAYING/PAUSED/ENDED), object registration, and deterministic updates
 - **GameRecorder**: Captures user inputs and object updates for later replay (recording only - does not execute)
 - **ReplayManager**: Handles playback of recorded game sessions with frame-accurate determinism
@@ -27,6 +30,7 @@ Clockwork is a TypeScript/PIXI.js game engine focused on deterministic, replayab
 - **Serializer**: Universal serialization with type registration for all parameter types
 
 ### Rendering System
+
 The rendering system is built on PIXI.js and provides a complete 2D graphics solution with three main components:
 
 - **GameCanvas**: Abstract PIXI.js-based canvas class that manages:
@@ -65,6 +69,7 @@ The rendering system is built on PIXI.js and provides a complete 2D graphics sol
 - `tests/` - Unit tests for core systems
 
 ### Dependencies
+
 - **Runtime**: pixi.js (2D graphics engine), pixi-viewport (viewport/camera), alea (seeded PRNG)
 - **Development**: TypeScript, Biome (linting/formatting), Bun (runtime/testing)
 
@@ -79,5 +84,4 @@ The rendering system is built on PIXI.js and provides a complete 2D graphics sol
 - don't auto-run demo and/or engine dev server
 - never bypass pre-commit hooks when doing a git commit
 - always check for package.json for lint and format commands and use the commands defined in there
-- don't ever run the demo server
 - use "bun run lint" to lint, "bun run lint:fix" to fix lint errors, and "bun run format" to format code, look in package.json for other scripts
