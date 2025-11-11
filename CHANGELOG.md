@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.9.5](https://github.com/hiddentao/clockwork-engine/compare/v1.9.4...v1.9.5) (2025-11-11)
+
+
+### Documentation
+
+* improve CLAUDE.md formatting and remove redundant instruction ([c974ef1](https://github.com/hiddentao/clockwork-engine/commit/c974ef17c9ed7b85f899cc5a24a4e408c75ff580))
+
+
+### Code Refactoring
+
+* improve GameCanvas renderer management and lifecycle ([8ed19c8](https://github.com/hiddentao/clockwork-engine/commit/8ed19c8019fe3db0fde18da459912c2c83898b71))
+
 ## [1.9.4](https://github.com/hiddentao/clockwork-engine/compare/v1.9.3...v1.9.4) (2025-11-06)
 
 
