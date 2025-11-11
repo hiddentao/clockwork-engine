@@ -343,9 +343,6 @@ export class Game {
     console.log("🎬 Starting replay mode...")
     this.isReplaying = true
 
-    // Set ticker speed for replay
-    this.canvas.getApp().ticker.speed = this.replaySpeed
-
     // If already on replay engine (e.g., after a replay ended), just restart
     if (this.activeEngine === this.replayManager.getReplayEngine()) {
       await this.replayEngine.reset(recording.gameConfig)
@@ -355,6 +352,9 @@ export class Game {
     }
 
     this.canvas.setGameEngine(this.activeEngine)
+
+    // Set ticker speed for replay AFTER setGameEngine to ensure it's applied
+    this.canvas.getApp().ticker.speed = this.replaySpeed
 
     // Start replay on the replay engine (this will control the engine internally)
     await this.replayManager.replay(recording)
@@ -382,6 +382,10 @@ export class Game {
 
   private async switchToPlayMode(): Promise<void> {
     console.log("🔄 Switching to play mode...")
+
+    // Reset ticker speed to normal play speed
+    this.canvas.getApp().ticker.speed = 1
+    this.replaySpeed = 1
 
     // Stop any ongoing recording or replay
     this.stopRecording()

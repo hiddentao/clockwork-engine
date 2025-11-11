@@ -24,7 +24,14 @@ export class SnakeGameCanvas extends GameCanvas {
     super(options)
   }
 
-  protected initializeGameLayers(): void {
+  protected setupRenderers(): void {
+    // Clean up existing grid
+    if (this.gridGraphics) {
+      this.gameContainer.removeChild(this.gridGraphics)
+      this.gridGraphics.destroy()
+      this.gridGraphics = null
+    }
+
     // Create and add grid background
     this.drawGrid()
 
@@ -34,6 +41,13 @@ export class SnakeGameCanvas extends GameCanvas {
     this.snakeRenderer = new SnakeRenderer(this.gameContainer)
     this.wallRenderer = new WallRenderer(this.gameContainer)
     this.explosionRenderer = new ExplosionRenderer(this.gameContainer)
+
+    // Register renderers with GameCanvas for state management
+    this.registerRenderer("apple", this.appleRenderer)
+    this.registerRenderer("bomb", this.bombRenderer)
+    this.registerRenderer("snake", this.snakeRenderer)
+    this.registerRenderer("wall", this.wallRenderer)
+    this.registerRenderer("explosion", this.explosionRenderer)
   }
 
   private drawGrid(): void {

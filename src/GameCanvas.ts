@@ -1,8 +1,11 @@
 import { EventEmitter } from "./EventEmitter"
 import type { GameEngine } from "./GameEngine"
+import { GameEngineEventType } from "./GameEngine"
 import { Vector2D } from "./geometry/Vector2D"
 import { FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
 import { PIXI, Viewport } from "./lib/pixi"
+import type { AbstractRenderer } from "./rendering/AbstractRenderer"
+import { GameState } from "./types"
 
 /**
  * Events emitted by the game canvas for user interactions and viewport changes.
@@ -84,6 +87,8 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   protected gameEngine: GameEngine | null = null
   protected readonly initialWidth: number
   protected readonly initialHeight: number
+  protected renderers: Map<string, AbstractRenderer<any>> = new Map()
+  protected updateCallback: ((ticker: any) => void) | null = null
 
   protected static readonly DEFAULT_OPTIONS: Partial<GameCanvasOptions> = {
     backgroundColor: 0x1e1e1e,
@@ -188,16 +193,10 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
     this.viewport.addChild(this.gameContainer)
     this.app.stage.addChild(this.viewport)
-
     this.app.stage.addChild(this.hudContainer)
-
-    this.initializeGameLayers()
-
     container.appendChild(this.app.canvas)
 
     this.setupEventListeners()
-
-    this.setupUpdateLoop()
   }
 
   /**
@@ -215,10 +214,46 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Initializes game-specific visual layers and renderers.
+   * Registers a renderer with the canvas for state management.
+   *
+   * @param name Unique name for the renderer
+   * @param renderer The renderer instance to register
+   */
+  protected registerRenderer(
+    name: string,
+    renderer: AbstractRenderer<any>,
+  ): void {
+    this.renderers.set(name, renderer)
+  }
+
+  /**
+   * Unregisters a renderer from the canvas.
+   *
+   * @param name Name of the renderer to unregister
+   */
+  protected unregisterRenderer(name: string): void {
+    this.renderers.delete(name)
+  }
+
+  /**
+   * Sets up game-specific visual layers and renderers.
    * Must be implemented by subclasses to set up their rendering system.
    */
-  protected abstract initializeGameLayers(): void
+  protected abstract setupRenderers(): void
+
+  /**
+   * Clears all registered renderers.
+   * Called before reinitializing layers to ensure clean state.
+   */
+  protected clearRenderers(): void {
+    for (const renderer of this.renderers.values()) {
+      try {
+        renderer.clear()
+      } catch (error) {
+        console.error("Error clearing renderer:", error)
+      }
+    }
+  }
 
   /**
    * Retrieves the currently associated game engine instance.
@@ -232,10 +267,30 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   /**
    * Associates a game engine with this canvas for update loop integration.
    *
-   * @param gameLoop The game engine instance to associate
+   * @param gameEngine The game engine instance to associate
    */
-  public setGameEngine(gameLoop: GameEngine | null): void {
-    this.gameEngine = gameLoop
+  public setGameEngine(gameEngine: GameEngine | null): void {
+    // Remove listeners from previous engine before setting new one
+    if (this.gameEngine) {
+      this.gameEngine.off(
+        GameEngineEventType.STATE_CHANGE,
+        this.handleGameStateChange,
+      )
+    }
+
+    this.gameEngine = gameEngine
+
+    // Add listener to new engine
+    if (this.gameEngine) {
+      this.gameEngine.on(
+        GameEngineEventType.STATE_CHANGE,
+        this.handleGameStateChange,
+      )
+    }
+
+    this.clearRenderers()
+    this.setupRenderers()
+    this.setupUpdateLoop()
   }
 
   /**
@@ -260,9 +315,17 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Sets up event listeners for mouse, touch, and viewport interactions.
+   * Sets up event listeners for mouse, touch, viewport interactions, and game engine state changes.
+   * Removes existing listeners before adding new ones to prevent memory leaks.
    */
   protected setupEventListeners(): void {
+    // Remove existing DOM event listeners
+    if (this.container) {
+      this.container.removeEventListener("pointermove", this.handlePointerMove)
+      this.container.removeEventListener("click", this.handleClick)
+    }
+
+    // Add new DOM event listeners
     if (this.container) {
       this.container.addEventListener("pointermove", this.handlePointerMove)
       this.container.addEventListener("click", this.handleClick)
@@ -275,9 +338,17 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    * Starts the main game update and render loop using PIXI's ticker.
    */
   protected setupUpdateLoop(): void {
-    this.app.ticker.add((ticker) => {
+    // Remove existing update loop to prevent multiple callbacks
+    if (this.updateCallback) {
+      this.app.ticker.remove(this.updateCallback)
+    }
+
+    // Create and store the update callback
+    this.updateCallback = (ticker: any) => {
       this.update(~~(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER))
-    })
+    }
+
+    this.app.ticker.add(this.updateCallback)
   }
 
   protected handlePointerMove = (event: PointerEvent) => {
@@ -313,6 +384,19 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
   protected handleViewportZoomed = () => {
     this.emit(GameCanvasEvent.VIEWPORT_ZOOMED, this.viewport.scale.x)
+  }
+
+  protected handleGameStateChange = (
+    newState: GameState,
+    _oldState: GameState,
+  ) => {
+    for (const renderer of this.renderers.values()) {
+      try {
+        renderer.updateGameState(newState)
+      } catch (error) {
+        console.error("Error updating renderer game state:", error)
+      }
+    }
   }
 
   /**
@@ -453,6 +537,12 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    * Removes event listeners, destroys PIXI application, and cleans up DOM references.
    */
   public destroy(): void {
+    // Clean up ticker callback
+    if (this.updateCallback) {
+      this.app.ticker.remove(this.updateCallback)
+      this.updateCallback = null
+    }
+
     if (this.container) {
       this.container.removeEventListener("pointermove", this.handlePointerMove)
       this.container.removeEventListener("click", this.handleClick)

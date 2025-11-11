@@ -136,6 +136,10 @@ export interface IGameLoop {
 
 This makes it easy to build a game loop in which different objects can be processed in a consistent manner. A number of the other classes - `GameObject`, `Timer`, etc - all implement this. 
 
+ℹ️ **Any and all timing-related code (e.g movement velocity, durations) should make use of deltaTicks and/or totalTicks and never just assume a ticks-per-second frequency.**
+
+
+
 ### Game states
 
 Note the `GameState.ENDED` in the code above. Here are the possible states:
@@ -260,12 +264,12 @@ The rendering system in Clockwork utilises Pixi's built-in system of [container 
 
 Clockwork makes rendering easier and efficient by:
 
-* **GameObject-specific renderers** - `AbstractRenderer` is the base class for any and all renderers which render a list of game objects. It handles per-object updaters, adding and removing objects from the renderer containers, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
+* **GameObject-specific renderers** - `AbstractRenderer` is the base class for any and all renderers which render a list of game objects. It handles per-object updaters, adding and removing objects from the renderer containers, sprite rendering, and provides methods for rendering primitives such as circles and rectangles. 
 * **Only re-rendering what has changed** - the `GameObject.isRepaintNeeded` boolean value indicates whether a given game object needs to be re-rendered by the rendering pipeline. This helps with rendering performance. The boolean is set from within the game loop, and it must be unset by the renderer instance that is responsible for rendering that item, once the item has re-rendered.
 
 *Note: `AbstractRenderer` is actually a generic type, meaning you don't need to use `GameObject`s with it, you could use any type of object you want.* 
 
-Renderers are loaded and executed from within the `GameCanvas` instance. This object sets up the Pixi application and associated viewport system (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
+Renderers are loaded and executed from within the `GameCanvas` instance. This object holds a list of renderers and sets up the Pixi application and associated viewport system (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
 
 `GameCanvas` provides the game loop entrypoint method, which internally calls the `GameEngine` game loop method:
 
@@ -283,6 +287,8 @@ protected update(deltaTicks: number): void {
   this.render(deltaTicks)
 }
 ```
+
+The `GameCanvas` listens for state changes in the `GameEngine` and informs its list of renderers accordingly. This allows for e.g animations to be visually paused when the game is in a paused state.
 
 
 

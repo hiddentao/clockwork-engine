@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { GameEngine } from "../../src/GameEngine"
 import { GameEventManager } from "../../src/GameEventManager"
 import { GameRecorder } from "../../src/GameRecorder"
@@ -20,8 +20,15 @@ describe("ReplayManager", () => {
   let proxyEngine: GameEngine
   let sampleRecording: GameRecording
   let loader: MockLoader
+  let originalConsoleWarn: typeof console.warn
 
   beforeEach(() => {
+    // Suppress console warnings for object types not found during replay tests
+    originalConsoleWarn = console.warn
+    console.warn = () => {
+      /* Suppress console warnings during replay tests */
+    }
+
     loader = new MockLoader()
     engine = new ComplexTestEngine(loader)
     replayManager = new ReplayManager(engine)
@@ -72,6 +79,11 @@ describe("ReplayManager", () => {
         description: "Test recording",
       },
     }
+  })
+
+  afterEach(() => {
+    // Restore console.warn
+    console.warn = originalConsoleWarn
   })
 
   describe("Initial State", () => {

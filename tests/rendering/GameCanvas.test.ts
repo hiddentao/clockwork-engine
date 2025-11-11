@@ -320,7 +320,7 @@ class TestGameCanvas extends GameCanvas {
   public initializeCallCount = 0
   public testRenderers: Map<string, any> = new Map()
 
-  protected initializeGameLayers(): void {
+  protected setupRenderers(): void {
     this.initializeCallCount++
 
     // Create simple test renderers that track their operations

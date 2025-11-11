@@ -489,6 +489,10 @@ describe("GameEngine", () => {
     })
 
     it("should handle timer errors gracefully", async () => {
+      const originalConsoleError = console.error
+      const errorLogs: any[] = []
+      console.error = (...args: any[]) => errorLogs.push(args)
+
       engine.start()
 
       let errorThrown = false
@@ -512,6 +516,10 @@ describe("GameEngine", () => {
 
       expect(errorThrown).toBe(true)
       expect(normalCallbackExecuted).toBe(true)
+      expect(errorLogs.length).toBe(1) // Should have logged 1 error
+
+      // Restore console.error
+      console.error = originalConsoleError
     })
   })
 

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, mock } from "bun:test"
+import { GameState } from "../../src/types"
 
 // EventEmitter-like functionality for PIXI mock objects
 class EventEmitter {
@@ -284,6 +285,11 @@ class TestRenderer extends AbstractRenderer<TestGameObject> {
   public testCreateGraphics() {
     return this.createGraphics()
   }
+
+  // Expose gameState for testing
+  public getGameState(): GameState {
+    return this.gameState
+  }
 }
 
 describe("AbstractRenderer", () => {
@@ -307,6 +313,10 @@ describe("AbstractRenderer", () => {
       expect(renderer.createCallCount).toBe(0)
       expect(renderer.updateContainerCallCount).toBe(0)
       expect(gameContainer.children.length).toBe(0)
+    })
+
+    it("should initialize with default game state", () => {
+      expect(renderer.getGameState()).toBe(GameState.READY)
     })
 
     it("should store reference to game container", () => {
@@ -1029,6 +1039,75 @@ describe("AbstractRenderer", () => {
 
         renderer.clear()
         expect(destroyCalled).toBe(true)
+      })
+    })
+  })
+
+  describe("Game State Management", () => {
+    describe("updateGameState", () => {
+      it("should update the game state", () => {
+        expect(renderer.getGameState()).toBe(GameState.READY)
+
+        renderer.updateGameState(GameState.PLAYING)
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+
+        renderer.updateGameState(GameState.PAUSED)
+        expect(renderer.getGameState()).toBe(GameState.PAUSED)
+
+        renderer.updateGameState(GameState.ENDED)
+        expect(renderer.getGameState()).toBe(GameState.ENDED)
+      })
+
+      it("should allow returning to previous states", () => {
+        renderer.updateGameState(GameState.PLAYING)
+        renderer.updateGameState(GameState.PAUSED)
+        renderer.updateGameState(GameState.PLAYING)
+
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+      })
+
+      it("should handle multiple state changes", () => {
+        const states = [
+          GameState.PLAYING,
+          GameState.PAUSED,
+          GameState.ENDED,
+          GameState.READY,
+        ]
+
+        states.forEach((state) => {
+          renderer.updateGameState(state)
+          expect(renderer.getGameState()).toBe(state)
+        })
+      })
+    })
+
+    describe("State persistence during operations", () => {
+      it("should maintain state during item operations", () => {
+        renderer.updateGameState(GameState.PLAYING)
+
+        renderer.add(testItems[0])
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+
+        renderer.update(testItems[0])
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+
+        renderer.remove("item1")
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+
+        renderer.setItems(testItems)
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+
+        renderer.clear()
+        expect(renderer.getGameState()).toBe(GameState.PLAYING)
+      })
+
+      it("should maintain state during rerender operations", () => {
+        renderer.updateGameState(GameState.PAUSED)
+        renderer.add(testItems[0])
+        renderer.add(testItems[1])
+
+        renderer.rerender()
+        expect(renderer.getGameState()).toBe(GameState.PAUSED)
       })
     })
   })

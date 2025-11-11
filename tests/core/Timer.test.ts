@@ -129,6 +129,10 @@ describe("Timer", () => {
     })
 
     it("should handle callback errors gracefully", () => {
+      const originalConsoleError = console.error
+      const errorLogs: any[] = []
+      console.error = (...args: any[]) => errorLogs.push(args)
+
       let errorThrown = false
       let normalCallbackExecuted = false
 
@@ -146,6 +150,12 @@ describe("Timer", () => {
 
       expect(errorThrown).toBe(true)
       expect(normalCallbackExecuted).toBe(true)
+      expect(errorLogs.length).toBe(1)
+      expect(errorLogs[0][0]).toContain("Timer")
+      expect(errorLogs[0][0]).toContain("failed")
+
+      // Restore console.error
+      console.error = originalConsoleError
     })
   })
 
@@ -242,6 +252,10 @@ describe("Timer", () => {
     })
 
     it("should handle interval callback errors gracefully", () => {
+      const originalConsoleError = console.error
+      const errorLogs: any[] = []
+      console.error = (...args: any[]) => errorLogs.push(args)
+
       let errorCount = 0
       let normalExecutions = 0
 
@@ -258,6 +272,10 @@ describe("Timer", () => {
 
       expect(errorCount).toBe(3)
       expect(normalExecutions).toBe(3)
+      expect(errorLogs.length).toBe(3) // Should have logged 3 errors
+
+      // Restore console.error
+      console.error = originalConsoleError
     })
   })
 
@@ -561,6 +579,10 @@ describe("Timer", () => {
     })
 
     it("should handle callback that throws and creates new timer", () => {
+      const originalConsoleError = console.error
+      const errorLogs: any[] = []
+      console.error = (...args: any[]) => errorLogs.push(args)
+
       let newTimerExecuted = false
 
       timer.setTimeout(() => {
@@ -572,6 +594,10 @@ describe("Timer", () => {
 
       timer.update(2, 2)
       expect(newTimerExecuted).toBe(true)
+      expect(errorLogs.length).toBe(1) // Should have logged 1 error
+
+      // Restore console.error
+      console.error = originalConsoleError
     })
 
     it("should maintain deterministic execution order", () => {

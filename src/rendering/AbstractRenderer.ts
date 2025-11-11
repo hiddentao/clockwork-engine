@@ -1,8 +1,8 @@
 import { PIXI } from "../lib/pixi"
-import type { BaseRenderer } from "./BaseRenderer"
+import { GameState } from "../types"
 
 /**
- * Abstract base implementation of the BaseRenderer interface for PIXI.js game objects.
+ * Abstract base implementation for PIXI.js game objects.
  * Provides common functionality for managing visual representations of game entities
  * including creation, updating, removal, and lifecycle management.
  *
@@ -11,10 +11,11 @@ import type { BaseRenderer } from "./BaseRenderer"
  *
  * @template T The type of game object being rendered
  */
-export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
+export abstract class AbstractRenderer<T> {
   protected gameContainer: PIXI.Container
   protected itemSprites: Map<string, PIXI.Container> = new Map()
   protected items: Map<string, T> = new Map()
+  protected gameState: GameState = GameState.READY
 
   constructor(gameContainer: PIXI.Container) {
     this.gameContainer = gameContainer
@@ -28,6 +29,16 @@ export abstract class AbstractRenderer<T> implements BaseRenderer<T> {
    * @returns A PIXI container containing the item's visual elements
    */
   protected abstract create(item: T): PIXI.Container
+
+  /**
+   * Updates the game state for this renderer.
+   * Allows renderers to react to game state changes (e.g., pause animations, change visual appearance).
+   *
+   * @param state The new game state
+   */
+  public updateGameState(state: GameState): void {
+    this.gameState = state
+  }
 
   /**
    * Extracts a unique identifier from a game object.
