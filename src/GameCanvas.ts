@@ -330,8 +330,9 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
       this.container.addEventListener("pointermove", this.handlePointerMove)
       this.container.addEventListener("click", this.handleClick)
     }
-    // this.viewport.on("moved", this.handleViewportMoved)
-    // this.viewport.on("zoomed", this.handleViewportZoomed)
+
+    this.viewport.on("moved", this.handleViewportMoved)
+    this.viewport.on("zoomed", this.handleViewportZoomed)
   }
 
   /**
