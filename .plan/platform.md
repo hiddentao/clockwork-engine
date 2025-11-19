@@ -800,24 +800,435 @@ class Spritesheet {
 }
 ```
 
-### AssetLoader Base Class
+### AssetLoader Class
 
 ```typescript
-abstract class BaseAssetLoader<TSpritesheets, TStaticImages, TSounds> {
+class AssetLoader {
   constructor(
     protected loader: Loader,
     protected rendering: RenderingLayer,
     protected audio: AudioLayer
   )
 
-  async loadSpritesheet(key: TSpritesheets): Promise<Spritesheet>
-  async loadStaticImage(key: TStaticImages): Promise<TextureId>
-  async loadSound(key: TSounds): Promise<void>
+  register(id: string, type: AssetType): void
+  async loadSpritesheet(id: string): Promise<Spritesheet>
+  async loadStaticImage(id: string): Promise<TextureId>
+  async loadSound(id: string): Promise<void>
   async preloadAssets(onProgress?: ProgressCallback): Promise<void>
+  getSpritesheet(id: string): Spritesheet | undefined
+  getStaticImage(id: string): TextureId | undefined
 }
 ```
 
-Games will extend `BaseAssetLoader` with their specific asset enums.
+Games can use `AssetLoader` directly or extend it for custom loading behavior.
+
+## HeadlessLoader for In-Memory Replay
+
+### Purpose
+Enable server-side replay validation with minimal overhead. HeadlessLoader returns empty strings for all assets since MemoryPlatformLayer doesn't need actual asset data for replay validation.
+
+### Implementation
+
+```typescript
+/**
+ * Minimal loader for headless in-memory replay.
+ * Returns empty strings for all assets since MemoryPlatformLayer
+ * doesn't need actual asset data.
+ */
+export class HeadlessLoader extends Loader {
+  async fetchData(id: string, meta?: Record<string, any>): Promise<string> {
+    // Return empty string - MemoryPlatformLayer handles this
+    return ''
+  }
+}
+```
+
+**Key Points**:
+- Ultra-simple implementation
+- No caching needed (returns instantly)
+- No asset pre-loading required
+- Works with MemoryPlatformLayer which handles empty strings gracefully
+
+### Usage Pattern
+
+```typescript
+// Headless replay setup
+const loader = new HeadlessLoader()
+const platform = new MemoryPlatformLayer()
+const engine = new TestGameEngine({ loader, platform })
+
+await engine.reset(recording.gameConfig)
+
+const replayManager = new ReplayManager(engine)
+await replayManager.replay(recording)
+
+// Process replay...
+```
+
+## Asset Preloading System
+
+### Purpose
+Allow games to declare required assets that are automatically preloaded during `GameEngine.reset()` before `setup()` is called. This ensures all assets are loaded before game initialization.
+
+### AssetLoader Implementation
+
+```typescript
+export type AssetType = 'spritesheet' | 'staticImage' | 'sound'
+
+/**
+ * Concrete asset loader based on game-base and tiki-kong patterns.
+ * Games can use directly or extend for custom behavior.
+ */
+export class AssetLoader {
+  private spritesheets = new Map<string, Spritesheet>()
+  private staticImages = new Map<string, TextureId>()
+  private sounds = new Set<string>()
+
+  // Asset registration
+  private registeredSpritesheets: string[] = []
+  private registeredStaticImages: string[] = []
+  private registeredSounds: string[] = []
+
+  constructor(
+    protected loader: Loader,
+    protected rendering: RenderingLayer,
+    protected audio: AudioLayer
+  ) {}
+
+  /**
+   * Register an asset to be preloaded.
+   * Call this during game initialization for all required assets.
+   */
+  register(id: string, type: AssetType): void {
+    switch (type) {
+      case 'spritesheet':
+        if (!this.registeredSpritesheets.includes(id)) {
+          this.registeredSpritesheets.push(id)
+        }
+        break
+      case 'staticImage':
+        if (!this.registeredStaticImages.includes(id)) {
+          this.registeredStaticImages.push(id)
+        }
+        break
+      case 'sound':
+        if (!this.registeredSounds.has(id)) {
+          this.registeredSounds.add(id)
+        }
+        break
+    }
+  }
+
+  /**
+   * Preload all registered assets.
+   * Called by GameEngine.reset() before setup().
+   */
+  async preloadAssets(onProgress?: (loaded: number, total: number) => void): Promise<void> {
+    const tasks: Promise<void>[] = []
+    let loaded = 0
+    const total = this.registeredSpritesheets.length +
+                  this.registeredStaticImages.length +
+                  this.registeredSounds.size
+
+    const trackProgress = () => {
+      loaded++
+      onProgress?.(loaded, total)
+    }
+
+    // Load spritesheets
+    for (const id of this.registeredSpritesheets) {
+      tasks.push(this.loadSpritesheet(id).then(trackProgress))
+    }
+
+    // Load static images
+    for (const id of this.registeredStaticImages) {
+      tasks.push(this.loadStaticImage(id).then(trackProgress))
+    }
+
+    // Load sounds
+    for (const id of this.registeredSounds) {
+      tasks.push(this.loadSound(id).then(trackProgress))
+    }
+
+    await Promise.all(tasks)
+  }
+
+  // Asset loading (virtual methods - games can override in subclass)
+  async loadSpritesheet(id: string): Promise<Spritesheet> {
+    const spritesheet = await Spritesheet.load(
+      this.loader,
+      this.rendering,
+      `sprites/${id}.png`
+    )
+    this.spritesheets.set(id, spritesheet)
+    return spritesheet
+  }
+
+  async loadStaticImage(id: string): Promise<TextureId> {
+    const textureId = await this.rendering.loadTexture(`images/${id}.png`)
+    this.staticImages.set(id, textureId)
+    return textureId
+  }
+
+  async loadSound(id: string): Promise<void> {
+    const data = await this.loader.fetchData(`sounds/${id}.wav`)
+    await this.audio.loadSound(id, data)
+  }
+
+  // Getters (from game-base pattern)
+  getSpritesheet(id: string): Spritesheet | undefined {
+    return this.spritesheets.get(id)
+  }
+
+  getStaticImage(id: string): TextureId | undefined {
+    return this.staticImages.get(id)
+  }
+}
+```
+
+### Game Usage Examples
+
+**Direct Usage (Simple Games)**:
+```typescript
+// Use AssetLoader directly without extending
+const loader = new DemoLoader()
+const platform = new WebPlatformLayer(container, options)
+const assetLoader = new AssetLoader(loader, platform.rendering, platform.audio)
+
+// Register assets
+assetLoader.register('player', 'spritesheet')
+assetLoader.register('enemy', 'spritesheet')
+assetLoader.register('tileset', 'spritesheet')
+assetLoader.register('logo', 'staticImage')
+assetLoader.register('background', 'staticImage')
+assetLoader.register('jump', 'sound')
+assetLoader.register('hit', 'sound')
+
+// Create engine
+const engine = new MyGameEngine({ loader, platform, assetLoader })
+await engine.reset(config)
+
+// Use loaded assets
+const playerSheet = assetLoader.getSpritesheet('player')
+const logoTexture = assetLoader.getStaticImage('logo')
+```
+
+**Custom Subclass (Complex Games)**:
+```typescript
+// Extend AssetLoader for custom path logic
+class TikiKongAssetLoader extends AssetLoader {
+  async loadSpritesheet(id: string): Promise<Spritesheet> {
+    // Custom path convention
+    const spritesheet = await Spritesheet.load(
+      this.loader,
+      this.rendering,
+      `game-assets/spritesheets/${id}.png`
+    )
+    this.spritesheets.set(id, spritesheet)
+    return spritesheet
+  }
+
+  async loadSound(id: string): Promise<void> {
+    // Try mp3 first, fallback to wav
+    let data: string
+    try {
+      data = await this.loader.fetchData(`sounds/${id}.mp3`)
+    } catch {
+      data = await this.loader.fetchData(`sounds/${id}.wav`)
+    }
+    await this.audio.loadSound(id, data)
+  }
+}
+
+// Usage
+const assetLoader = new TikiKongAssetLoader(loader, platform.rendering, platform.audio)
+assetLoader.register('kong', 'spritesheet')
+assetLoader.register('barrel', 'spritesheet')
+assetLoader.register('roar', 'sound')
+
+const engine = new TikiKongEngine({ loader, platform, assetLoader })
+```
+
+### GameEngine Integration
+
+```typescript
+export interface GameEngineOptions {
+  loader: Loader
+  platform: PlatformLayer
+  assetLoader?: AssetLoader  // Optional - games provide if needed
+}
+
+export abstract class GameEngine {
+  protected loader: Loader
+  protected platform: PlatformLayer
+  protected assetLoader?: AssetLoader
+
+  constructor(options: GameEngineOptions) {
+    this.loader = options.loader
+    this.platform = options.platform
+    this.assetLoader = options.assetLoader
+  }
+
+  /**
+   * Reset the game to initial state.
+   * Preloads assets before calling setup() if assetLoader is provided.
+   */
+  async reset(config: GameConfig): Promise<void> {
+    this.state = GameState.READY
+
+    // Preload assets before setup (if asset loader provided)
+    if (this.assetLoader?.preloadAssets) {
+      await this.assetLoader.preloadAssets()
+    }
+
+    // Now setup can assume all assets are loaded
+    await this.setup(config)
+  }
+}
+```
+
+### MemoryPlatformLayer Empty String Handling
+
+**MemoryRenderingLayer**:
+```typescript
+class MemoryRenderingLayer implements RenderingLayer {
+  async loadTexture(url: string): Promise<TextureId> {
+    // Empty string from HeadlessLoader - just return mock ID
+    const id = this.nextTextureId++
+    this.textures.set(id, { url, width: 0, height: 0 })
+    return id
+  }
+
+  async loadSpritesheet(imageUrl: string, jsonData: any): Promise<SpritesheetId> {
+    // Empty imageUrl and empty jsonData from HeadlessLoader
+    // Just return mock spritesheet with no frames
+    const id = this.nextSpritesheetId++
+    this.spritesheets.set(id, { frames: new Map() })
+    return id
+  }
+
+  getTexture(spritesheet: SpritesheetId, frameName: string): TextureId | null {
+    // Return null or mock texture - doesn't matter for replay
+    return null
+  }
+}
+```
+
+**MemoryAudioLayer**:
+```typescript
+class MemoryAudioLayer implements AudioLayer {
+  async loadSound(id: string, data: string | ArrayBuffer): Promise<void> {
+    // Empty string from HeadlessLoader - no-op
+  }
+
+  createBuffer(channels: number, length: number, sampleRate: number): AudioBuffer {
+    // Return minimal mock
+    return {
+      numberOfChannels: channels,
+      length,
+      sampleRate,
+      duration: length / sampleRate,
+      getChannelData: () => new Float32Array(length)
+    } as AudioBuffer
+  }
+}
+```
+
+## Headless Replay Testing
+
+### Comprehensive Test Coverage
+
+```typescript
+describe('Headless In-Memory Replay', () => {
+  it('should replay recording with HeadlessLoader + MemoryPlatformLayer', async () => {
+    // 1. Create headless components
+    const loader = new HeadlessLoader()
+    const platform = new MemoryPlatformLayer()
+
+    // 2. Create asset loader (optional for headless - can be omitted)
+    const assetLoader = new AssetLoader(loader, platform.rendering, platform.audio)
+    assetLoader.register('player', 'spritesheet')
+    assetLoader.register('enemy', 'spritesheet')
+
+    // 3. Create engine with asset loader
+    const engine = new TestGameEngine({ loader, platform, assetLoader })
+
+    // 4. Reset (will call preloadAssets automatically)
+    await engine.reset(recording.gameConfig)
+
+    // 5. Replay
+    const replayManager = new ReplayManager(engine)
+    await replayManager.replay(recording)
+
+    // 6. Process replay with timeout protection
+    const startTime = Date.now()
+    const TIMEOUT_MS = 10000
+    let progress = replayManager.getReplayProgress()
+
+    while (progress.progress < 1.0) {
+      expect(Date.now() - startTime).toBeLessThan(TIMEOUT_MS)
+
+      engine.update(recording.totalTicks)
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      progress = replayManager.getReplayProgress()
+    }
+
+    // 7. Validate final state
+    const snapshot = engine.getGameSnapshot()
+    expect(snapshot).toMatchObject(recording.expectedSnapshot)
+  })
+
+  it('should handle asset loading with empty strings', async () => {
+    const loader = new HeadlessLoader()
+    const platform = new MemoryPlatformLayer()
+
+    // Verify empty strings don't break anything
+    const textureId = await platform.rendering.loadTexture('')
+    expect(textureId).toBeDefined()
+
+    const spritesheetId = await platform.rendering.loadSpritesheet('', {})
+    expect(spritesheetId).toBeDefined()
+
+    await platform.audio.loadSound('test', '')
+    // Should not throw
+  })
+
+  it('should complete deterministic replay', async () => {
+    const loader = new HeadlessLoader()
+    const platform = new MemoryPlatformLayer()
+
+    // Run same recording twice
+    const results = []
+    for (let i = 0; i < 2; i++) {
+      const engine = new TestGameEngine({ loader, platform })
+      await engine.reset(recording.gameConfig)
+
+      const replayManager = new ReplayManager(engine)
+      await replayManager.replay(recording)
+
+      let progress = replayManager.getReplayProgress()
+      while (progress.progress < 1.0) {
+        engine.update(recording.totalTicks)
+        await new Promise(resolve => setTimeout(resolve, 100))
+        progress = replayManager.getReplayProgress()
+      }
+
+      results.push(engine.getGameSnapshot())
+    }
+
+    // Both replays should produce identical results
+    expect(results[0]).toEqual(results[1])
+  })
+})
+```
+
+**Test Pattern** (based on arcade2):
+1. **Timeout Protection**: Always use timeout guards for replay loops
+2. **Progress Polling**: Sleep between update() calls to allow async operations
+3. **Determinism Verification**: Run same replay multiple times, verify identical results
+4. **Empty String Handling**: Verify MemoryPlatformLayer handles empty asset data
+5. **Final State Validation**: Extract and verify game snapshot matches expected state
 
 ## Migration Strategy
 
@@ -878,11 +1289,16 @@ Games will extend `BaseAssetLoader` with their specific asset enums.
 ### Phase 7: Asset Loading
 1. Port `Spritesheet` class from game-base
    - Update to use `RenderingLayer.loadTexture()` with error texture support
-2. Port `BaseAssetLoader` from game-base
+2. Create `AssetLoader` class (concrete, based on game-base and tiki-kong patterns)
    - Remove HTML5 Audio API usage (`new Audio()`)
    - Consolidate all sound loading through `AudioLayer.loadSound()`
-3. Integrate with platform `RenderingLayer` and `AudioLayer`
-4. Update loading to use platform-agnostic texture management
+   - Add `register(id: string, type: AssetType)` method for asset registration
+   - Implement `preloadAssets()` method with progress callback support
+   - Add `getSpritesheet()`, `getStaticImage()` getters
+   - Virtual `load*()` methods for subclass customization
+3. Update `GameEngineOptions` to accept optional `assetLoader`
+4. Update `GameEngine.reset()` to call `assetLoader.preloadAssets()` if provided
+5. Integrate with platform `RenderingLayer` and `AudioLayer`
 
 ### Phase 8: Demo Updates
 1. Update demo to create `WebPlatformLayer`
@@ -897,6 +1313,15 @@ Games will extend `BaseAssetLoader` with their specific asset enums.
 3. Replay verification tests using `MemoryPlatformLayer`
 4. Visual regression tests for demo
 5. Performance benchmarking
+
+### Phase 10: Headless Replay Infrastructure
+1. Implement `HeadlessLoader` class (returns empty strings)
+2. Update `MemoryRenderingLayer` to handle empty asset data
+3. Update `MemoryAudioLayer` to handle empty asset data
+4. Verify `GameEngine.reset()` preloading hook works with `AssetLoader`
+5. Create comprehensive replay test suite using test game engine
+6. Verify timeout protection and progress tracking
+7. Document server-side replay validation patterns
 
 ## Success Criteria
 
@@ -914,6 +1339,10 @@ Games will extend `BaseAssetLoader` with their specific asset enums.
 ✅ **Type Safety**: Full TypeScript type safety maintained
 ✅ **API Clarity**: Clean, intuitive OOP-style API for game developers
 ✅ **Extensibility**: Easy to add new platform implementations (Canvas2D, Unity, etc.)
+✅ **Headless Replay**: In-memory replay with `HeadlessLoader` + `MemoryPlatformLayer` validates game logic
+✅ **Asset Preloading**: Games can declare required assets, automatically preloaded in `reset()`
+✅ **No Asset Data Needed**: `MemoryPlatformLayer` handles empty strings from `HeadlessLoader`
+✅ **GameCanvas Optional**: Replay validation works without `GameCanvas` initialization
 
 ## Open Questions & Future Considerations
 
@@ -983,9 +1412,24 @@ These features are not used by the reference games (tiki-kong, snakes-on-a-chain
   - Audio management (RealAudioManager, DummyAudioManager)
   - Replay infrastructure
   - Resize handling pattern (useResponsiveCanvas hook)
-- arcade2: `~/dev/tribally/arcade2/src/client`
+- arcade2: `~/dev/tribally/arcade2/src`
   - Resize handling pattern (100ms debounce, orientation tracking)
   - Responsive canvas sizing with reserved vertical space
+  - Server-side replay validation (`src/server/lib/serverAssetLoader.ts`)
+  - DOM shims for headless execution (`src/server/lib/domShims.ts`)
+  - Headless engine creation with DummyAudioManager
+  - Asset caching and Data URL conversion patterns
+  - Replay timeout protection and progress polling
+
+### arcade2 Headless Replay Insights
+Key patterns discovered from arcade2 that influenced this plan:
+1. **Minimal Loader**: HeadlessLoader returns empty strings (simpler than arcade2's full asset loading)
+2. **Asset Pre-loading**: Loader doesn't know game's asset requirements - games register via manifest
+3. **Data URLs**: All non-JSON assets converted to Data URLs for in-memory use (already standard pattern)
+4. **Timeout Protection**: Always guard replay loops with timeouts (10s recommended)
+5. **Progress Polling**: Sleep between update() calls to allow async operations (100-500ms)
+6. **No GameCanvas Needed**: In-memory replay validates logic only, no rendering required
+7. **Cleaner Abstraction**: MemoryPlatformLayer eliminates need for DOM shims (unlike arcade2)
 
 ### External Documentation
 - PIXI.js v8 API
