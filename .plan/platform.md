@@ -482,6 +482,23 @@ interface KeyboardInputEvent {
   code: string
   timestamp: number
 }
+
+### Type Safety: Branded IDs
+
+To prevent mixing up different types of IDs (e.g. passing a TextureId where a NodeId is expected), we will use TypeScript "branded types".
+
+```typescript
+// Utility for creating branded types
+type Brand<K, T> = K & { __brand: T }
+
+export type NodeId = Brand<number, 'NodeId'>
+export type TextureId = Brand<number, 'TextureId'>
+export type SpritesheetId = Brand<number, 'SpritesheetId'>
+export type SoundId = Brand<string, 'SoundId'>
+
+// Helper to cast raw values (use carefully, mostly inside the platform layer)
+export function asNodeId(id: number): NodeId { return id as NodeId }
+```
 ```
 
 **Coordinate System**:
@@ -836,7 +853,7 @@ Enable server-side replay validation with minimal overhead. HeadlessLoader retur
  * doesn't need actual asset data.
  */
 export class HeadlessLoader extends Loader {
-  async fetchData(id: string, meta?: Record<string, any>): Promise<string> {
+  async fetchData(id: string, meta?: Record<string, any>): Promise<string | ArrayBuffer> {
     // Return empty string - MemoryPlatformLayer handles this
     return ''
   }
@@ -955,17 +972,29 @@ export class AssetLoader {
 
   // Asset loading (virtual methods - games can override in subclass)
   async loadSpritesheet(id: string): Promise<Spritesheet> {
+    // Load image data
+    const imageData = await this.loader.fetchData(`sprites/${id}.png`)
+    const imageUrl = this.createUrlFromData(imageData, 'image/png')
+    
+    // Load JSON data (always string)
+    const jsonContent = await this.loader.fetchData(`sprites/${id}.json`)
+    const jsonData = typeof jsonContent === 'string' ? JSON.parse(jsonContent) : jsonContent
+
     const spritesheet = await Spritesheet.load(
       this.loader,
       this.rendering,
-      `sprites/${id}.png`
+      imageUrl,
+      jsonData
     )
     this.spritesheets.set(id, spritesheet)
     return spritesheet
   }
 
   async loadStaticImage(id: string): Promise<TextureId> {
-    const textureId = await this.rendering.loadTexture(`images/${id}.png`)
+    const data = await this.loader.fetchData(`images/${id}.png`)
+    const url = this.createUrlFromData(data, 'image/png')
+    
+    const textureId = await this.rendering.loadTexture(url)
     this.staticImages.set(id, textureId)
     return textureId
   }
@@ -973,6 +1002,21 @@ export class AssetLoader {
   async loadSound(id: string): Promise<void> {
     const data = await this.loader.fetchData(`sounds/${id}.wav`)
     await this.audio.loadSound(id, data)
+  }
+
+  /**
+   * Helper to convert Loader data (String/ArrayBuffer) to a usable URL.
+   * - Strings are returned as-is (assumed to be URLs or Data URIs)
+   * - ArrayBuffers are converted to Blob URLs
+   */
+  protected createUrlFromData(data: string | ArrayBuffer, mimeType: string): string {
+    if (typeof data === 'string') {
+      return data
+    }
+    
+    // Convert ArrayBuffer to Blob URL
+    const blob = new Blob([data], { type: mimeType })
+    return URL.createObjectURL(blob)
   }
 
   // Getters (from game-base pattern)
@@ -1258,7 +1302,7 @@ describe('Headless In-Memory Replay', () => {
 4. Create `WebPlatformLayer` composition
    - Add `getDevicePixelRatio()` method
 
-### Phase 3: Memory Implementations
+### Phase 3: Memory Implementations & Testing Infra
 1. Implement `MemoryRenderingLayer` with state tracking
    - Track bounds for `getBounds()`
    - Mock all new visual features
@@ -1268,6 +1312,10 @@ describe('Headless In-Memory Replay', () => {
 3. Implement `MemoryInputLayer` (no-op)
 4. Create `MemoryPlatformLayer` composition
    - `getDevicePixelRatio()` returns `1`
+5. **Setup Test Infrastructure**
+   - Configure test runner (Jest/Vitest) to use `MemoryPlatformLayer`
+   - Create basic "sanity check" test that boots the engine with memory platform
+   - Ensure `HeadlessLoader` works in the test environment
 
 ### Phase 4: Engine Integration
 1. Update `GameEngineOptions` to accept `PlatformLayer`
@@ -1313,6 +1361,7 @@ describe('Headless In-Memory Replay', () => {
 3. Replay verification tests using `MemoryPlatformLayer`
 4. Visual regression tests for demo
 5. Performance benchmarking
+(Note: Core test infra is set up in Phase 3, this phase focuses on expanding coverage)
 
 ### Phase 10: Headless Replay Infrastructure
 1. Implement `HeadlessLoader` class (returns empty strings)
@@ -1389,7 +1438,7 @@ These features are not used by the reference games (tiki-kong, snakes-on-a-chain
 5. **Texture Atlasing**: Platform-specific optimizations
 
 ### Mitigation Strategies
-- Strict type branding for all IDs (TextureId, NodeId, etc.)
+- Strict type branding for all IDs (TextureId, NodeId, etc.) - **Added to Plan**
 - Comprehensive unit tests for coordinate transformations
 - Benchmark memory overhead of DisplayNode wrappers
 - Document animation state management patterns
