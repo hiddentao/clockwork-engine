@@ -140,11 +140,62 @@ test.describe("PixiRenderingLayer (Browser with WebGL)", () => {
 
       const node = rendering.createNode()
 
-      rendering.drawRectangle(node, 10, 20, 100, 50, 0xff0000)
-      rendering.drawCircle(node, 50, 50, 25, 0x00ff00)
-      rendering.drawPolygon(node, [0, 0, 100, 0, 50, 100], 0x0000ff)
+      // Draw primitives
+      rendering.drawRectangle(node, 100, 100, 100, 50, 0xff0000)
+      rendering.drawCircle(node, 300, 150, 25, 0x00ff00)
+      rendering.drawPolygon(node, [500, 100, 600, 100, 550, 200], 0x0000ff)
+
+      // Render one frame
+      rendering.render()
 
       const graphics = rendering.getGraphics(node)
+
+      // Extract pixels for verification (inline implementation)
+      const extractPixels = (app: any) => {
+        const { renderer } = app
+        const { width, height } = renderer.screen
+        const pixels = new Uint8Array(width * height * 4)
+        const gl = renderer.gl
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+        // Flip Y coordinate (WebGL uses bottom-left origin)
+        const flipped = new Uint8ClampedArray(width * height * 4)
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const srcIdx = ((height - y - 1) * width + x) * 4
+            const dstIdx = (y * width + x) * 4
+            flipped[dstIdx] = pixels[srcIdx]
+            flipped[dstIdx + 1] = pixels[srcIdx + 1]
+            flipped[dstIdx + 2] = pixels[srcIdx + 2]
+            flipped[dstIdx + 3] = pixels[srcIdx + 3]
+          }
+        }
+        return new ImageData(flipped, width, height)
+      }
+
+      const imageData = extractPixels((rendering as any).app)
+
+      // Helper to check pixel color
+      const checkPixel = (x: number, y: number, expectedHex: number) => {
+        const index = (y * imageData.width + x) * 4
+        const pixel = {
+          r: imageData.data[index],
+          g: imageData.data[index + 1],
+          b: imageData.data[index + 2],
+          a: imageData.data[index + 3],
+        }
+        const expected = {
+          r: (expectedHex >> 16) & 0xff,
+          g: (expectedHex >> 8) & 0xff,
+          b: expectedHex & 0xff,
+        }
+        const tolerance = 10
+        return (
+          Math.abs(pixel.r - expected.r) <= tolerance &&
+          Math.abs(pixel.g - expected.g) <= tolerance &&
+          Math.abs(pixel.b - expected.b) <= tolerance
+        )
+      }
 
       rendering.clearGraphics(node)
       const clearedGraphics = rendering.getGraphics(node)
@@ -153,6 +204,10 @@ test.describe("PixiRenderingLayer (Browser with WebGL)", () => {
         graphicsCount: graphics.length,
         types: graphics.map((g: any) => g.type),
         clearedCount: clearedGraphics.length,
+        // Verify each primitive rendered
+        rectanglePixel: checkPixel(150, 125, 0xff0000), // Center of red rectangle
+        circlePixel: checkPixel(300, 150, 0x00ff00), // Center of green circle
+        polygonPixel: checkPixel(550, 150, 0x0000ff), // Inside blue polygon
       }
     })
 
@@ -161,6 +216,11 @@ test.describe("PixiRenderingLayer (Browser with WebGL)", () => {
     expect(result.types).toContain("circle")
     expect(result.types).toContain("polygon")
     expect(result.clearedCount).toBe(0)
+
+    // Visual verification
+    expect(result.rectanglePixel).toBe(true)
+    expect(result.circlePixel).toBe(true)
+    expect(result.polygonPixel).toBe(true)
   })
 
   test("should handle viewport operations", async ({ page }) => {
@@ -245,6 +305,185 @@ test.describe("PixiRenderingLayer (Browser with WebGL)", () => {
 
     expect(result.textureLoaded).toBe(true)
     expect(result.nodeHasSprite).toBe(true)
+  })
+
+  test("should render colored rectangles correctly", async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { PixiRenderingLayer } = await import("/dist/clockwork-engine.js")
+
+      const canvas = document.createElement("canvas")
+      canvas.width = 400
+      canvas.height = 300
+      document.body.appendChild(canvas)
+
+      const rendering = new PixiRenderingLayer(canvas, {
+        worldWidth: 400,
+        worldHeight: 300,
+      })
+
+      await rendering.init()
+
+      // Create nodes with different colored rectangles
+      const redNode = rendering.createNode()
+      const greenNode = rendering.createNode()
+      const blueNode = rendering.createNode()
+
+      // Draw rectangles with direct colors (not using tint)
+      rendering.drawRectangle(redNode, 50, 100, 50, 50, 0xff0000)
+      rendering.drawRectangle(greenNode, 150, 100, 50, 50, 0x00ff00)
+      rendering.drawRectangle(blueNode, 250, 100, 50, 50, 0x0000ff)
+
+      // Render
+      rendering.render()
+
+      // Extract pixels
+      const extractPixels = (app: any) => {
+        const { renderer } = app
+        const { width, height } = renderer.screen
+        const pixels = new Uint8Array(width * height * 4)
+        const gl = renderer.gl
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+        const flipped = new Uint8ClampedArray(width * height * 4)
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const srcIdx = ((height - y - 1) * width + x) * 4
+            const dstIdx = (y * width + x) * 4
+            flipped[dstIdx] = pixels[srcIdx]
+            flipped[dstIdx + 1] = pixels[srcIdx + 1]
+            flipped[dstIdx + 2] = pixels[srcIdx + 2]
+            flipped[dstIdx + 3] = pixels[srcIdx + 3]
+          }
+        }
+        return new ImageData(flipped, width, height)
+      }
+
+      const imageData = extractPixels((rendering as any).app)
+
+      // Check colors
+      const getPixel = (x: number, y: number) => {
+        const index = (y * imageData.width + x) * 4
+        return {
+          r: imageData.data[index],
+          g: imageData.data[index + 1],
+          b: imageData.data[index + 2],
+          a: imageData.data[index + 3],
+        }
+      }
+
+      const redPixel = getPixel(75, 125)
+      const greenPixel = getPixel(175, 125)
+      const bluePixel = getPixel(275, 125)
+
+      return {
+        pixels: {
+          red: redPixel,
+          green: greenPixel,
+          blue: bluePixel,
+        },
+      }
+    })
+
+    // Verify rendered colors match expected values
+    expect(result.pixels.red.r).toBeGreaterThan(200)
+    expect(result.pixels.red.g).toBeLessThan(50)
+    expect(result.pixels.red.b).toBeLessThan(50)
+
+    expect(result.pixels.green.r).toBeLessThan(50)
+    expect(result.pixels.green.g).toBeGreaterThan(200)
+    expect(result.pixels.green.b).toBeLessThan(50)
+
+    expect(result.pixels.blue.r).toBeLessThan(50)
+    expect(result.pixels.blue.g).toBeLessThan(50)
+    expect(result.pixels.blue.b).toBeGreaterThan(200)
+  })
+
+  test("should render with alpha transparency", async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const { PixiRenderingLayer } = await import("/dist/clockwork-engine.js")
+
+      const canvas = document.createElement("canvas")
+      canvas.width = 400
+      canvas.height = 300
+      document.body.appendChild(canvas)
+
+      const rendering = new PixiRenderingLayer(canvas, {
+        worldWidth: 400,
+        worldHeight: 300,
+      })
+
+      await rendering.init()
+
+      // Create two nodes with different alpha values
+      const opaqueNode = rendering.createNode()
+      const semiTransparentNode = rendering.createNode()
+
+      // Draw rectangles
+      rendering.drawRectangle(opaqueNode, 50, 100, 80, 80, 0xff0000)
+      rendering.drawRectangle(semiTransparentNode, 150, 100, 80, 80, 0x00ff00)
+
+      // Set different alpha values
+      rendering.setAlpha(opaqueNode, 1.0)
+      rendering.setAlpha(semiTransparentNode, 0.5)
+
+      rendering.render()
+
+      // Extract pixels
+      const extractPixels = (app: any) => {
+        const { renderer } = app
+        const { width, height } = renderer.screen
+        const pixels = new Uint8Array(width * height * 4)
+        const gl = renderer.gl
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+        const flipped = new Uint8ClampedArray(width * height * 4)
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const srcIdx = ((height - y - 1) * width + x) * 4
+            const dstIdx = (y * width + x) * 4
+            flipped[dstIdx] = pixels[srcIdx]
+            flipped[dstIdx + 1] = pixels[srcIdx + 1]
+            flipped[dstIdx + 2] = pixels[srcIdx + 2]
+            flipped[dstIdx + 3] = pixels[srcIdx + 3]
+          }
+        }
+        return new ImageData(flipped, width, height)
+      }
+
+      const imageData = extractPixels((rendering as any).app)
+
+      const getPixel = (x: number, y: number) => {
+        const index = (y * imageData.width + x) * 4
+        return {
+          r: imageData.data[index],
+          g: imageData.data[index + 1],
+          b: imageData.data[index + 2],
+          a: imageData.data[index + 3],
+        }
+      }
+
+      return {
+        alphaValues: {
+          opaque: rendering.getAlpha(opaqueNode),
+          semiTransparent: rendering.getAlpha(semiTransparentNode),
+        },
+        pixels: {
+          opaque: getPixel(90, 140),
+          semiTransparent: getPixel(190, 140),
+        },
+      }
+    })
+
+    // Verify alpha values are set correctly
+    expect(result.alphaValues.opaque).toBe(1.0)
+    expect(result.alphaValues.semiTransparent).toBe(0.5)
+
+    // Verify opaque red is fully visible
+    expect(result.pixels.opaque.r).toBeGreaterThan(200)
+
+    // Verify semi-transparent green has reduced intensity due to alpha blending
+    expect(result.pixels.semiTransparent.g).toBeGreaterThan(50)
+    expect(result.pixels.semiTransparent.g).toBeLessThan(200)
   })
 
   test("should cleanup properly", async ({ page }) => {

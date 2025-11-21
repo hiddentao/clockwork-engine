@@ -699,6 +699,10 @@ export class PixiRenderingLayer implements RenderingLayer {
     this._needsRepaint = true
   }
 
+  render(): void {
+    this.app.renderer.render(this.app.stage)
+  }
+
   getDevicePixelRatio(): number {
     return window.devicePixelRatio || 1
   }

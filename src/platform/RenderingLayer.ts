@@ -133,6 +133,9 @@ export interface RenderingLayer {
   onTick(callback: (deltaTicks: number) => void): void
   setTickerSpeed(speed: number): void
 
+  // Manual rendering
+  render(): void
+
   // Canvas resize
   resize(width: number, height: number): void
 }

@@ -471,6 +471,11 @@ export class MemoryRenderingLayer implements RenderingLayer {
     this.tickerSpeed = speed
   }
 
+  // Manual rendering
+  render(): void {
+    // No-op for headless rendering
+  }
+
   // Canvas resize
   resize(width: number, height: number): void {
     this.canvasSize = { width, height }
