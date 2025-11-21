@@ -40,7 +40,6 @@ const devBuild = await Bun.build({
   format: "esm",
   minify: false,
   sourcemap: "external",
-  splitting: false,
 })
 
 if (!devBuild.success) {
@@ -64,7 +63,6 @@ const prodBuild = await Bun.build({
   format: "esm",
   minify: true,
   sourcemap: "external",
-  splitting: false,
 })
 
 if (!prodBuild.success) {

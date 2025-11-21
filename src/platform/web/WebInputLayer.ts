@@ -5,14 +5,15 @@
  */
 
 import type { InputEvent, InputLayer, KeyboardInputEvent } from "../InputLayer"
+import { EventCallbackManager } from "../utils/EventCallbackManager"
 
 export class WebInputLayer implements InputLayer {
-  private pointerDownCallbacks: Array<(event: InputEvent) => void> = []
-  private pointerUpCallbacks: Array<(event: InputEvent) => void> = []
-  private pointerMoveCallbacks: Array<(event: InputEvent) => void> = []
-  private clickCallbacks: Array<(event: InputEvent) => void> = []
-  private keyDownCallbacks: Array<(event: KeyboardInputEvent) => void> = []
-  private keyUpCallbacks: Array<(event: KeyboardInputEvent) => void> = []
+  private pointerDownCallbacks = new EventCallbackManager<InputEvent>()
+  private pointerUpCallbacks = new EventCallbackManager<InputEvent>()
+  private pointerMoveCallbacks = new EventCallbackManager<InputEvent>()
+  private clickCallbacks = new EventCallbackManager<InputEvent>()
+  private keyDownCallbacks = new EventCallbackManager<KeyboardInputEvent>()
+  private keyUpCallbacks = new EventCallbackManager<KeyboardInputEvent>()
 
   private boundPointerDownHandler: (e: MouseEvent) => void
   private boundPointerUpHandler: (e: MouseEvent) => void
@@ -38,27 +39,27 @@ export class WebInputLayer implements InputLayer {
   }
 
   onPointerDown(callback: (event: InputEvent) => void): void {
-    this.pointerDownCallbacks.push(callback)
+    this.pointerDownCallbacks.register(callback)
   }
 
   onPointerUp(callback: (event: InputEvent) => void): void {
-    this.pointerUpCallbacks.push(callback)
+    this.pointerUpCallbacks.register(callback)
   }
 
   onPointerMove(callback: (event: InputEvent) => void): void {
-    this.pointerMoveCallbacks.push(callback)
+    this.pointerMoveCallbacks.register(callback)
   }
 
   onClick(callback: (event: InputEvent) => void): void {
-    this.clickCallbacks.push(callback)
+    this.clickCallbacks.register(callback)
   }
 
   onKeyDown(callback: (event: KeyboardInputEvent) => void): void {
-    this.keyDownCallbacks.push(callback)
+    this.keyDownCallbacks.register(callback)
   }
 
   onKeyUp(callback: (event: KeyboardInputEvent) => void): void {
-    this.keyUpCallbacks.push(callback)
+    this.keyUpCallbacks.register(callback)
   }
 
   removeAllListeners(): void {
@@ -75,40 +76,32 @@ export class WebInputLayer implements InputLayer {
     window.removeEventListener("keydown", this.boundKeyDownHandler)
     window.removeEventListener("keyup", this.boundKeyUpHandler)
 
-    this.pointerDownCallbacks = []
-    this.pointerUpCallbacks = []
-    this.pointerMoveCallbacks = []
-    this.clickCallbacks = []
-    this.keyDownCallbacks = []
-    this.keyUpCallbacks = []
+    this.pointerDownCallbacks.clear()
+    this.pointerUpCallbacks.clear()
+    this.pointerMoveCallbacks.clear()
+    this.clickCallbacks.clear()
+    this.keyDownCallbacks.clear()
+    this.keyUpCallbacks.clear()
   }
 
   private handlePointerDown(e: MouseEvent): void {
     const event = this.normalizePointerEvent(e)
-    for (const callback of this.pointerDownCallbacks) {
-      callback(event)
-    }
+    this.pointerDownCallbacks.trigger(event)
   }
 
   private handlePointerUp(e: MouseEvent): void {
     const event = this.normalizePointerEvent(e)
-    for (const callback of this.pointerUpCallbacks) {
-      callback(event)
-    }
+    this.pointerUpCallbacks.trigger(event)
   }
 
   private handlePointerMove(e: MouseEvent): void {
     const event = this.normalizePointerEvent(e)
-    for (const callback of this.pointerMoveCallbacks) {
-      callback(event)
-    }
+    this.pointerMoveCallbacks.trigger(event)
   }
 
   private handleClick(e: MouseEvent): void {
     const event = this.normalizePointerEvent(e)
-    for (const callback of this.clickCallbacks) {
-      callback(event)
-    }
+    this.clickCallbacks.trigger(event)
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -117,9 +110,7 @@ export class WebInputLayer implements InputLayer {
       code: e.code,
       timestamp: Date.now(),
     }
-    for (const callback of this.keyDownCallbacks) {
-      callback(event)
-    }
+    this.keyDownCallbacks.trigger(event)
   }
 
   private handleKeyUp(e: KeyboardEvent): void {
@@ -128,9 +119,7 @@ export class WebInputLayer implements InputLayer {
       code: e.code,
       timestamp: Date.now(),
     }
-    for (const callback of this.keyUpCallbacks) {
-      callback(event)
-    }
+    this.keyUpCallbacks.trigger(event)
   }
 
   private normalizePointerEvent(e: MouseEvent): InputEvent {

@@ -15,6 +15,9 @@ import type {
   TextureId,
 } from "../types"
 import { asNodeId, asSpritesheetId, asTextureId } from "../types"
+import { calculateBoundsWithAnchor } from "../utils/boundsCalculation"
+import { screenToWorld, worldToScreen } from "../utils/coordinateTransforms"
+import { withNode } from "../utils/nodeHelpers"
 
 interface NodeState {
   id: NodeId
@@ -119,87 +122,78 @@ export class MemoryRenderingLayer implements RenderingLayer {
 
   // Transform
   setPosition(id: NodeId, x: number, y: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.position = { x, y }
-    }
+    })
   }
 
   setRotation(id: NodeId, radians: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.rotation = radians
-    }
+    })
   }
 
   setScale(id: NodeId, scaleX: number, scaleY: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.scale = { x: scaleX, y: scaleY }
-    }
+    })
   }
 
   setAnchor(id: NodeId, anchorX: number, anchorY: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.anchor = { x: anchorX, y: anchorY }
-    }
+    })
   }
 
   setAlpha(id: NodeId, alpha: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.alpha = alpha
-    }
+    })
   }
 
   setVisible(id: NodeId, visible: boolean): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.visible = visible
-    }
+    })
   }
 
   setZIndex(id: NodeId, z: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.zIndex = z
-    }
+    })
   }
 
   // Size
   setSize(id: NodeId, width: number, height: number): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.size = { width, height }
-    }
+    })
   }
 
   getSize(id: NodeId): { width: number; height: number } {
-    const node = this.nodes.get(id)
-    return node ? node.size : { width: 0, height: 0 }
+    return withNode(this.nodes, id, (node) => node.size, {
+      width: 0,
+      height: 0,
+    })!
   }
 
   // Visual effects
   setTint(id: NodeId, color: Color): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.tint = color
-    }
+    })
   }
 
   setBlendMode(id: NodeId, mode: BlendMode): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.blendMode = mode
-    }
+    })
   }
 
   setTextureFiltering(id: NodeId, filtering: TextureFiltering): void {
-    const node = this.nodes.get(id)
-    if (node) {
+    withNode(this.nodes, id, (node) => {
       node.textureFiltering = filtering
-    }
+    })
   }
 
   // Bounds query
@@ -209,21 +203,13 @@ export class MemoryRenderingLayer implements RenderingLayer {
     width: number
     height: number
   } {
-    const node = this.nodes.get(id)
-    if (!node) {
-      return { x: 0, y: 0, width: 0, height: 0 }
-    }
-
-    // Calculate bounds with anchor offset
-    const x = node.position.x - node.size.width * node.anchor.x
-    const y = node.position.y - node.size.height * node.anchor.y
-
-    return {
-      x,
-      y,
-      width: node.size.width,
-      height: node.size.height,
-    }
+    return withNode(
+      this.nodes,
+      id,
+      (node) =>
+        calculateBoundsWithAnchor(node.position, node.size, node.anchor),
+      { x: 0, y: 0, width: 0, height: 0 },
+    )!
   }
 
   // Visual content
@@ -413,53 +399,56 @@ export class MemoryRenderingLayer implements RenderingLayer {
   }
 
   getViewportPosition(id: NodeId): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    return node?.viewport?.position ?? { x: 0, y: 0 }
+    return withNode(
+      this.nodes,
+      id,
+      (node) => node.viewport?.position ?? { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    )!
   }
 
   setViewportPosition(id: NodeId, x: number, y: number): void {
-    const node = this.nodes.get(id)
-    if (node?.viewport) {
-      node.viewport.position = { x, y }
-    }
+    withNode(this.nodes, id, (node) => {
+      if (node.viewport) {
+        node.viewport.position = { x, y }
+      }
+    })
   }
 
   setViewportZoom(id: NodeId, zoom: number): void {
-    const node = this.nodes.get(id)
-    if (node?.viewport) {
-      node.viewport.zoom = zoom
-    }
+    withNode(this.nodes, id, (node) => {
+      if (node.viewport) {
+        node.viewport.zoom = zoom
+      }
+    })
   }
 
   getViewportZoom(id: NodeId): number {
-    const node = this.nodes.get(id)
-    return node?.viewport?.zoom ?? 1
+    return withNode(this.nodes, id, (node) => node.viewport?.zoom ?? 1, 1)!
   }
 
   worldToScreen(id: NodeId, x: number, y: number): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    if (!node?.viewport) {
-      return { x, y }
-    }
-
-    const { position, zoom } = node.viewport
-    return {
-      x: (x - position.x) * zoom,
-      y: (y - position.y) * zoom,
-    }
+    return withNode(
+      this.nodes,
+      id,
+      (node) =>
+        node.viewport
+          ? worldToScreen(x, y, node.viewport.position, node.viewport.zoom)
+          : { x, y },
+      { x, y },
+    )!
   }
 
   screenToWorld(id: NodeId, x: number, y: number): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    if (!node?.viewport) {
-      return { x, y }
-    }
-
-    const { position, zoom } = node.viewport
-    return {
-      x: x / zoom + position.x,
-      y: y / zoom + position.y,
-    }
+    return withNode(
+      this.nodes,
+      id,
+      (node) =>
+        node.viewport
+          ? screenToWorld(x, y, node.viewport.position, node.viewport.zoom)
+          : { x, y },
+      { x, y },
+    )!
   }
 
   // Game loop
@@ -487,83 +476,81 @@ export class MemoryRenderingLayer implements RenderingLayer {
   }
 
   getChildren(id: NodeId): NodeId[] {
-    const node = this.nodes.get(id)
-    return node ? [...node.children] : []
+    return withNode(this.nodes, id, (node) => [...node.children], [])!
   }
 
   getPosition(id: NodeId): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    return node ? { ...node.position } : { x: 0, y: 0 }
+    return withNode(this.nodes, id, (node) => ({ ...node.position }), {
+      x: 0,
+      y: 0,
+    })!
   }
 
   getRotation(id: NodeId): number {
-    const node = this.nodes.get(id)
-    return node?.rotation ?? 0
+    return withNode(this.nodes, id, (node) => node.rotation, 0)!
   }
 
   getScale(id: NodeId): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    return node ? { ...node.scale } : { x: 1, y: 1 }
+    return withNode(this.nodes, id, (node) => ({ ...node.scale }), {
+      x: 1,
+      y: 1,
+    })!
   }
 
   getAnchor(id: NodeId): { x: number; y: number } {
-    const node = this.nodes.get(id)
-    return node ? { ...node.anchor } : { x: 0, y: 0 }
+    return withNode(this.nodes, id, (node) => ({ ...node.anchor }), {
+      x: 0,
+      y: 0,
+    })!
   }
 
   getAlpha(id: NodeId): number {
-    const node = this.nodes.get(id)
-    return node?.alpha ?? 1
+    return withNode(this.nodes, id, (node) => node.alpha, 1)!
   }
 
   getVisible(id: NodeId): boolean {
-    const node = this.nodes.get(id)
-    return node?.visible ?? true
+    return withNode(this.nodes, id, (node) => node.visible, true)!
   }
 
   getZIndex(id: NodeId): number {
-    const node = this.nodes.get(id)
-    return node?.zIndex ?? 0
+    return withNode(this.nodes, id, (node) => node.zIndex, 0)!
   }
 
   getTint(id: NodeId): Color | undefined {
-    const node = this.nodes.get(id)
-    return node?.tint
+    return withNode(this.nodes, id, (node) => node.tint, undefined)!
   }
 
   getBlendMode(id: NodeId): BlendMode | undefined {
-    const node = this.nodes.get(id)
-    return node?.blendMode
+    return withNode(this.nodes, id, (node) => node.blendMode, undefined)!
   }
 
   getTextureFiltering(id: NodeId): TextureFiltering | undefined {
-    const node = this.nodes.get(id)
-    return node?.textureFiltering
+    return withNode(this.nodes, id, (node) => node.textureFiltering, undefined)!
   }
 
   getSpriteTexture(id: NodeId): TextureId | undefined {
-    const node = this.nodes.get(id)
-    return node?.spriteTexture
+    return withNode(this.nodes, id, (node) => node.spriteTexture, undefined)!
   }
 
   getAnimationData(id: NodeId) {
-    const node = this.nodes.get(id)
-    return node?.animationData
+    return withNode(this.nodes, id, (node) => node.animationData, undefined)!
   }
 
   isAnimationPlaying(id: NodeId): boolean {
-    const node = this.nodes.get(id)
-    return node?.animationData?.playing ?? false
+    return withNode(
+      this.nodes,
+      id,
+      (node) => node.animationData?.playing ?? false,
+      false,
+    )!
   }
 
   getGraphics(id: NodeId): GraphicsCommand[] {
-    const node = this.nodes.get(id)
-    return node ? [...node.graphics] : []
+    return withNode(this.nodes, id, (node) => [...node.graphics], [])!
   }
 
   getViewportData(id: NodeId): ViewportState | undefined {
-    const node = this.nodes.get(id)
-    return node?.viewport
+    return withNode(this.nodes, id, (node) => node.viewport, undefined)!
   }
 
   getTickerSpeed(): number {

@@ -20,6 +20,9 @@ import {
   asSpritesheetId,
   asTextureId,
 } from "../types"
+import { calculateBoundsWithAnchor } from "../utils/boundsCalculation"
+import { normalizeColor } from "../utils/colorUtils"
+import { withNode } from "../utils/nodeHelpers"
 
 interface NodeState {
   container: PIXI.Container
@@ -194,47 +197,47 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   setPosition(id: NodeId, x: number, y: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.x = x
-    state.container.y = y
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.x = x
+      state.container.y = y
+      this._needsRepaint = true
+    })
   }
 
   getPosition(id: NodeId): { x: number; y: number } {
-    const state = this.nodes.get(id)
-    if (!state) return { x: 0, y: 0 }
-
-    return { x: state.container.x, y: state.container.y }
+    return withNode(
+      this.nodes,
+      id,
+      (state) => ({ x: state.container.x, y: state.container.y }),
+      { x: 0, y: 0 },
+    )!
   }
 
   setRotation(id: NodeId, radians: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.rotation = radians
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.rotation = radians
+      this._needsRepaint = true
+    })
   }
 
   getRotation(id: NodeId): number {
-    const state = this.nodes.get(id)
-    return state?.container.rotation ?? 0
+    return withNode(this.nodes, id, (state) => state.container.rotation, 0)!
   }
 
   setScale(id: NodeId, scaleX: number, scaleY: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.scale.set(scaleX, scaleY)
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.scale.set(scaleX, scaleY)
+      this._needsRepaint = true
+    })
   }
 
   getScale(id: NodeId): { x: number; y: number } {
-    const state = this.nodes.get(id)
-    if (!state) return { x: 1, y: 1 }
-
-    return { x: state.container.scale.x, y: state.container.scale.y }
+    return withNode(
+      this.nodes,
+      id,
+      (state) => ({ x: state.container.scale.x, y: state.container.scale.y }),
+      { x: 1, y: 1 },
+    )!
   }
 
   setAnchor(id: NodeId, anchorX: number, anchorY: number): void {
@@ -251,66 +254,60 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   getAnchor(id: NodeId): { x: number; y: number } {
-    const state = this.nodes.get(id)
-    return state?.anchor ?? { x: 0, y: 0 }
+    return withNode(this.nodes, id, (state) => state.anchor, { x: 0, y: 0 })!
   }
 
   setAlpha(id: NodeId, alpha: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.alpha = alpha
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.alpha = alpha
+      this._needsRepaint = true
+    })
   }
 
   getAlpha(id: NodeId): number {
-    const state = this.nodes.get(id)
-    return state?.container.alpha ?? 1
+    return withNode(this.nodes, id, (state) => state.container.alpha, 1)!
   }
 
   setVisible(id: NodeId, visible: boolean): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.visible = visible
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.visible = visible
+      this._needsRepaint = true
+    })
   }
 
   getVisible(id: NodeId): boolean {
-    const state = this.nodes.get(id)
-    return state?.container.visible ?? true
+    return withNode(this.nodes, id, (state) => state.container.visible, true)!
   }
 
   setZIndex(id: NodeId, z: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
-
-    state.container.zIndex = z
-    this._needsRepaint = true
+    withNode(this.nodes, id, (state) => {
+      state.container.zIndex = z
+      this._needsRepaint = true
+    })
   }
 
   getZIndex(id: NodeId): number {
-    const state = this.nodes.get(id)
-    return state?.container.zIndex ?? 0
+    return withNode(this.nodes, id, (state) => state.container.zIndex, 0)!
   }
 
   setSize(id: NodeId, width: number, height: number): void {
-    const state = this.nodes.get(id)
-    if (!state) return
+    withNode(this.nodes, id, (state) => {
+      state.size = { width, height }
 
-    state.size = { width, height }
+      if (state.currentSprite) {
+        state.currentSprite.width = width
+        state.currentSprite.height = height
+      }
 
-    if (state.currentSprite) {
-      state.currentSprite.width = width
-      state.currentSprite.height = height
-    }
-
-    this._needsRepaint = true
+      this._needsRepaint = true
+    })
   }
 
   getSize(id: NodeId): { width: number; height: number } {
-    const state = this.nodes.get(id)
-    return state?.size ?? { width: 0, height: 0 }
+    return withNode(this.nodes, id, (state) => state.size, {
+      width: 0,
+      height: 0,
+    })!
   }
 
   setTint(id: NodeId, color: Color): void {
@@ -320,16 +317,14 @@ export class PixiRenderingLayer implements RenderingLayer {
     state.tint = color
 
     if (state.currentSprite) {
-      const tintValue = typeof color === "number" ? color : this.rgbToHex(color)
-      state.currentSprite.tint = tintValue
+      state.currentSprite.tint = normalizeColor(color)
     }
 
     this._needsRepaint = true
   }
 
   getTint(id: NodeId): Color | null {
-    const state = this.nodes.get(id)
-    return state?.tint ?? null
+    return withNode(this.nodes, id, (state) => state.tint, null)!
   }
 
   setBlendMode(id: NodeId, mode: BlendMode): void {
@@ -350,8 +345,12 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   getBlendMode(id: NodeId): BlendMode {
-    const state = this.nodes.get(id)
-    return state?.blendMode ?? ("normal" as BlendMode)
+    return withNode(
+      this.nodes,
+      id,
+      (state) => state.blendMode,
+      "normal" as BlendMode,
+    )!
   }
 
   setTextureFiltering(id: NodeId, filtering: TextureFiltering): void {
@@ -369,8 +368,12 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   getTextureFiltering(id: NodeId): TextureFiltering {
-    const state = this.nodes.get(id)
-    return state?.textureFiltering ?? ("linear" as TextureFiltering)
+    return withNode(
+      this.nodes,
+      id,
+      (state) => state.textureFiltering,
+      "linear" as TextureFiltering,
+    )!
   }
 
   getBounds(id: NodeId): {
@@ -379,18 +382,17 @@ export class PixiRenderingLayer implements RenderingLayer {
     width: number
     height: number
   } {
-    const state = this.nodes.get(id)
-    if (!state) return { x: 0, y: 0, width: 0, height: 0 }
-
-    const x = state.container.x - state.size.width * state.anchor.x
-    const y = state.container.y - state.size.height * state.anchor.y
-
-    return {
-      x,
-      y,
-      width: state.size.width,
-      height: state.size.height,
-    }
+    return withNode(
+      this.nodes,
+      id,
+      (state) =>
+        calculateBoundsWithAnchor(
+          { x: state.container.x, y: state.container.y },
+          state.size,
+          state.anchor,
+        ),
+      { x: 0, y: 0, width: 0, height: 0 },
+    )!
   }
 
   async loadTexture(url: string): Promise<TextureId> {
@@ -432,9 +434,7 @@ export class PixiRenderingLayer implements RenderingLayer {
     }
 
     if (state.tint !== null) {
-      const tintValue =
-        typeof state.tint === "number" ? state.tint : this.rgbToHex(state.tint)
-      sprite.tint = tintValue
+      sprite.tint = normalizeColor(state.tint)
     }
 
     sprite.blendMode = this.toPixiBlendMode(state.blendMode)
@@ -491,9 +491,7 @@ export class PixiRenderingLayer implements RenderingLayer {
     }
 
     if (state.tint !== null) {
-      const tintValue =
-        typeof state.tint === "number" ? state.tint : this.rgbToHex(state.tint)
-      animatedSprite.tint = tintValue
+      animatedSprite.tint = normalizeColor(state.tint)
     }
 
     animatedSprite.blendMode = this.toPixiBlendMode(state.blendMode)
@@ -538,15 +536,13 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   isAnimationPlaying(id: NodeId): boolean {
-    const state = this.nodes.get(id)
-    return state?.isAnimationPlaying ?? false
+    return withNode(this.nodes, id, (state) => state.isAnimationPlaying, false)!
   }
 
   getAnimationData(
     id: NodeId,
   ): { textures: TextureId[]; ticksPerFrame: number; loop: boolean } | null {
-    const state = this.nodes.get(id)
-    return state?.animationData ?? null
+    return withNode(this.nodes, id, (state) => state.animationData, null)!
   }
 
   drawRectangle(
@@ -673,8 +669,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   getGraphics(id: NodeId): Array<{ type: string; data: any }> {
-    const state = this.nodes.get(id)
-    return state?.graphicsCommands ?? []
+    return withNode(this.nodes, id, (state) => state.graphicsCommands, [])!
   }
 
   getSpriteTexture(id: NodeId): TextureId | null {
@@ -781,18 +776,14 @@ export class PixiRenderingLayer implements RenderingLayer {
         case "rectangle": {
           const { x, y, width, height, fill, stroke, strokeWidth } = cmd.data
           if (fill !== undefined) {
-            const fillColor =
-              typeof fill === "number" ? fill : this.rgbToHex(fill)
             state.graphics.rect(x, y, width, height)
-            state.graphics.fill(fillColor)
+            state.graphics.fill(normalizeColor(fill))
           }
           if (stroke !== undefined) {
-            const strokeColor =
-              typeof stroke === "number" ? stroke : this.rgbToHex(stroke)
             state.graphics.rect(x, y, width, height)
             state.graphics.stroke({
               width: strokeWidth ?? 1,
-              color: strokeColor,
+              color: normalizeColor(stroke),
             })
           }
           break
@@ -800,18 +791,14 @@ export class PixiRenderingLayer implements RenderingLayer {
         case "circle": {
           const { x, y, radius, fill, stroke, strokeWidth } = cmd.data
           if (fill !== undefined) {
-            const fillColor =
-              typeof fill === "number" ? fill : this.rgbToHex(fill)
             state.graphics.circle(x, y, radius)
-            state.graphics.fill(fillColor)
+            state.graphics.fill(normalizeColor(fill))
           }
           if (stroke !== undefined) {
-            const strokeColor =
-              typeof stroke === "number" ? stroke : this.rgbToHex(stroke)
             state.graphics.circle(x, y, radius)
             state.graphics.stroke({
               width: strokeWidth ?? 1,
-              color: strokeColor,
+              color: normalizeColor(stroke),
             })
           }
           break
@@ -819,40 +806,38 @@ export class PixiRenderingLayer implements RenderingLayer {
         case "polygon": {
           const { points, fill, stroke, strokeWidth } = cmd.data
           if (fill !== undefined) {
-            const fillColor =
-              typeof fill === "number" ? fill : this.rgbToHex(fill)
             state.graphics.poly(points)
-            state.graphics.fill(fillColor)
+            state.graphics.fill(normalizeColor(fill))
           }
           if (stroke !== undefined) {
-            const strokeColor =
-              typeof stroke === "number" ? stroke : this.rgbToHex(stroke)
             state.graphics.poly(points)
             state.graphics.stroke({
               width: strokeWidth ?? 1,
-              color: strokeColor,
+              color: normalizeColor(stroke),
             })
           }
           break
         }
         case "line": {
           const { x1, y1, x2, y2, color, width } = cmd.data
-          const lineColor =
-            typeof color === "number" ? color : this.rgbToHex(color)
           state.graphics.moveTo(x1, y1)
           state.graphics.lineTo(x2, y2)
-          state.graphics.stroke({ width: width ?? 1, color: lineColor })
+          state.graphics.stroke({
+            width: width ?? 1,
+            color: normalizeColor(color),
+          })
           break
         }
         case "polyline": {
           const { points, color, width } = cmd.data
-          const lineColor =
-            typeof color === "number" ? color : this.rgbToHex(color)
           for (let i = 0; i < points.length - 2; i += 2) {
             state.graphics.moveTo(points[i], points[i + 1])
             state.graphics.lineTo(points[i + 2], points[i + 3])
           }
-          state.graphics.stroke({ width: width ?? 1, color: lineColor })
+          state.graphics.stroke({
+            width: width ?? 1,
+            color: normalizeColor(color),
+          })
           break
         }
       }
@@ -875,10 +860,6 @@ export class PixiRenderingLayer implements RenderingLayer {
     ctx.fillRect(0, size / 2, size / 2, size / 2)
 
     return PIXI.Texture.from(canvas)
-  }
-
-  private rgbToHex(rgb: { r: number; g: number; b: number }): number {
-    return (rgb.r << 16) | (rgb.g << 8) | rgb.b
   }
 
   private toPixiBlendMode(mode: BlendMode): any {

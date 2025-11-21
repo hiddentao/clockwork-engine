@@ -1284,7 +1284,10 @@ describe('Headless In-Memory Replay', () => {
 
 ## Implementation Progress
 
-**Current Status**: Phases 1A, 1B, and 3 complete, ready for Phase 2 (Web Platform)
+**Overall Progress**: ~45% complete (Phases 1A, 1B, 3 fully complete; Phase 2 ~70% complete)
+**Total Tests Passing**: 196 tests across 9 test files (158 unit tests + 9 browser tests + 29 interface tests)
+**Current Status**: Phases 1A, 1B, and 3 complete; Phase 2 implementations done but missing tests
+**Next Steps**: Complete Phase 2 tests, then proceed to Phase 4 (Engine Integration)
 **Milestone Target**: Phases 1-6 complete
 
 ### Phase 1A: Core Abstractions - Interfaces & Types
@@ -1294,8 +1297,8 @@ describe('Headless In-Memory Replay', () => {
 - [x] Create `src/platform/AudioLayer.ts`
 - [x] Create `src/platform/InputLayer.ts`
 - [x] Create `src/platform/index.ts`
-- [x] Write tests: `tests/platform/types.test.ts`
-- [x] Write tests: `tests/platform/interfaces.test.ts`
+- [x] Write tests: `tests/platform/types.test.ts` (14 tests)
+- [x] Write tests: `tests/platform/interfaces.test.ts` (13 tests)
 - Status: ✅ Complete (2025-11-21)
 - Tests: 27/27 passing
 - Issues: None
@@ -1310,56 +1313,116 @@ describe('Headless In-Memory Replay', () => {
 
 ### Phase 2: Web Implementations
 **Setup:**
-- [ ] Configure puppeteer/playwright for headless browser testing
-- [ ] Create `tests/setup/browser.setup.ts`
-- [ ] Create `tests/fixtures/dom.fixtures.ts`
+- [x] Configure playwright for headless browser testing
+- [x] Create browser test infrastructure in `tests/browser/`
+- [x] Playwright config with testMatch pattern for `.playwright.ts` files
 
 **2A: PixiRenderingLayer**
-- [ ] Create `src/platform/web/PixiRenderingLayer.ts`
-- [ ] Write tests (40+ test cases for all RenderingLayer methods)
-- [ ] Implement error texture (pink checkerboard)
-- [ ] Implement viewport integration
-- [ ] Implement ticker integration
+- [x] Create `src/platform/web/PixiRenderingLayer.ts`
+- [ ] Write tests (0/40+ test cases needed - implementation complete but tests deleted due to WebGL requirement)
+- [x] Implement error texture (pink checkerboard)
+- [x] Implement viewport integration
+- [x] Implement ticker integration
+- [x] Refactor to use shared `withNode` utility
 
 **2B: WebAudioLayer**
-- [ ] Create `src/platform/web/WebAudioLayer.ts`
-- [ ] Write tests (procedural audio, context management)
-- [ ] Implement sound loading and playback
-- [ ] Implement createBuffer for procedural audio
+- [x] Create `src/platform/web/WebAudioLayer.ts`
+- [ ] Write tests (0/10+ needed - implementation complete)
+- [x] Implement sound loading and playback
+- [x] Implement createBuffer for procedural audio
 
 **2C: WebInputLayer**
-- [ ] Create `src/platform/web/WebInputLayer.ts`
-- [ ] Write tests (DOM event wrapping)
-- [ ] Implement event subscription
-- [ ] Implement coordinate normalization
+- [x] Create `src/platform/web/WebInputLayer.ts`
+- [x] Create `src/platform/utils/EventCallbackManager.ts` (utility for callback management)
+- [ ] Write tests (0/10+ needed - implementation complete)
+- [x] Implement event subscription
+- [x] Implement coordinate normalization
 
 **2D: WebPlatformLayer**
-- [ ] Create `src/platform/web/WebPlatformLayer.ts`
-- [ ] Create `src/platform/web/index.ts`
-- [ ] Write integration tests
-- Status: ⏸️ Not started
-- Tests: 0/0 passing
-- Issues: None
+- [x] Create `src/platform/web/WebPlatformLayer.ts`
+- [x] Create `src/platform/web/index.ts`
+- [ ] Write integration tests (0/10+ needed - implementation complete)
+- Status: ⚠️ ~70% complete (implementations done, tests missing)
+- Tests: 9 browser tests passing (pixi-rendering.spec.playwright.ts)
+- Issues: Need comprehensive unit tests for all Web platform components
 
 ### Phase 3: Memory Implementations & Testing Infra
 **3A: MemoryRenderingLayer**
 - [x] Create `src/platform/memory/MemoryRenderingLayer.ts`
-- [x] Write tests (state tracking, bounds calculation)
+- [x] Write tests: `tests/platform/MemoryRenderingLayer.test.ts` (44 tests)
 - [x] Implement state tracking for all methods
-- [x] Implement bounds calculation
+- [x] Implement bounds calculation with `calculateBoundsWithAnchor` utility
+- [x] Refactor to use shared `withNode` utility
 
 **3B: MemoryAudioLayer & MemoryInputLayer**
 - [x] Create `src/platform/memory/MemoryAudioLayer.ts`
 - [x] Create `src/platform/memory/MemoryInputLayer.ts`
-- [x] Write tests (no-op validation)
+- [x] Write tests: `tests/platform/MemoryAudioLayer.test.ts` (22 tests)
+- [x] Write tests: `tests/platform/MemoryInputLayer.test.ts` (16 tests)
 
 **3C: MemoryPlatformLayer**
 - [x] Create `src/platform/memory/MemoryPlatformLayer.ts`
 - [x] Create `src/platform/memory/index.ts`
-- [x] Write integration tests
+- [x] Write tests: `tests/platform/MemoryPlatformLayer.test.ts` (11 tests)
 - Status: ✅ Complete (2025-11-21)
 - Tests: 93/93 passing (44 rendering + 22 audio + 16 input + 11 platform)
 - Issues: None
+
+### Implementation Notes (Phases 1-3)
+
+**Utility Files Created:**
+- `src/platform/utils/nodeHelpers.ts` - Shared `withNode<T>()` function for null-safe node access
+- `src/platform/utils/EventCallbackManager.ts` - Generic callback management for input events
+- `src/platform/utils/boundsCalculation.ts` - Shared bounds calculation with anchor support
+- `src/platform/utils/coordinateTransforms.ts` - World/screen coordinate conversion utilities
+- `src/platform/utils/colorUtils.ts` - Color conversion between hex and RGB object formats
+
+**Refactorings Completed:**
+- Extracted duplicate `withNode` implementations from both RenderingLayer classes (~18 lines saved)
+- Applied `withNode` pattern to ~50 methods across PixiRenderingLayer and MemoryRenderingLayer
+- Eliminated ~120 lines of repetitive null-checking boilerplate
+
+**Constructor Signatures (As Implemented):**
+```typescript
+// Web Platform
+new WebPlatformLayer(container: HTMLDivElement, width: number, height: number)
+new PixiRenderingLayer(container: HTMLDivElement, width: number, height: number)
+new WebAudioLayer() // No constructor params
+new WebInputLayer(container: HTMLElement)
+
+// Memory Platform
+new MemoryPlatformLayer() // No constructor params
+new MemoryRenderingLayer() // No constructor params
+new MemoryAudioLayer() // No constructor params
+new MemoryInputLayer() // No constructor params
+
+// DisplayNode
+new DisplayNode(id: NodeId, rendering: RenderingLayer)
+```
+
+**Known Issues:**
+- Spritesheet support not fully implemented (URL loading pattern needs work)
+- PixiRenderingLayer unit tests deleted (require WebGL, can't run in headless Bun)
+- WebAudioLayer, WebInputLayer, WebPlatformLayer missing comprehensive unit tests
+- Browser tests only cover basic PixiRenderingLayer functionality (9 tests)
+
+### Blockers for Production Use
+
+**Critical (Blocking all production use):**
+1. **GameEngine not integrated** (Phase 4) - Engine still expects old constructor signature
+2. **GameCanvas not refactored** (Phase 5) - Canvas still uses PIXI.js directly
+3. **AbstractRenderer not updated** (Phase 6) - Renderers still use PIXI.Container
+
+**Until Phases 4-6 are complete, the platform abstraction cannot be used in actual games.**
+
+**Recommended (Before Phase 4):**
+1. Add comprehensive unit tests for Web platform components (Phase 2)
+   - PixiRenderingLayer: 0/40+ tests needed
+   - WebAudioLayer: 0/10+ tests needed
+   - WebInputLayer: 0/10+ tests needed
+   - WebPlatformLayer: 0/10+ tests needed
+2. Resolve spritesheet URL loading patterns
+3. Expand browser test coverage beyond basic rendering
 
 ### Phase 4: Engine Integration ⚠️ BREAKING CHANGE
 - [ ] Update `src/GameEngine.ts` constructor signature

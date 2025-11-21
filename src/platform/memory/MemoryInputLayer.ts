@@ -6,88 +6,74 @@
  */
 
 import type { InputEvent, InputLayer, KeyboardInputEvent } from "../InputLayer"
-
-type InputCallback = (event: InputEvent) => void
-type KeyboardCallback = (event: KeyboardInputEvent) => void
+import { EventCallbackManager } from "../utils/EventCallbackManager"
 
 export class MemoryInputLayer implements InputLayer {
-  private pointerDownCallbacks: InputCallback[] = []
-  private pointerUpCallbacks: InputCallback[] = []
-  private pointerMoveCallbacks: InputCallback[] = []
-  private clickCallbacks: InputCallback[] = []
-  private keyDownCallbacks: KeyboardCallback[] = []
-  private keyUpCallbacks: KeyboardCallback[] = []
+  private pointerDownCallbacks = new EventCallbackManager<InputEvent>()
+  private pointerUpCallbacks = new EventCallbackManager<InputEvent>()
+  private pointerMoveCallbacks = new EventCallbackManager<InputEvent>()
+  private clickCallbacks = new EventCallbackManager<InputEvent>()
+  private keyDownCallbacks = new EventCallbackManager<KeyboardInputEvent>()
+  private keyUpCallbacks = new EventCallbackManager<KeyboardInputEvent>()
 
   // Pointer event subscription
-  onPointerDown(callback: InputCallback): void {
-    this.pointerDownCallbacks.push(callback)
+  onPointerDown(callback: (event: InputEvent) => void): void {
+    this.pointerDownCallbacks.register(callback)
   }
 
-  onPointerUp(callback: InputCallback): void {
-    this.pointerUpCallbacks.push(callback)
+  onPointerUp(callback: (event: InputEvent) => void): void {
+    this.pointerUpCallbacks.register(callback)
   }
 
-  onPointerMove(callback: InputCallback): void {
-    this.pointerMoveCallbacks.push(callback)
+  onPointerMove(callback: (event: InputEvent) => void): void {
+    this.pointerMoveCallbacks.register(callback)
   }
 
-  onClick(callback: InputCallback): void {
-    this.clickCallbacks.push(callback)
+  onClick(callback: (event: InputEvent) => void): void {
+    this.clickCallbacks.register(callback)
   }
 
   // Keyboard event subscription
-  onKeyDown(callback: KeyboardCallback): void {
-    this.keyDownCallbacks.push(callback)
+  onKeyDown(callback: (event: KeyboardInputEvent) => void): void {
+    this.keyDownCallbacks.register(callback)
   }
 
-  onKeyUp(callback: KeyboardCallback): void {
-    this.keyUpCallbacks.push(callback)
+  onKeyUp(callback: (event: KeyboardInputEvent) => void): void {
+    this.keyUpCallbacks.register(callback)
   }
 
   // Cleanup
   removeAllListeners(): void {
-    this.pointerDownCallbacks = []
-    this.pointerUpCallbacks = []
-    this.pointerMoveCallbacks = []
-    this.clickCallbacks = []
-    this.keyDownCallbacks = []
-    this.keyUpCallbacks = []
+    this.pointerDownCallbacks.clear()
+    this.pointerUpCallbacks.clear()
+    this.pointerMoveCallbacks.clear()
+    this.clickCallbacks.clear()
+    this.keyDownCallbacks.clear()
+    this.keyUpCallbacks.clear()
   }
 
   // Manual event triggering for testing
   triggerPointerDown(event: InputEvent): void {
-    for (const callback of this.pointerDownCallbacks) {
-      callback(event)
-    }
+    this.pointerDownCallbacks.trigger(event)
   }
 
   triggerPointerUp(event: InputEvent): void {
-    for (const callback of this.pointerUpCallbacks) {
-      callback(event)
-    }
+    this.pointerUpCallbacks.trigger(event)
   }
 
   triggerPointerMove(event: InputEvent): void {
-    for (const callback of this.pointerMoveCallbacks) {
-      callback(event)
-    }
+    this.pointerMoveCallbacks.trigger(event)
   }
 
   triggerClick(event: InputEvent): void {
-    for (const callback of this.clickCallbacks) {
-      callback(event)
-    }
+    this.clickCallbacks.trigger(event)
   }
 
   triggerKeyDown(event: KeyboardInputEvent): void {
-    for (const callback of this.keyDownCallbacks) {
-      callback(event)
-    }
+    this.keyDownCallbacks.trigger(event)
   }
 
   triggerKeyUp(event: KeyboardInputEvent): void {
-    for (const callback of this.keyUpCallbacks) {
-      callback(event)
-    }
+    this.keyUpCallbacks.trigger(event)
   }
 }
