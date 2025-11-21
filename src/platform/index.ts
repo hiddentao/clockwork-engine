@@ -20,3 +20,6 @@ export type { PlatformLayer } from "./PlatformLayer"
 export type { RenderingLayer, ViewportOptions } from "./RenderingLayer"
 export type { AudioLayer, AudioBuffer, AudioContextState } from "./AudioLayer"
 export type { InputLayer, InputEvent, KeyboardInputEvent } from "./InputLayer"
+
+// Display Node (OOP wrapper)
+export { DisplayNode } from "./DisplayNode"
