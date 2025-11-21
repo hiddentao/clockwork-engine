@@ -72,11 +72,14 @@
     "@biomejs/biome": "^1.9.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@playwright/test": "^1.56.1",
     "@types/bun": "^1.2.21",
     "bun-types": "^1.2.21",
     "commit-and-tag-version": "^12.6.0",
+    "happy-dom": "^20.0.10",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
+    "playwright": "^1.56.1",
     "typescript": "^5.3.3"
   },
   "lint-staged": {
