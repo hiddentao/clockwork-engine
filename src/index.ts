@@ -35,3 +35,5 @@ export * from "./lib/color"
 export * from "./lib/performance"
 // Internal constants and utilities
 export * from "./lib/internals"
+// Platform abstraction layer
+export * from "./platform"

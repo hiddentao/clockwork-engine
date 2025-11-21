@@ -23,3 +23,15 @@ export type { InputLayer, InputEvent, KeyboardInputEvent } from "./InputLayer"
 
 // Display Node (OOP wrapper)
 export { DisplayNode } from "./DisplayNode"
+
+// Memory Platform (for headless testing and replay)
+export { MemoryRenderingLayer } from "./memory/MemoryRenderingLayer"
+export { MemoryAudioLayer } from "./memory/MemoryAudioLayer"
+export { MemoryInputLayer } from "./memory/MemoryInputLayer"
+export { MemoryPlatformLayer } from "./memory/MemoryPlatformLayer"
+
+// Web Platform (browser-based with PIXI.js and Web Audio API)
+export { PixiRenderingLayer } from "./web/PixiRenderingLayer"
+export { WebAudioLayer } from "./web/WebAudioLayer"
+export { WebInputLayer } from "./web/WebInputLayer"
+export { WebPlatformLayer } from "./web/WebPlatformLayer"

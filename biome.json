@@ -15,6 +15,7 @@
     "indentWidth": 2
   },
   "javascript": {
+    "globals": ["Bun"],
     "formatter": {
       "semicolons": "asNeeded"
     }

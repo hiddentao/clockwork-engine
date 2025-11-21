@@ -19,6 +19,8 @@ export function setupBrowserEnvironment() {
   global.HTMLElement = window.HTMLElement as any
   global.HTMLDivElement = window.HTMLDivElement as any
   global.HTMLCanvasElement = window.HTMLCanvasElement as any
+  global.MouseEvent = window.MouseEvent as any
+  global.KeyboardEvent = window.KeyboardEvent as any
 
   // Web Audio API mocks (basic stubs for testing)
   global.AudioContext = class AudioContext {
@@ -86,5 +88,7 @@ export function cleanupBrowserEnvironment() {
   delete (global as any).HTMLElement
   delete (global as any).HTMLDivElement
   delete (global as any).HTMLCanvasElement
+  delete (global as any).MouseEvent
+  delete (global as any).KeyboardEvent
   delete (global as any).AudioContext
 }
