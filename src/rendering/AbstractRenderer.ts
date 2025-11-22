@@ -1,10 +1,13 @@
-import { PIXI } from "../lib/pixi"
+import type { Color, RenderingLayer } from "../platform"
+import { DisplayNode } from "../platform/DisplayNode"
 import { GameState } from "../types"
 
 /**
- * Abstract base implementation for PIXI.js game objects.
+ * Abstract base implementation for game object renderers.
  * Provides common functionality for managing visual representations of game entities
  * including creation, updating, removal, and lifecycle management.
+ *
+ * Platform-agnostic: works with any RenderingLayer implementation.
  *
  * Child classes must implement create() to define how their specific items are rendered
  * and getId() to provide unique identification for tracking.
@@ -12,23 +15,25 @@ import { GameState } from "../types"
  * @template T The type of game object being rendered
  */
 export abstract class AbstractRenderer<T> {
-  protected gameContainer: PIXI.Container
-  protected itemSprites: Map<string, PIXI.Container> = new Map()
+  protected gameNode: DisplayNode
+  protected rendering: RenderingLayer
+  protected itemNodes: Map<string, DisplayNode> = new Map()
   protected items: Map<string, T> = new Map()
   protected gameState: GameState = GameState.READY
 
-  constructor(gameContainer: PIXI.Container) {
-    this.gameContainer = gameContainer
+  constructor(gameNode: DisplayNode) {
+    this.gameNode = gameNode
+    this.rendering = gameNode.getRendering()
   }
 
   /**
    * Creates the visual representation for a game object.
-   * Must return a PIXI.Container that will be added to the display tree.
+   * Must return a DisplayNode that will be added to the display tree.
    *
    * @param item The game object to create visuals for
-   * @returns A PIXI container containing the item's visual elements
+   * @returns A DisplayNode containing the item's visual elements
    */
-  protected abstract create(item: T): PIXI.Container
+  protected abstract create(item: T): DisplayNode
 
   /**
    * Updates the game state for this renderer.
@@ -58,18 +63,18 @@ export abstract class AbstractRenderer<T> {
   public add(item: T): void {
     try {
       const id = this.getId(item)
-      if (this.itemSprites.has(id)) {
+      if (this.itemNodes.has(id)) {
         this.update(item)
         return
       }
 
-      const container = this.create(item)
-      this.gameContainer.addChild(container)
-      this.itemSprites.set(id, container)
+      const node = this.create(item)
+      this.gameNode.addChild(node)
+      this.itemNodes.set(id, node)
       this.items.set(id, item)
 
-      // Call updateContainer for newly created items to handle initial paint
-      this.updateContainer(container, item)
+      // Call updateNode for newly created items to handle initial paint
+      this.updateNode(node, item)
     } catch (error) {
       console.error(`Error adding item in ${this.constructor.name}:`, error)
     }
@@ -77,7 +82,7 @@ export abstract class AbstractRenderer<T> {
 
   /**
    * Updates an existing item's visual representation.
-   * Modifies the PIXI container properties without recreating the entire display object.
+   * Modifies the node properties without recreating the entire display object.
    * If the item doesn't exist, it will be created.
    *
    * @param item The game object with updated state
@@ -85,9 +90,9 @@ export abstract class AbstractRenderer<T> {
   public update(item: T): void {
     try {
       const id = this.getId(item)
-      const container = this.itemSprites.get(id)
-      if (container) {
-        this.updateContainer(container, item)
+      const node = this.itemNodes.get(id)
+      if (node) {
+        this.updateNode(node, item)
         this.items.set(id, item)
       } else {
         this.add(item)
@@ -99,17 +104,17 @@ export abstract class AbstractRenderer<T> {
 
   /**
    * Removes an item from the renderer by its unique identifier.
-   * Destroys the PIXI container and cleans up all references.
+   * Destroys the node and cleans up all references.
    *
    * @param id Unique identifier of the item to remove
    */
   public remove(id: string): void {
     try {
-      const container = this.itemSprites.get(id)
-      if (container) {
-        this.gameContainer.removeChild(container)
-        container.destroy({ children: true })
-        this.itemSprites.delete(id)
+      const node = this.itemNodes.get(id)
+      if (node) {
+        this.gameNode.removeChild(node)
+        node.destroy()
+        this.itemNodes.delete(id)
         this.items.delete(id)
       }
     } catch (error) {
@@ -126,14 +131,14 @@ export abstract class AbstractRenderer<T> {
    */
   public setItems(items: T[]): void {
     try {
-      const existingItemIds = Array.from(this.itemSprites.keys())
+      const existingItemIds = Array.from(this.itemNodes.keys())
       const newItemIds = new Set<string>()
 
       for (const item of items) {
         const id = this.getId(item)
         newItemIds.add(id)
 
-        if (this.itemSprites.has(id)) {
+        if (this.itemNodes.has(id)) {
           this.update(item)
         } else {
           this.add(item)
@@ -171,106 +176,67 @@ export abstract class AbstractRenderer<T> {
   }
 
   /**
-   * Adds a display object as a named child to a container.
-   * Enables retrieval by name for later reference.
-   *
-   * @param container The parent container
-   * @param child The child display object
-   * @param name The name to assign to the child
-   */
-  protected addNamedChild(
-    container: PIXI.Container,
-    child: PIXI.Container | PIXI.Graphics,
-    name: string,
-  ): void {
-    child.label = name
-    container.addChild(child)
-  }
-
-  /**
-   * Retrieves a named child from a container.
-   *
-   * @param container The parent container
-   * @param name The name of the child to retrieve
-   * @returns The named child or undefined if not found
-   */
-  protected getNamedChild<T extends PIXI.Container | PIXI.Graphics>(
-    container: PIXI.Container,
-    name: string,
-  ): T | undefined {
-    return container.getChildByLabel(name) as T | undefined
-  }
-
-  /**
-   * Creates a PIXI Graphics object with automatic cleanup on removal.
-   * Graphics objects will automatically destroy themselves when removed from their parent.
-   *
-   * @returns A new PIXI.Graphics instance with cleanup behavior
-   */
-  protected createGraphics(): PIXI.Graphics {
-    const graphics = new PIXI.Graphics()
-
-    // Auto-cleanup when removed from parent
-    // This is essential for preventing memory leaks
-    graphics.on("removed", () => {
-      graphics.destroy()
-    })
-
-    return graphics
-  }
-
-  /**
-   * Creates a filled rectangle graphic.
+   * Creates a filled rectangle as a DisplayNode.
    *
    * @param width Width of the rectangle
    * @param height Height of the rectangle
-   * @param color Fill color in hexadecimal format
+   * @param color Fill color
    * @param x X position (defaults to center horizontally)
    * @param y Y position (defaults to center vertically)
-   * @returns A new Graphics object with the rectangle drawn
+   * @returns A new DisplayNode with the rectangle drawn
    */
   protected createRectangle(
     width: number,
     height: number,
-    color: number,
+    color: Color,
     x?: number,
     y?: number,
-  ): PIXI.Graphics {
-    const graphics = this.createGraphics()
+  ): DisplayNode {
+    const node = this.rendering.createNode()
+    const displayNode = new DisplayNode(node, this.rendering)
+
     x = x ?? -width / 2
     y = y ?? -height / 2
-    return graphics.rect(x, y, width, height).fill(color)
+
+    this.rendering.drawRectangle(node, x, y, width, height, color)
+    return displayNode
   }
 
   /**
-   * Creates a filled circle graphic.
+   * Creates a filled circle as a DisplayNode.
    *
    * @param radius Radius of the circle
-   * @param color Fill color in hexadecimal format
+   * @param color Fill color
    * @param x X position (defaults to origin)
    * @param y Y position (defaults to origin)
-   * @returns A new Graphics object with the circle drawn
+   * @returns A new DisplayNode with the circle drawn
    */
   protected createCircle(
     radius: number,
-    color: number,
+    color: Color,
     x = 0,
     y = 0,
-  ): PIXI.Graphics {
-    const graphics = this.createGraphics()
-    return graphics.circle(x, y, radius).fill(color)
+  ): DisplayNode {
+    const node = this.rendering.createNode()
+    const displayNode = new DisplayNode(node, this.rendering)
+
+    this.rendering.drawCircle(node, x, y, radius, color)
+    return displayNode
   }
 
   /**
-   * Creates a filled polygon graphic from coordinate points.
+   * Creates a filled polygon as a DisplayNode.
    *
    * @param points Array of coordinates in sequence
-   * @param color Fill color in hexadecimal format
-   * @returns A new Graphics object with the polygon drawn
+   * @param color Fill color
+   * @returns A new DisplayNode with the polygon drawn
    */
-  protected createPolygon(points: number[], color: number): PIXI.Graphics {
-    const graphics = this.createGraphics()
-    return graphics.poly(points).fill(color)
+  protected createPolygon(points: number[], color: Color): DisplayNode {
+    const node = this.rendering.createNode()
+    const displayNode = new DisplayNode(node, this.rendering)
+
+    this.rendering.drawPolygon(node, points, color)
+    return displayNode
   }
 
   /**
@@ -279,58 +245,71 @@ export abstract class AbstractRenderer<T> {
    * @param width Width of the rectangle
    * @param height Height of the rectangle
    * @param strokeWidth Width of the border line
-   * @param color Border color in hexadecimal format
+   * @param color Border color
    * @param alpha Transparency of the border (defaults to opaque)
-   * @returns A new Graphics object with the border rectangle drawn
+   * @returns A new DisplayNode with the border rectangle drawn
    */
   protected createBorderRectangle(
     width: number,
     height: number,
     strokeWidth: number,
-    color: number,
+    color: Color,
     alpha = 1,
-  ): PIXI.Graphics {
-    const graphics = this.createGraphics()
-    return graphics
-      .rect(0, 0, width, height)
-      .stroke({ width: strokeWidth, color, alpha })
+  ): DisplayNode {
+    const node = this.rendering.createNode()
+    const displayNode = new DisplayNode(node, this.rendering)
+
+    this.rendering.drawRectangle(
+      node,
+      0,
+      0,
+      width,
+      height,
+      undefined,
+      color,
+      strokeWidth,
+    )
+    displayNode.setAlpha(alpha)
+
+    return displayNode
   }
 
   /**
-   * Creates a positioned container with a body graphic as its main child.
-   * The body graphic is added as a named child for easy retrieval.
+   * Creates a positioned node with a body graphic as its child.
    *
    * @param x X position
    * @param y Y position
    * @param rotation Rotation in radians (optional)
-   * @param bodyGraphic The graphic to use as the body
-   * @returns A container with the body graphic as a named child
+   * @param bodyNode The node to use as the body
+   * @returns A DisplayNode with the body node as a child
    */
-  protected createStandardContainer(
+  protected createStandardNode(
     x: number,
     y: number,
     rotation: number | undefined = undefined,
-    bodyGraphic: PIXI.Graphics,
-  ): PIXI.Container {
-    const container = new PIXI.Container()
-    container.position.set(x, y)
+    bodyNode: DisplayNode,
+  ): DisplayNode {
+    const node = this.rendering.createNode()
+    const displayNode = new DisplayNode(node, this.rendering)
+
+    displayNode.setPosition(x, y)
     if (rotation !== undefined) {
-      container.rotation = rotation
+      displayNode.setRotation(rotation)
     }
 
-    this.addNamedChild(container, bodyGraphic, "body")
+    displayNode.addChild(bodyNode)
 
-    return container
+    return displayNode
   }
 
   /**
-   * Updates a container's visual properties based on the item's current state.
-   * Checks the needsRepaint flag and only calls repaintContainer if needed.
+   * Updates a node's visual properties based on the item's current state.
+   * Checks the needsRepaint flag and only calls repaintNode if needed.
    *
-   * @param container The PIXI container to update
+   * @param node The DisplayNode to update
    * @param item The game object with current state
    */
-  protected updateContainer(container: PIXI.Container, item: T): void {
+  protected updateNode(node: DisplayNode, item: T): void {
     // Check if item has needsRepaint property (for GameObject instances)
     if (
       typeof item === "object" &&
@@ -338,7 +317,7 @@ export abstract class AbstractRenderer<T> {
       "needsRepaint" in item &&
       (item as any).needsRepaint
     ) {
-      this.repaintContainer(container, item)
+      this.repaintNode(node, item)
       ;(item as any).needsRepaint = false
     } else if (
       typeof item !== "object" ||
@@ -346,44 +325,43 @@ export abstract class AbstractRenderer<T> {
       !("needsRepaint" in item)
     ) {
       // For backwards compatibility with non-GameObject items, always repaint
-      this.repaintContainer(container, item)
+      this.repaintNode(node, item)
     }
   }
 
   /**
-   * Repaints a container's visual properties based on the item's current state.
+   * Repaints a node's visual properties based on the item's current state.
    * Default implementation performs no updates. Child classes should override
    * this method to implement specific repaint behavior.
    *
-   * @param _container The PIXI container to repaint
+   * @param _node The DisplayNode to repaint
    * @param _item The game object with current state
    */
-  protected repaintContainer(_container: PIXI.Container, _item: T): void {
+  protected repaintNode(_node: DisplayNode, _item: T): void {
     // Default implementation performs no updates
   }
 
   /**
    * Completely clears the renderer and cleans up all resources.
-   * Removes all PIXI containers from the display tree and frees GPU memory.
    */
   public clear(): void {
-    const entries = Array.from(this.itemSprites.entries())
-    for (const [id, container] of entries) {
-      this.gameContainer.removeChild(container)
-      container.destroy({ children: true })
-      this.itemSprites.delete(id)
+    const entries = Array.from(this.itemNodes.entries())
+    for (const [id, node] of entries) {
+      this.gameNode.removeChild(node)
+      node.destroy()
+      this.itemNodes.delete(id)
       this.items.delete(id)
     }
   }
 
   /**
-   * Retrieves the PIXI container for a specific item.
+   * Retrieves the DisplayNode for a specific item.
    *
    * @param id Unique identifier of the item
-   * @returns The PIXI container or undefined if not found
+   * @returns The DisplayNode or undefined if not found
    */
-  public getContainer(id: string): PIXI.Container | undefined {
-    return this.itemSprites.get(id)
+  public getNode(id: string): DisplayNode | undefined {
+    return this.itemNodes.get(id)
   }
 
   /**
@@ -413,9 +391,9 @@ export abstract class AbstractRenderer<T> {
   public rerender(): void {
     try {
       for (const [id, item] of this.items.entries()) {
-        const container = this.itemSprites.get(id)
-        if (container) {
-          this.updateContainer(container, item)
+        const node = this.itemNodes.get(id)
+        if (node) {
+          this.updateNode(node, item)
         }
       }
     } catch (error) {

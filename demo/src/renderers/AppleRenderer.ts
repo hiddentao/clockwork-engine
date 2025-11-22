@@ -1,66 +1,78 @@
-import { AbstractRenderer, PIXI } from "@hiddentao/clockwork-engine"
+import { AbstractRenderer, DisplayNode } from "@hiddentao/clockwork-engine"
 import { Apple } from "../gameObjects/Apple"
 import { GAME_CONFIG } from "../utils/constants"
 
 export class AppleRenderer extends AbstractRenderer<Apple> {
-  constructor(gameContainer: PIXI.Container) {
-    super(gameContainer)
+  private bodyNodes: Map<string, DisplayNode> = new Map()
+  private highlightNodes: Map<string, DisplayNode> = new Map()
+
+  constructor(gameNode: DisplayNode) {
+    super(gameNode)
   }
 
-  protected create(apple: Apple): PIXI.Container {
+  protected create(apple: Apple): DisplayNode {
     const cellSize = GAME_CONFIG.CELL_SIZE
     const position = apple.getPosition()
 
-    // Create container for apple
-    const container = new PIXI.Container()
-    container.position.set(
+    const appleBody = this.createCircle(
+      (cellSize - 4) / 2,
+      GAME_CONFIG.COLORS.APPLE,
+    )
+
+    const highlight = this.createCircle(
+      (cellSize - 4) / 8,
+      0xff6666,
+      -(cellSize - 4) / 6,
+      -(cellSize - 4) / 6,
+    )
+
+    const node = this.rendering.createNode()
+    const container = new DisplayNode(node, this.rendering)
+    container.setPosition(
       position.x * cellSize + cellSize / 2,
       position.y * cellSize + cellSize / 2,
     )
+    container.addChild(appleBody)
+    container.addChild(highlight)
 
-    // Create main apple body
-    const appleBody = this.createCircle(
-      (cellSize - 4) / 2, // radius to match original sizing
-      GAME_CONFIG.COLORS.APPLE,
-    )
-    this.addNamedChild(container, appleBody, "body")
-
-    // Create highlight
-    const highlight = this.createCircle(
-      (cellSize - 4) / 8, // smaller highlight
-      0xff6666, // lighter red for highlight
-      -(cellSize - 4) / 6, // offset left
-      -(cellSize - 4) / 6, // offset up
-    )
-    this.addNamedChild(container, highlight, "highlight")
+    this.bodyNodes.set(apple.getId(), appleBody)
+    this.highlightNodes.set(apple.getId(), highlight)
 
     return container
   }
 
-  protected repaintContainer(container: PIXI.Container, apple: Apple): void {
+  protected repaintNode(node: DisplayNode, apple: Apple): void {
     const engine = apple.getEngine()
     const currentTick = engine ? engine.getTotalTicks() : 0
 
-    // Update position
     const cellSize = GAME_CONFIG.CELL_SIZE
     const position = apple.getPosition()
-    container.position.set(
+    node.setPosition(
       position.x * cellSize + cellSize / 2,
       position.y * cellSize + cellSize / 2,
     )
 
-    // Update alpha based on apple's age (fading effect)
-    container.alpha = apple.getAlpha(currentTick)
+    node.setAlpha(apple.getAlpha(currentTick))
 
-    // Update pulse effect using sin wave like original (frame * 0.2)
     const pulse = Math.sin(currentTick * 0.2) * 0.1 + 0.9
 
-    // Apply pulse to both body and highlight
-    const body = this.getNamedChild(container, "body")
-    const highlight = this.getNamedChild(container, "highlight")
+    const body = this.bodyNodes.get(apple.getId())
+    const highlight = this.highlightNodes.get(apple.getId())
 
-    if (body) body.scale.set(pulse)
-    if (highlight) highlight.scale.set(pulse)
+    if (body) body.setScale(pulse)
+    if (highlight) highlight.setScale(pulse)
+  }
+
+  public remove(id: string): void {
+    this.bodyNodes.delete(id)
+    this.highlightNodes.delete(id)
+    super.remove(id)
+  }
+
+  public clear(): void {
+    this.bodyNodes.clear()
+    this.highlightNodes.clear()
+    super.clear()
   }
 
   public getId(apple: Apple): string {

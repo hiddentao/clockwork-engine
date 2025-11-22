@@ -3,7 +3,15 @@ import type { GameEngine } from "./GameEngine"
 import { GameEngineEventType } from "./GameEngine"
 import { Vector2D } from "./geometry/Vector2D"
 import { FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
-import { PIXI, Viewport } from "./lib/pixi"
+import type {
+  AudioLayer,
+  InputEvent,
+  InputLayer,
+  NodeId,
+  PlatformLayer,
+  RenderingLayer,
+} from "./platform"
+import { DisplayNode } from "./platform/DisplayNode"
 import type { AbstractRenderer } from "./rendering/AbstractRenderer"
 import { GameState } from "./types"
 
@@ -19,7 +27,6 @@ export enum GameCanvasEvent {
 
 /**
  * Type definitions for canvas event callbacks.
- * Maps each event type to its corresponding callback signature.
  */
 export interface GameCanvasEventMap
   extends Record<string, (...args: any[]) => void> {
@@ -31,64 +38,44 @@ export interface GameCanvasEventMap
 
 /**
  * Configuration options for initializing a game canvas.
- * Defines rendering settings, viewport behavior, and interaction controls.
  */
 export interface GameCanvasOptions {
-  /** Canvas width in pixels */
   width: number
-  /** Canvas height in pixels */
   height: number
-  /** World coordinate system width */
   worldWidth: number
-  /** World coordinate system height */
   worldHeight: number
-  /** Background color in hexadecimal format */
   backgroundColor?: number
-  /** Rendering resolution multiplier */
   resolution?: number
-  /** Enable anti-aliasing for smoother graphics */
   antialias?: boolean
-  /** Minimum allowed zoom level */
   minZoom?: number
-  /** Maximum allowed zoom level */
   maxZoom?: number
-  /** Starting zoom level when canvas loads */
   initialZoom?: number
-  /** Buffer area around world boundaries for viewport clamping */
   clampBuffer?: number
-  /** Allow viewport dragging with mouse/touch */
   enableDrag?: boolean
-  /** Enable pinch-to-zoom gesture support */
   enablePinch?: boolean
-  /** Allow zooming with mouse wheel */
   enableWheel?: boolean
-  /** Enable momentum-based viewport deceleration */
   enableDecelerate?: boolean
-  /** Scale game content when canvas is resized */
   scaleWithResize?: boolean
-  /** Renderer preference - 'webgl' or 'webgpu' */
   preference?: "webgl" | "webgpu"
 }
 
 /**
- * Abstract base class for creating interactive game canvases with PIXI.js.
- * Provides viewport management, event handling, and rendering infrastructure
- * for 2D games with pan, zoom, and interaction capabilities.
- *
- * Subclasses must implement initializeGameLayers() to set up game-specific
- * visual layers and render() to define per-frame rendering logic.
+ * Abstract base class for creating interactive game canvases using platform abstraction.
+ * Platform-agnostic: works with Web (PIXI.js) or Memory (headless) platforms.
  */
 export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
-  protected app: PIXI.Application
-  protected viewport!: Viewport
-  protected container: HTMLDivElement | null = null
-  protected gameContainer: PIXI.Container
-  protected hudContainer: PIXI.Container
+  protected rendering: RenderingLayer
+  protected audio: AudioLayer
+  protected input: InputLayer
+  protected viewportNode!: DisplayNode
+  protected gameNode!: DisplayNode
+  protected hudNode!: DisplayNode
+  protected viewportNodeId!: NodeId
   protected gameEngine: GameEngine | null = null
   protected readonly initialWidth: number
   protected readonly initialHeight: number
   protected renderers: Map<string, AbstractRenderer<any>> = new Map()
-  protected updateCallback: ((ticker: any) => void) | null = null
+  protected updateCallback: ((deltaTicks: number) => void) | null = null
 
   protected static readonly DEFAULT_OPTIONS: Partial<GameCanvasOptions> = {
     backgroundColor: 0x1e1e1e,
@@ -105,11 +92,15 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
     scaleWithResize: false,
   }
 
-  constructor(protected options: GameCanvasOptions) {
+  constructor(
+    protected options: GameCanvasOptions,
+    platform: PlatformLayer,
+  ) {
     super()
-    this.app = new PIXI.Application()
-    this.gameContainer = new PIXI.Container()
-    this.hudContainer = new PIXI.Container()
+
+    this.rendering = platform.rendering
+    this.audio = platform.audio
+    this.input = platform.input
 
     this.initialWidth = options.width
     this.initialHeight = options.height
@@ -118,106 +109,89 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Factory method for creating and initializing a game canvas instance.
-   * Handles the asynchronous initialization process and DOM attachment.
-   *
-   * @param container HTML element to attach the canvas to
-   * @param options Configuration options for the canvas
-   * @returns Promise resolving to the initialized canvas instance
+   * Initialize the canvas - platform-agnostic (no container parameter).
    */
-  public static async create<T extends GameCanvas>(
-    this: new (
-      options: GameCanvasOptions,
-    ) => T,
-    container: HTMLDivElement,
-    options: GameCanvasOptions,
-  ): Promise<T> {
-    const instance = new this(options)
-    await instance.initialize(container)
-    return instance
-  }
+  public async initialize(): Promise<void> {
+    const viewportNodeId = this.rendering.createNode()
+    const gameNodeId = this.rendering.createNode()
+    const hudNodeId = this.rendering.createNode()
 
-  /**
-   * Initializes the PIXI application, viewport, and canvas setup.
-   * Configures rendering, interaction, and attaches to the DOM.
-   *
-   * @param container HTML element to attach the canvas to
-   */
-  protected async initialize(container: HTMLDivElement): Promise<void> {
-    this.container = container
+    this.viewportNode = new DisplayNode(viewportNodeId, this.rendering)
+    this.gameNode = new DisplayNode(gameNodeId, this.rendering)
+    this.hudNode = new DisplayNode(hudNodeId, this.rendering)
+    this.viewportNodeId = viewportNodeId
 
-    const initOptions: any = {
-      width: this.options.width,
-      height: this.options.height,
-      backgroundColor: this.options.backgroundColor,
-      resolution: this.options.resolution || window.devicePixelRatio || 1,
-      autoDensity: true,
-      antialias: this.options.antialias,
-    }
+    this.viewportNode.addChild(this.gameNode)
 
-    if (this.options.preference) {
-      initOptions.preference = this.options.preference
-    }
-
-    await this.app.init(initOptions)
-
-    this.viewport = new Viewport({
-      screenWidth: this.app.screen.width,
-      screenHeight: this.app.screen.height,
+    this.rendering.setViewport(this.viewportNodeId, {
+      screenWidth: this.options.width,
+      screenHeight: this.options.height,
       worldWidth: this.options.worldWidth,
       worldHeight: this.options.worldHeight,
-      events: this.app.renderer.events,
+      enableDrag: this.options.enableDrag,
+      enablePinch: this.options.enablePinch,
+      enableZoom: this.options.enableWheel,
+      clampWheel: this.options.enableWheel,
+      minScale: this.options.minZoom,
+      maxScale: this.options.maxZoom,
     })
 
-    if (this.options.enableDrag) this.viewport.drag()
-    if (this.options.enablePinch) this.viewport.pinch()
-    if (this.options.enableWheel) this.viewport.wheel()
-    if (this.options.enableDecelerate) this.viewport.decelerate()
-
-    this.viewport.clampZoom({
-      minScale: this.options.minZoom!,
-      maxScale: this.options.maxZoom!,
-    })
-
-    this.configureViewportClamp()
-
-    this.viewport.moveCenter(
+    this.rendering.setViewportPosition(
+      this.viewportNodeId,
       this.options.worldWidth / 2,
       this.options.worldHeight / 2,
     )
-    this.viewport.setZoom(this.options.initialZoom!, true)
 
-    // Set proper event modes for containers
-    this.gameContainer.eventMode = "passive"
-    this.hudContainer.eventMode = "passive"
-
-    this.viewport.addChild(this.gameContainer)
-    this.app.stage.addChild(this.viewport)
-    this.app.stage.addChild(this.hudContainer)
-    container.appendChild(this.app.canvas)
+    if (this.options.initialZoom) {
+      this.rendering.setViewportZoom(
+        this.viewportNodeId,
+        this.options.initialZoom,
+      )
+    }
 
     this.setupEventListeners()
+    this.setupUpdateLoop()
   }
 
   /**
-   * Configures viewport boundaries with buffer zones around the world edges.
-   * Prevents users from panning too far outside the game world.
+   * Set up input event listeners via platform.input
    */
-  protected configureViewportClamp(): Viewport {
-    return this.viewport.clamp({
-      direction: "all",
-      left: -this.options.clampBuffer!,
-      right: this.options.worldWidth + this.options.clampBuffer!,
-      top: -this.options.clampBuffer!,
-      bottom: this.options.worldHeight + this.options.clampBuffer!,
+  protected setupEventListeners(): void {
+    this.input.onPointerMove((event) => this.handlePointerMove(event))
+    this.input.onClick((event) => this.handleClick(event))
+  }
+
+  /**
+   * Start the update loop using platform.rendering.onTick()
+   */
+  protected setupUpdateLoop(): void {
+    this.rendering.onTick((deltaTicks) => {
+      this.update(deltaTicks * FRAMES_TO_TICKS_MULTIPLIER)
     })
   }
 
+  protected handlePointerMove = (event: InputEvent) => {
+    const worldPos = this.rendering.screenToWorld(
+      this.viewportNodeId,
+      event.x,
+      event.y,
+    )
+    const worldPosition = new Vector2D(worldPos.x, worldPos.y)
+    this.emit(GameCanvasEvent.POINTER_MOVE, worldPosition)
+  }
+
+  protected handleClick = (event: InputEvent) => {
+    const worldPos = this.rendering.screenToWorld(
+      this.viewportNodeId,
+      event.x,
+      event.y,
+    )
+    const worldPosition = new Vector2D(worldPos.x, worldPos.y)
+    this.emit(GameCanvasEvent.POINTER_CLICK, worldPosition)
+  }
+
   /**
-   * Registers a renderer with the canvas for state management.
-   *
-   * @param name Unique name for the renderer
-   * @param renderer The renderer instance to register
+   * Register a renderer
    */
   protected registerRenderer(
     name: string,
@@ -227,23 +201,19 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Unregisters a renderer from the canvas.
-   *
-   * @param name Name of the renderer to unregister
+   * Unregister a renderer
    */
   protected unregisterRenderer(name: string): void {
     this.renderers.delete(name)
   }
 
   /**
-   * Sets up game-specific visual layers and renderers.
-   * Must be implemented by subclasses to set up their rendering system.
+   * Set up game-specific renderers
    */
   protected abstract setupRenderers(): void
 
   /**
-   * Clears all registered renderers.
-   * Called before reinitializing layers to ensure clean state.
+   * Clear all renderers
    */
   protected clearRenderers(): void {
     for (const renderer of this.renderers.values()) {
@@ -256,21 +226,16 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Retrieves the currently associated game engine instance.
-   *
-   * @returns The game engine or null if none is set
+   * Get the game engine
    */
   public getGameEngine(): GameEngine | null {
     return this.gameEngine
   }
 
   /**
-   * Associates a game engine with this canvas for update loop integration.
-   *
-   * @param gameEngine The game engine instance to associate
+   * Set the game engine
    */
   public setGameEngine(gameEngine: GameEngine | null): void {
-    // Remove listeners from previous engine before setting new one
     if (this.gameEngine) {
       this.gameEngine.off(
         GameEngineEventType.STATE_CHANGE,
@@ -280,7 +245,6 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
     this.gameEngine = gameEngine
 
-    // Add listener to new engine
     if (this.gameEngine) {
       this.gameEngine.on(
         GameEngineEventType.STATE_CHANGE,
@@ -294,97 +258,18 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Renders the current frame with game-specific drawing logic.
-   * Called every tick after the game engine update.
-   *
-   * @param deltaTicks Ticks elapsed since the last update
+   * Render frame - implemented by subclasses
    */
   protected abstract render(deltaTicks: number): void
 
   /**
-   * Updates the game state and triggers rendering for each tick.
-   * Coordinates between the game engine and visual rendering.
-   *
-   * @param deltaTicks Ticks elapsed since the last update
+   * Update game state and render
    */
   protected update(deltaTicks: number): void {
     if (this.gameEngine) {
       this.gameEngine.update(deltaTicks)
     }
     this.render(deltaTicks)
-  }
-
-  /**
-   * Sets up event listeners for mouse, touch, viewport interactions, and game engine state changes.
-   * Removes existing listeners before adding new ones to prevent memory leaks.
-   */
-  protected setupEventListeners(): void {
-    // Remove existing DOM event listeners
-    if (this.container) {
-      this.container.removeEventListener("pointermove", this.handlePointerMove)
-      this.container.removeEventListener("click", this.handleClick)
-    }
-
-    // Add new DOM event listeners
-    if (this.container) {
-      this.container.addEventListener("pointermove", this.handlePointerMove)
-      this.container.addEventListener("click", this.handleClick)
-    }
-
-    this.viewport.on("moved", this.handleViewportMoved)
-    this.viewport.on("zoomed", this.handleViewportZoomed)
-  }
-
-  /**
-   * Starts the main game update and render loop using PIXI's ticker.
-   */
-  protected setupUpdateLoop(): void {
-    // Remove existing update loop to prevent multiple callbacks
-    if (this.updateCallback) {
-      this.app.ticker.remove(this.updateCallback)
-    }
-
-    // Create and store the update callback
-    this.updateCallback = (ticker: any) => {
-      this.update(~~(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER))
-    }
-
-    this.app.ticker.add(this.updateCallback)
-  }
-
-  protected handlePointerMove = (event: PointerEvent) => {
-    if (!this.container) return
-
-    const rect = this.container.getBoundingClientRect()
-    const viewportPos = this.viewport.toWorld(
-      event.clientX - rect.left,
-      event.clientY - rect.top,
-    )
-
-    const worldPosition = new Vector2D(viewportPos.x, viewportPos.y)
-    this.emit(GameCanvasEvent.POINTER_MOVE, worldPosition)
-  }
-
-  protected handleClick = (event: MouseEvent) => {
-    if (!this.container) return
-
-    const rect = this.container.getBoundingClientRect()
-    const viewportPos = this.viewport.toWorld(
-      event.clientX - rect.left,
-      event.clientY - rect.top,
-    )
-
-    const worldPosition = new Vector2D(viewportPos.x, viewportPos.y)
-    this.emit(GameCanvasEvent.POINTER_CLICK, worldPosition)
-  }
-
-  protected handleViewportMoved = () => {
-    const center = this.viewport.center
-    this.emit(GameCanvasEvent.VIEWPORT_MOVED, new Vector2D(center.x, center.y))
-  }
-
-  protected handleViewportZoomed = () => {
-    this.emit(GameCanvasEvent.VIEWPORT_ZOOMED, this.viewport.scale.x)
   }
 
   protected handleGameStateChange = (
@@ -401,206 +286,137 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
   }
 
   /**
-   * Moves the viewport to center on specific world coordinates.
-   *
-   * @param x World X coordinate to center on
-   * @param y World Y coordinate to center on
-   * @param animate Whether to animate the movement smoothly
+   * Move viewport to position
    */
-  public moveViewportTo(x: number, y: number, animate = false): void {
-    if (animate) {
-      this.viewport.animate({
-        position: new PIXI.Point(x, y),
-        time: 1000,
-        ease: "easeInOutCubic",
-      })
-    } else {
-      this.viewport.moveCenter(x, y)
-    }
+  public moveViewportTo(x: number, y: number, _animate = false): void {
+    this.rendering.setViewportPosition(this.viewportNodeId, x, y)
+    const center = this.rendering.getViewportPosition(this.viewportNodeId)
+    this.emit(GameCanvasEvent.VIEWPORT_MOVED, new Vector2D(center.x, center.y))
   }
 
   /**
-   * Sets the viewport zoom level.
-   *
-   * @param zoom Target zoom level
-   * @param animate Whether to animate the zoom change smoothly
+   * Set viewport zoom
    */
-  public setZoom(zoom: number, animate = false): void {
-    if (animate) {
-      this.viewport.animate({
-        scale: zoom,
-        time: 1000,
-        ease: "easeInOutCubic",
-      })
-    } else {
-      this.viewport.setZoom(zoom, true)
-    }
+  public setZoom(zoom: number, _animate = false): void {
+    this.rendering.setViewportZoom(this.viewportNodeId, zoom)
+    const currentZoom = this.rendering.getViewportZoom(this.viewportNodeId)
+    this.emit(GameCanvasEvent.VIEWPORT_ZOOMED, currentZoom)
   }
 
   /**
-   * Gets the current viewport center position in world coordinates.
-   *
-   * @returns Current center position as Vector2D
+   * Get viewport center
    */
   public getViewportCenter(): Vector2D {
-    const center = this.viewport.center
-    return new Vector2D(center.x, center.y)
+    const pos = this.rendering.getViewportPosition(this.viewportNodeId)
+    return new Vector2D(pos.x, pos.y)
   }
 
   /**
-   * Gets the current viewport zoom level.
-   *
-   * @returns Current zoom scale factor
+   * Get viewport zoom
    */
   public getZoom(): number {
-    return this.viewport.scale.x
+    return this.rendering.getViewportZoom(this.viewportNodeId)
   }
 
   /**
-   * Converts world coordinates to screen pixel coordinates.
-   *
-   * @param worldPos Position in world coordinate system
-   * @returns Corresponding screen pixel position
+   * Convert world coordinates to screen coordinates
    */
   public worldToScreen(worldPos: Vector2D): Vector2D {
-    const screenPos = this.viewport.toScreen(worldPos.x, worldPos.y)
+    const screenPos = this.rendering.worldToScreen(
+      this.viewportNodeId,
+      worldPos.x,
+      worldPos.y,
+    )
     return new Vector2D(screenPos.x, screenPos.y)
   }
 
   /**
-   * Converts screen pixel coordinates to world coordinates.
-   *
-   * @param screenPos Position in screen pixel coordinates
-   * @returns Corresponding world coordinate position
+   * Convert screen coordinates to world coordinates
    */
   public screenToWorld(screenPos: Vector2D): Vector2D {
-    const worldPos = this.viewport.toWorld(screenPos.x, screenPos.y)
+    const worldPos = this.rendering.screenToWorld(
+      this.viewportNodeId,
+      screenPos.x,
+      screenPos.y,
+    )
     return new Vector2D(worldPos.x, worldPos.y)
   }
 
   /**
-   * Resizes the canvas and adjusts the viewport accordingly.
-   * Handles both scaling and non-scaling resize modes based on configuration.
-   *
-   * @param width New canvas width in pixels
-   * @param height New canvas height in pixels
+   * Resize canvas
    */
   public resize(width: number, height: number): void {
-    if (this.app) {
-      this.app.renderer.resize(width, height)
-      if (this.viewport) {
-        this.viewport.screenWidth = width
-        this.viewport.screenHeight = height
-      }
-    }
+    this.rendering.resize(width, height)
 
     if (this.options.scaleWithResize) {
       const scaleX = width / this.initialWidth
       const scaleY = height / this.initialHeight
       const uniformScale = Math.min(scaleX, scaleY)
 
-      this.gameContainer.scale.set(uniformScale)
-
-      this.gameContainer.x = (width - this.initialWidth * uniformScale) / 2
-      this.gameContainer.y = (height - this.initialHeight * uniformScale) / 2
+      this.gameNode.setScale(uniformScale)
+      this.gameNode.setPosition(
+        (width - this.initialWidth * uniformScale) / 2,
+        (height - this.initialHeight * uniformScale) / 2,
+      )
     } else {
       this.options.width = width
       this.options.height = height
     }
 
-    if (this.viewport) {
-      const worldAspectRatio =
-        this.options.worldWidth / this.options.worldHeight
-      const canvasAspectRatio = width / height
+    const worldAspectRatio = this.options.worldWidth / this.options.worldHeight
+    const canvasAspectRatio = width / height
 
-      let targetZoom: number
-      if (canvasAspectRatio > worldAspectRatio) {
-        targetZoom = height / this.options.worldHeight
-      } else {
-        targetZoom = width / this.options.worldWidth
-      }
-
-      targetZoom = Math.max(
-        this.options.minZoom!,
-        Math.min(this.options.maxZoom!, targetZoom),
-      )
-
-      this.viewport.setZoom(targetZoom, false)
-      this.viewport.moveCenter(
-        this.options.worldWidth / 2,
-        this.options.worldHeight / 2,
-      )
+    let targetZoom: number
+    if (canvasAspectRatio > worldAspectRatio) {
+      targetZoom = height / this.options.worldHeight
+    } else {
+      targetZoom = width / this.options.worldWidth
     }
+
+    targetZoom = Math.max(
+      this.options.minZoom!,
+      Math.min(this.options.maxZoom!, targetZoom),
+    )
+
+    this.rendering.setViewportZoom(this.viewportNodeId, targetZoom)
+    this.rendering.setViewportPosition(
+      this.viewportNodeId,
+      this.options.worldWidth / 2,
+      this.options.worldHeight / 2,
+    )
   }
 
   /**
-   * Destroys the canvas and cleans up all resources.
-   * Removes event listeners, destroys PIXI application, and cleans up DOM references.
+   * Destroy canvas
    */
   public destroy(): void {
-    // Clean up ticker callback
-    if (this.updateCallback) {
-      this.app.ticker.remove(this.updateCallback)
-      this.updateCallback = null
-    }
-
-    if (this.container) {
-      this.container.removeEventListener("pointermove", this.handlePointerMove)
-      this.container.removeEventListener("click", this.handleClick)
-      if (this.app.canvas.parentNode === this.container) {
-        this.container.removeChild(this.app.canvas)
-      }
-      this.container = null
-    }
-
-    this.viewport.off("moved", this.handleViewportMoved)
-    this.viewport.off("zoomed", this.handleViewportZoomed)
-
+    this.input.removeAllListeners()
     this.clearListeners()
 
-    this.app.destroy(true, { children: true, texture: true })
+    if (this.viewportNode) {
+      this.viewportNode.destroy()
+    }
+    if (this.hudNode) {
+      this.hudNode.destroy()
+    }
   }
 
   /**
-   * Gets the PIXI application instance.
-   *
-   * @returns The PIXI application
+   * Get the game node (DisplayNode)
    */
-  public getApp(): PIXI.Application {
-    return this.app
+  public getGameNode(): DisplayNode {
+    return this.gameNode
   }
 
   /**
-   * Gets the viewport instance for advanced viewport manipulation.
-   *
-   * @returns The pixi-viewport instance
+   * Get the HUD node (DisplayNode)
    */
-  public getViewport(): Viewport {
-    return this.viewport
+  public getHudNode(): DisplayNode {
+    return this.hudNode
   }
 
   /**
-   * Gets the main game container that moves with the viewport.
-   *
-   * @returns The game world container
-   */
-  public getGameContainer(): PIXI.Container {
-    return this.gameContainer
-  }
-
-  /**
-   * Gets the HUD container that stays fixed on screen.
-   *
-   * @returns The HUD container
-   */
-  public getHudContainer(): PIXI.Container {
-    return this.hudContainer
-  }
-
-  /**
-   * Gets a copy of the current canvas options.
-   *
-   * @returns Copy of the canvas configuration
+   * Get canvas options
    */
   public getOptions(): GameCanvasOptions {
     return { ...this.options }

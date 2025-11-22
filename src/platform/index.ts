@@ -34,4 +34,7 @@ export { MemoryPlatformLayer } from "./memory/MemoryPlatformLayer"
 export { PixiRenderingLayer } from "./web/PixiRenderingLayer"
 export { WebAudioLayer } from "./web/WebAudioLayer"
 export { WebInputLayer } from "./web/WebInputLayer"
-export { WebPlatformLayer } from "./web/WebPlatformLayer"
+export {
+  WebPlatformLayer,
+  type WebPlatformOptions,
+} from "./web/WebPlatformLayer"

@@ -1,61 +1,51 @@
-import { AbstractRenderer, PIXI } from "@hiddentao/clockwork-engine"
+import { AbstractRenderer, DisplayNode } from "@hiddentao/clockwork-engine"
 import { Bomb } from "../gameObjects/Bomb"
 import { GAME_CONFIG } from "../utils/constants"
 
 export class BombRenderer extends AbstractRenderer<Bomb> {
-  constructor(gameContainer: PIXI.Container) {
-    super(gameContainer)
+  constructor(gameNode: DisplayNode) {
+    super(gameNode)
   }
 
-  protected create(bomb: Bomb): PIXI.Container {
+  protected create(bomb: Bomb): DisplayNode {
     const cellSize = GAME_CONFIG.CELL_SIZE
     const position = bomb.getPosition()
 
-    // Create container for bomb
-    const container = new PIXI.Container()
-    container.position.set(
+    const bombBody = this.createCircle(
+      (cellSize - 4) / 2,
+      GAME_CONFIG.COLORS.BOMB,
+    )
+
+    const center = this.createCircle((cellSize - 4) / 6, 0xcc4400)
+
+    const fuse = this.createRectangle(
+      2,
+      (cellSize - 4) / 4,
+      0xffff00,
+      0,
+      -(cellSize - 4) / 3,
+    )
+
+    const node = this.rendering.createNode()
+    const container = new DisplayNode(node, this.rendering)
+    container.setPosition(
       position.x * cellSize + cellSize / 2,
       position.y * cellSize + cellSize / 2,
     )
-
-    // Create main bomb body (circular like apple)
-    const bombBody = this.createCircle(
-      (cellSize - 4) / 2, // radius to match apple sizing
-      GAME_CONFIG.COLORS.BOMB,
-    )
-    this.addNamedChild(container, bombBody, "body")
-
-    // Create darker center
-    const center = this.createCircle(
-      (cellSize - 4) / 6, // smaller center
-      0xcc4400, // darker orange
-    )
-    this.addNamedChild(container, center, "center")
-
-    // Create fuse highlight
-    const fuse = this.createRectangle(
-      2, // width
-      (cellSize - 4) / 4, // height
-      0xffff00, // yellow fuse
-      0, // x offset
-      -(cellSize - 4) / 3, // y offset (above bomb)
-    )
-    this.addNamedChild(container, fuse, "fuse")
+    container.addChild(bombBody)
+    container.addChild(center)
+    container.addChild(fuse)
 
     return container
   }
 
-  protected repaintContainer(container: PIXI.Container, bomb: Bomb): void {
-    // Update position
+  protected repaintNode(node: DisplayNode, bomb: Bomb): void {
     const cellSize = GAME_CONFIG.CELL_SIZE
     const position = bomb.getPosition()
-    container.position.set(
+    node.setPosition(
       position.x * cellSize + cellSize / 2,
       position.y * cellSize + cellSize / 2,
     )
-
-    // Bomb doesn't change over time like apple, so no alpha or pulse effects needed
-    // Could add a subtle danger pulse if desired
   }
 
   public getId(bomb: Bomb): string {

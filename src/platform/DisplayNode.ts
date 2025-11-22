@@ -195,4 +195,12 @@ export class DisplayNode {
   getId(): NodeId {
     return this.id
   }
+
+  getNodeId(): NodeId {
+    return this.id
+  }
+
+  getRendering(): RenderingLayer {
+    return this.rendering
+  }
 }

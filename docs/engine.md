@@ -51,7 +51,7 @@ The code is organized into classes (object-oriented programming) to make it easy
 * [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) - Abstract base class for data loaders. The engine uses the data loader instance to load external data at runtime. This is how you can inject external data and assets into your game in a clean, reproducible way.
 * [`Vector2D`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/Vector2D.ts) - Simple vector math implementation with basic vector arithmetic.
 * [`CollisionGrid`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/CollisionGrid.ts) - Extremely fast and simple collision detection with hashmaps for game grids of fixed sizes.
-* [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) - Base class for rendering layers (used by `GameCanvas`) that wraps Pixi.js containers with a number of helper methods that make it easy to render large numbers of items.
+* [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) - Base class for rendering layers (used by `GameCanvas`) with platform-agnostic rendering and helper methods that make it easy to render large numbers of items.
 
 ### Demo game
 
@@ -260,16 +260,16 @@ And subclasses of `GameObject` can define a custom set of event identifiers whic
 
 ## Rendering system
 
-The rendering system in Clockwork utilises Pixi's built-in system of [container rendering](https://pixijs.com/7.x/guides/components/containers). `GameObject` instances are queries for ther size, position, etc and rendered either as discrete graphics or sprites into Pixi containers. 
+The rendering system in Clockwork uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. `GameObject` instances are queried for their size, position, etc and rendered using DisplayNode instances that represent visual elements in the scene graph.
 
 Clockwork makes rendering easier and efficient by:
 
-* **GameObject-specific renderers** - `AbstractRenderer` is the base class for any and all renderers which render a list of game objects. It handles per-object updaters, adding and removing objects from the renderer containers, sprite rendering, and provides methods for rendering primitives such as circles and rectangles. 
-* **Only re-rendering what has changed** - the `GameObject.isRepaintNeeded` boolean value indicates whether a given game object needs to be re-rendered by the rendering pipeline. This helps with rendering performance. The boolean is set from within the game loop, and it must be unset by the renderer instance that is responsible for rendering that item, once the item has re-rendered.
+* **GameObject-specific renderers** - `AbstractRenderer` is the base class for any and all renderers which render a list of game objects. It handles per-object updates, adding and removing objects from the renderer nodes, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
+* **Only re-rendering what has changed** - the `GameObject.needsRepaint` boolean value indicates whether a given game object needs to be re-rendered by the rendering pipeline. This helps with rendering performance. The boolean is set from within the game loop, and it must be unset by the renderer instance that is responsible for rendering that item, once the item has re-rendered.
 
-*Note: `AbstractRenderer` is actually a generic type, meaning you don't need to use `GameObject`s with it, you could use any type of object you want.* 
+*Note: `AbstractRenderer` is actually a generic type, meaning you don't need to use `GameObject`s with it, you could use any type of object you want.*
 
-Renderers are loaded and executed from within the `GameCanvas` instance. This object holds a list of renderers and sets up the Pixi application and associated viewport system (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
+Renderers are loaded and executed from within the `GameCanvas` instance. This object holds a list of renderers and sets up the rendering system and associated viewport (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
 
 `GameCanvas` provides the game loop entrypoint method, which internally calls the `GameEngine` game loop method:
 

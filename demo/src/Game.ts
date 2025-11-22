@@ -6,6 +6,8 @@ import {
   ReplayManager,
   UserInputEventSource,
   Vector2D,
+  WebPlatformLayer,
+  type WebPlatformOptions,
 } from "@hiddentao/clockwork-engine"
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
@@ -15,6 +17,7 @@ import { Direction, GAME_CONFIG } from "./utils/constants"
 
 export class Game {
   private canvas!: SnakeGameCanvas
+  private platform!: WebPlatformLayer
   private playEngine!: DemoGameEngine
   private replayEngine!: DemoGameEngine
   private activeEngine!: DemoGameEngine
@@ -36,9 +39,34 @@ export class Game {
     this.loader = new DemoLoader()
     console.log("🔧 DemoLoader initialized")
 
-    // Initialize engines with loader
-    this.playEngine = new DemoGameEngine(this.loader)
-    this.replayEngine = new DemoGameEngine(this.loader)
+    // Create platform
+    const gameContainer = document.getElementById("game-container")!
+    const canvasContainer = document.createElement("div")
+    canvasContainer.id = "game-canvas"
+
+    const platformOptions: WebPlatformOptions = {
+      screenWidth: canvasSize.width,
+      screenHeight: canvasSize.height,
+      worldWidth: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+      worldHeight: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+      backgroundColor: GAME_CONFIG.COLORS.BACKGROUND,
+    }
+
+    this.platform = new WebPlatformLayer(
+      canvasContainer as HTMLDivElement,
+      platformOptions,
+    )
+    await this.platform.init()
+
+    // Initialize engines with loader and platform
+    this.playEngine = new DemoGameEngine({
+      loader: this.loader,
+      platform: this.platform,
+    })
+    this.replayEngine = new DemoGameEngine({
+      loader: this.loader,
+      platform: this.platform,
+    })
     this.activeEngine = this.playEngine
 
     const gameConfig = this.generateGameConfig()
@@ -55,25 +83,26 @@ export class Game {
     this.setupStateChangeListeners()
 
     // Create GameCanvas
-    const gameContainer = document.getElementById("game-container")!
-    const canvasContainer = document.createElement("div")
-    canvasContainer.id = "game-canvas"
+    this.canvas = new SnakeGameCanvas(
+      {
+        width: canvasSize.width,
+        height: canvasSize.height,
+        worldWidth: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+        worldHeight: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
+        backgroundColor: GAME_CONFIG.COLORS.BACKGROUND,
+        antialias: false,
+        enableDrag: false,
+        enablePinch: false,
+        enableWheel: false,
+        enableDecelerate: false,
+        minZoom: 1.0,
+        maxZoom: 1.0,
+        initialZoom: 1.0,
+      },
+      this.platform,
+    )
 
-    this.canvas = await SnakeGameCanvas.create(canvasContainer, {
-      width: canvasSize.width,
-      height: canvasSize.height,
-      worldWidth: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
-      worldHeight: GAME_CONFIG.GRID_SIZE * GAME_CONFIG.CELL_SIZE,
-      backgroundColor: GAME_CONFIG.COLORS.BACKGROUND,
-      antialias: false,
-      enableDrag: false,
-      enablePinch: false,
-      enableWheel: false,
-      enableDecelerate: false,
-      minZoom: 1.0,
-      maxZoom: 1.0,
-      initialZoom: 1.0,
-    })
+    await this.canvas.initialize()
 
     // Associate the game engine with the canvas
     this.canvas.setGameEngine(this.activeEngine)
@@ -242,8 +271,8 @@ export class Game {
   }
 
   private setupGameLoop(): void {
-    const ticker = this.canvas.getApp().ticker
-    ticker.add((ticker) => {
+    // Use platform rendering ticker for UI updates
+    this.platform.rendering.onTick(() => {
       this.ui.updateStatus({
         state: this.activeEngine.getState(),
         tick: this.isReplaying
@@ -252,7 +281,7 @@ export class Game {
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
-        actualFPS: ticker.FPS,
+        actualFPS: 60, // Platform abstraction doesn't expose FPS
       })
     })
   }
@@ -284,7 +313,7 @@ export class Game {
       case "replaySpeed":
         this.replaySpeed = data
         if (this.isReplaying) {
-          this.canvas.getApp().ticker.speed = this.replaySpeed
+          this.platform.rendering.setTickerSpeed(this.replaySpeed)
         }
         break
     }
@@ -353,8 +382,8 @@ export class Game {
 
     this.canvas.setGameEngine(this.activeEngine)
 
-    // Set ticker speed for replay AFTER setGameEngine to ensure it's applied
-    this.canvas.getApp().ticker.speed = this.replaySpeed
+    // Set ticker speed for replay
+    this.platform.rendering.setTickerSpeed(this.replaySpeed)
 
     // Start replay on the replay engine (this will control the engine internally)
     await this.replayManager.replay(recording)
@@ -367,7 +396,7 @@ export class Game {
     this.isReplaying = false
 
     // Reset ticker speed
-    this.canvas.getApp().ticker.speed = 1
+    this.platform.rendering.setTickerSpeed(1)
 
     this.replayManager.stopReplay()
 
@@ -384,7 +413,7 @@ export class Game {
     console.log("🔄 Switching to play mode...")
 
     // Reset ticker speed to normal play speed
-    this.canvas.getApp().ticker.speed = 1
+    this.platform.rendering.setTickerSpeed(1)
     this.replaySpeed = 1
 
     // Stop any ongoing recording or replay
