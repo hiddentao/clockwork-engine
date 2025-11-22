@@ -28,13 +28,6 @@ export function millisecondsToTicks(milliseconds: number): number {
 }
 
 /**
- * Collision detection constants
- */
-export const COLLISION_CONSTANTS = {
-  // No constants needed for CollisionGrid - it uses direct coordinate mapping
-} as const
-
-/**
  * Timer system constants
  */
 export const TIMER_CONSTANTS = {

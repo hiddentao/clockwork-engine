@@ -2,7 +2,6 @@ import { EventEmitter } from "./EventEmitter"
 import type { GameEngine } from "./GameEngine"
 import { GameEngineEventType } from "./GameEngine"
 import { Vector2D } from "./geometry/Vector2D"
-import { FRAMES_TO_TICKS_MULTIPLIER } from "./lib/internals"
 import type {
   AudioLayer,
   InputEvent,
@@ -166,7 +165,7 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
    */
   protected setupUpdateLoop(): void {
     this.rendering.onTick((deltaTicks) => {
-      this.update(deltaTicks * FRAMES_TO_TICKS_MULTIPLIER)
+      this.update(deltaTicks)
     })
   }
 

@@ -440,19 +440,11 @@ class GameObject {
 }
 ```
 
-### Tree Depth Limitations
+### Grid Resolution Considerations
 
-**Issue**: Objects clustered in small areas may exceed maximum tree depth.
+**Note**: The current collision system uses `CollisionGrid` which performs direct coordinate mapping without tree-based subdivision. Grid cells are automatically determined based on the world bounds and cell size parameters provided during initialization.
 
-**Solution**: Adjust constants or implement custom subdivision logic:
-
-```typescript
-// In constants.ts
-export const COLLISION_CONSTANTS = {
-  MAX_POINTS_PER_NODE: 10,  // Increase for denser areas
-  MAX_TREE_DEPTH: 8         // Increase for more subdivision
-}
-```
+If you need finer granularity for dense object clusters, adjust the `cellWidth` and `cellHeight` parameters when creating the grid.
 
 ## Performance Considerations
 

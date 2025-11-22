@@ -37,7 +37,6 @@ export class Game {
 
     // Initialize loader
     this.loader = new DemoLoader()
-    console.log("🔧 DemoLoader initialized")
 
     // Create platform
     const gameContainer = document.getElementById("game-container")!
@@ -71,9 +70,6 @@ export class Game {
 
     const gameConfig = this.generateGameConfig()
     await this.playEngine.reset(gameConfig)
-
-    // Demonstrate loader usage
-    await this.demonstrateLoaderCapabilities()
 
     // Initialize systems
     this.recorder = new GameRecorder()
@@ -173,17 +169,17 @@ export class Game {
           this.stopRecording()
 
           // oupput final game state and recording a single JSON
-          console.log(
-            `Final game state and recording`,
-            JSON.stringify({
-              finalState: {
-                applesEaten: this.activeEngine.getApplesEaten(),
-                snakeLength: this.activeEngine.getSnakeLength(),
-                snakePosition: this.activeEngine.getSnake()!.getPosition(),
-              },
-              recording: this.recorder.getCurrentRecording(),
-            }),
-          )
+          // console.log(
+          //   `Final game state and recording`,
+          //   JSON.stringify({
+          //     finalState: {
+          //       applesEaten: this.activeEngine.getApplesEaten(),
+          //       snakeLength: this.activeEngine.getSnakeLength(),
+          //       snakePosition: this.activeEngine.getSnake()!.getPosition(),
+          //     },
+          //     recording: this.recorder.getCurrentRecording(),
+          //   }),
+          // )
         }
       },
     )
@@ -426,46 +422,6 @@ export class Game {
     this.canvas.setGameEngine(this.activeEngine)
     const gameConfig = this.generateGameConfig()
     await this.playEngine.reset(gameConfig)
-  }
-
-  /**
-   * Demonstrate loader capabilities during initialization
-   */
-  private async demonstrateLoaderCapabilities(): Promise<void> {
-    console.log("🔄 Demonstrating loader capabilities...")
-
-    try {
-      // Check what data is available
-      const allKeys = await this.loader.listDataKeys()
-      console.log("📋 Available data keys:", allKeys)
-
-      // List data by type
-      const configKeys = await this.loader.listDataKeys("config")
-      console.log("🔧 Config keys:", configKeys)
-
-      // Load sample data
-      const gameConfig = await this.loader.fetchData("game", { type: "config" })
-      console.log("⚙️ Game config:", JSON.parse(gameConfig))
-
-      // Test data storage
-      const userPrefs = {
-        soundEnabled: true,
-        difficulty: "medium",
-        lastPlayed: new Date().toISOString(),
-      }
-      await this.loader.storeData("preferences", JSON.stringify(userPrefs), {
-        type: "user",
-      })
-      console.log("💾 Stored user preferences")
-
-      // Verify storage
-      const storedPrefs = await this.loader.fetchData("preferences", {
-        type: "user",
-      })
-      console.log("✅ Retrieved user preferences:", JSON.parse(storedPrefs))
-    } catch (error) {
-      console.error("❌ Loader demonstration failed:", error)
-    }
   }
 
   /**

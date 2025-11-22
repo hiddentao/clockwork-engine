@@ -6,6 +6,7 @@
 
 import { Viewport } from "pixi-viewport"
 import * as PIXI from "pixi.js"
+import { FRAMES_TO_TICKS_MULTIPLIER } from "../../lib/internals"
 import type { RenderingLayer, ViewportOptions } from "../RenderingLayer"
 import type {
   BlendMode,
@@ -739,12 +740,12 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   getViewportPosition(_id: NodeId): { x: number; y: number } {
-    return { x: this.viewport.x, y: this.viewport.y }
+    const center = this.viewport.center
+    return { x: center.x, y: center.y }
   }
 
   setViewportPosition(_id: NodeId, x: number, y: number): void {
-    this.viewport.x = x
-    this.viewport.y = y
+    this.viewport.moveCenter(x, y)
     this._needsRepaint = true
   }
 
@@ -764,8 +765,8 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   onTick(callback: (deltaTicks: number) => void): void {
-    this.app.ticker.add(() => {
-      callback(1)
+    this.app.ticker.add((ticker) => {
+      callback(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER)
     })
   }
 

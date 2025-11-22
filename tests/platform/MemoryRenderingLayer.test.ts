@@ -432,6 +432,70 @@ describe("MemoryRenderingLayer", () => {
       const speed = rendering.getTickerSpeed()
       expect(speed).toBe(2)
     })
+
+    it("should handle multiple sequential ticks", () => {
+      const receivedDeltas: number[] = []
+      rendering.onTick((delta) => {
+        receivedDeltas.push(delta)
+      })
+
+      rendering.tick(1000)
+      rendering.tick(500)
+      rendering.tick(1500)
+
+      expect(receivedDeltas).toEqual([1000, 500, 1500])
+    })
+
+    it("should call multiple callbacks for each tick", () => {
+      let callback1Count = 0
+      let callback2Count = 0
+      let callback1Delta = 0
+      let callback2Delta = 0
+
+      rendering.onTick((delta) => {
+        callback1Count++
+        callback1Delta = delta
+      })
+
+      rendering.onTick((delta) => {
+        callback2Count++
+        callback2Delta = delta
+      })
+
+      rendering.tick(1000)
+
+      expect(callback1Count).toBe(1)
+      expect(callback2Count).toBe(1)
+      expect(callback1Delta).toBe(1000)
+      expect(callback2Delta).toBe(1000)
+    })
+
+    it("should handle variable deltaTicks matching PIXI ticker behavior", () => {
+      const receivedDeltas: number[] = []
+      rendering.onTick((delta) => {
+        receivedDeltas.push(delta)
+      })
+
+      rendering.tick(500)
+      rendering.tick(1000)
+      rendering.tick(1500)
+      rendering.tick(2000)
+
+      expect(receivedDeltas).toEqual([500, 1000, 1500, 2000])
+    })
+
+    it("should accumulate ticks correctly", () => {
+      let totalTicks = 0
+      rendering.onTick((delta) => {
+        totalTicks += delta
+      })
+
+      rendering.tick(1000)
+      rendering.tick(1000)
+      rendering.tick(1000)
+
+      expect(totalTicks).toBe(3000)
+    })
   })
 
   describe("Canvas Resize", () => {

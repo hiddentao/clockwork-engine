@@ -12,12 +12,28 @@ export class WebAudioLayer implements AudioLayer {
   private activeSources = new Map<string, AudioBufferSourceNode[]>()
   private isClosed = false
 
+  private async resumeWithTimeout(maxWaitMs = 2000): Promise<void> {
+    if (!this.context) {
+      return
+    }
+
+    await this.context.resume()
+
+    const startTime = Date.now()
+    while (
+      this.context.state === "suspended" &&
+      Date.now() - startTime < maxWaitMs
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    }
+  }
+
   async initialize(): Promise<void> {
     if (this.context) {
       return
     }
     this.context = new AudioContext()
-    await this.context.resume()
+    await this.resumeWithTimeout()
   }
 
   destroy(): void {
@@ -138,9 +154,7 @@ export class WebAudioLayer implements AudioLayer {
   }
 
   async resumeContext(): Promise<void> {
-    if (this.context) {
-      await this.context.resume()
-    }
+    await this.resumeWithTimeout()
   }
 
   getState(): AudioContextState {

@@ -1277,4 +1277,15 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(50)
     })
   })
+
+  describe("Recording Corruption Handling", () => {
+    it("should reject recording with missing required fields", async () => {
+      const corruptedRecording = {
+        events: [],
+        deltaTicks: [1000],
+      } as any
+
+      await expect(replayManager.replay(corruptedRecording)).rejects.toThrow()
+    })
+  })
 })
