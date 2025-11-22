@@ -2,6 +2,10 @@
 
 // Data loading abstraction
 export * from "./Loader"
+export * from "./loaders/HeadlessLoader"
+// Asset management
+export * from "./assets/Spritesheet"
+export * from "./assets/AssetLoader"
 // Event emitter and listener infrastructure
 export * from "./EventEmitter"
 // Core type definitions and game state enums

@@ -7,6 +7,7 @@ import type { Loader } from "./Loader"
 import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
+import { AssetLoader } from "./assets/AssetLoader"
 import { CollisionGrid } from "./geometry"
 import type { PlatformLayer } from "./platform"
 import { type GameConfig, GameState } from "./types"
@@ -26,6 +27,7 @@ export interface GameEngineEvents
 export interface GameEngineOptions {
   loader: Loader
   platform: PlatformLayer
+  assetLoader?: AssetLoader
 }
 
 export abstract class GameEngine
@@ -44,11 +46,20 @@ export abstract class GameEngine
   protected collisionTree: CollisionGrid
   protected loader: Loader
   protected platform: PlatformLayer
+  protected assetLoader?: AssetLoader
 
   constructor(options: GameEngineOptions) {
     super()
     this.loader = options.loader
     this.platform = options.platform
+    // Initialize default AssetLoader if not provided
+    this.assetLoader =
+      options.assetLoader ||
+      new AssetLoader(
+        options.loader,
+        options.platform.rendering,
+        options.platform.audio,
+      )
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
     this.collisionTree = new CollisionGrid()
   }
@@ -62,6 +73,7 @@ export abstract class GameEngine
   /**
    * Reset the game engine to initial state
    * Clears all game objects, resets tick counter, and prepares for new game
+   * If assetLoader is configured, preloads all registered assets before setup()
    * @param gameConfig Game configuration containing seed and initial state
    */
   async reset(gameConfig: GameConfig): Promise<void> {
@@ -76,6 +88,12 @@ export abstract class GameEngine
     this.timer.reset()
     this.eventManager.reset()
     this.collisionTree.clear()
+
+    // Preload assets before setup() if assetLoader is configured
+    if (this.assetLoader) {
+      await this.assetLoader.preloadAssets()
+    }
+
     await this.setup(gameConfig)
   }
 
