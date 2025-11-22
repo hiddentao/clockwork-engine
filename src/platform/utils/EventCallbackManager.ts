@@ -12,7 +12,9 @@ export class EventCallbackManager<T> {
    * Register a new event callback
    */
   register(callback: (event: T) => void): void {
-    this.callbacks.push(callback)
+    if (!this.callbacks.includes(callback)) {
+      this.callbacks.push(callback)
+    }
   }
 
   /**

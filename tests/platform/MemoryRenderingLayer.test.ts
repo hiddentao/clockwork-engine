@@ -498,6 +498,105 @@ describe("MemoryRenderingLayer", () => {
     })
   })
 
+  describe("Game Loop (EventCallbackManager Integration)", () => {
+    it("should prevent duplicate onTick callback registration", () => {
+      let callCount = 0
+      const callback = () => callCount++
+
+      rendering.onTick(callback)
+      rendering.onTick(callback)
+
+      rendering.tick(1)
+      expect(callCount).toBe(1)
+    })
+
+    it("should support multiple different onTick callbacks", () => {
+      let count1 = 0
+      let count2 = 0
+      const callback1 = () => count1++
+      const callback2 = () => count2++
+
+      rendering.onTick(callback1)
+      rendering.onTick(callback2)
+
+      rendering.tick(1)
+      expect(count1).toBe(1)
+      expect(count2).toBe(1)
+    })
+
+    it("should clear tick callbacks on destroy", () => {
+      let callCount = 0
+      const callback = () => callCount++
+
+      rendering.onTick(callback)
+      rendering.destroy()
+      rendering.tick(1)
+
+      expect(callCount).toBe(0)
+    })
+
+    it("should not call duplicate callbacks even after multiple registrations", () => {
+      let callCount = 0
+      const callback = () => callCount++
+
+      rendering.onTick(callback)
+      rendering.onTick(callback)
+      rendering.onTick(callback)
+
+      rendering.tick(1)
+      rendering.tick(1)
+
+      expect(callCount).toBe(2)
+    })
+
+    it("should handle rapid tick cycles with duplicate prevention", () => {
+      let callCount = 0
+      const callback = () => callCount++
+
+      rendering.onTick(callback)
+      rendering.onTick(callback)
+
+      for (let i = 0; i < 10; i++) {
+        rendering.tick(1)
+      }
+
+      expect(callCount).toBe(10)
+    })
+  })
+
+  describe("FPS Reporting", () => {
+    it("should return 60 FPS", () => {
+      const fps = rendering.getFPS()
+      expect(fps).toBe(60)
+    })
+
+    it("should return consistent FPS across multiple calls", () => {
+      const fps1 = rendering.getFPS()
+      const fps2 = rendering.getFPS()
+      const fps3 = rendering.getFPS()
+
+      expect(fps1).toBe(fps2)
+      expect(fps2).toBe(fps3)
+      expect(fps1).toBe(60)
+    })
+
+    it("should return FPS independently of tick callbacks", () => {
+      const callback = () => {
+        /* noop */
+      }
+      rendering.onTick(callback)
+
+      const fps = rendering.getFPS()
+      expect(fps).toBe(60)
+    })
+
+    it("should return FPS after destroy", () => {
+      rendering.destroy()
+      const fps = rendering.getFPS()
+      expect(fps).toBe(60)
+    })
+  })
+
   describe("Canvas Resize", () => {
     it("should track canvas size", () => {
       rendering.resize(1024, 768)

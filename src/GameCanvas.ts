@@ -253,7 +253,6 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
     this.clearRenderers()
     this.setupRenderers()
-    this.setupUpdateLoop()
   }
 
   /**

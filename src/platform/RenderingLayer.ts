@@ -132,6 +132,7 @@ export interface RenderingLayer {
   // Game loop
   onTick(callback: (deltaTicks: number) => void): void
   setTickerSpeed(speed: number): void
+  getFPS(): number
 
   // Manual rendering
   render(): void

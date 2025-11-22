@@ -15,6 +15,7 @@ import type {
   TextureId,
 } from "../types"
 import { asNodeId, asSpritesheetId, asTextureId } from "../types"
+import { EventCallbackManager } from "../utils/EventCallbackManager"
 import { calculateBoundsWithAnchor } from "../utils/boundsCalculation"
 import { screenToWorld, worldToScreen } from "../utils/coordinateTransforms"
 import { withNode } from "../utils/nodeHelpers"
@@ -70,7 +71,7 @@ export class MemoryRenderingLayer implements RenderingLayer {
     SpritesheetId,
     { url: string; data: any; frames: Map<string, TextureId> }
   >()
-  private tickCallbacks: Array<(deltaTicks: number) => void> = []
+  private tickCallbackManager = new EventCallbackManager<number>()
   private tickerSpeed = 1
   private canvasSize = { width: 800, height: 600 }
 
@@ -453,11 +454,15 @@ export class MemoryRenderingLayer implements RenderingLayer {
 
   // Game loop
   onTick(callback: (deltaTicks: number) => void): void {
-    this.tickCallbacks.push(callback)
+    this.tickCallbackManager.register(callback)
   }
 
   setTickerSpeed(speed: number): void {
     this.tickerSpeed = speed
+  }
+
+  getFPS(): number {
+    return 60
   }
 
   // Manual rendering
@@ -475,7 +480,7 @@ export class MemoryRenderingLayer implements RenderingLayer {
     this.nodes.clear()
     this.textures.clear()
     this.spritesheets.clear()
-    this.tickCallbacks = []
+    this.tickCallbackManager.clear()
   }
 
   // Test helpers (not part of RenderingLayer interface)
@@ -571,8 +576,6 @@ export class MemoryRenderingLayer implements RenderingLayer {
 
   // Manual tick for testing
   tick(deltaTicks: number): void {
-    for (const callback of this.tickCallbacks) {
-      callback(deltaTicks)
-    }
+    this.tickCallbackManager.trigger(deltaTicks)
   }
 }

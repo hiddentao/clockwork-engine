@@ -277,7 +277,7 @@ export class Game {
         isRecording: this.isRecording,
         isReplaying: this.isReplaying,
         replaySpeed: this.replaySpeed,
-        actualFPS: 60, // Platform abstraction doesn't expose FPS
+        actualFPS: this.platform.rendering.getFPS(),
       })
     })
   }

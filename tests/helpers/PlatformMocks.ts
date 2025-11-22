@@ -430,6 +430,10 @@ export class MockRenderingLayer implements RenderingLayer {
     this.tickerSpeed = speed
   }
 
+  getFPS(): number {
+    return 60
+  }
+
   // Manual rendering
   render(): void {
     // No-op for mock

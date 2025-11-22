@@ -21,6 +21,7 @@ import {
   asSpritesheetId,
   asTextureId,
 } from "../types"
+import { EventCallbackManager } from "../utils/EventCallbackManager"
 import { calculateBoundsWithAnchor } from "../utils/boundsCalculation"
 import { normalizeColor } from "../utils/colorUtils"
 import { withNode } from "../utils/nodeHelpers"
@@ -60,6 +61,8 @@ export class PixiRenderingLayer implements RenderingLayer {
   >()
   private _needsRepaint = false
   private initialized = false
+  private tickCallbackManager = new EventCallbackManager<number>()
+  private tickerCallbackAdded = false
 
   constructor(canvas: HTMLCanvasElement, options: ViewportOptions) {
     this.canvas = canvas
@@ -106,6 +109,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   destroy(): void {
+    this.tickCallbackManager.clear()
     this.viewport.destroy()
     this.app.destroy(true, { children: true, texture: false })
     this.nodes.clear()
@@ -765,13 +769,23 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   onTick(callback: (deltaTicks: number) => void): void {
-    this.app.ticker.add((ticker) => {
-      callback(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER)
-    })
+    this.tickCallbackManager.register(callback)
+
+    if (!this.tickerCallbackAdded) {
+      this.app.ticker.add((ticker) => {
+        const deltaTicks = ~~(ticker.deltaTime * FRAMES_TO_TICKS_MULTIPLIER)
+        this.tickCallbackManager.trigger(deltaTicks)
+      })
+      this.tickerCallbackAdded = true
+    }
   }
 
   setTickerSpeed(speed: number): void {
     this.app.ticker.speed = speed
+  }
+
+  getFPS(): number {
+    return this.app.ticker.FPS
   }
 
   private clearCurrentVisual(state: NodeState): void {

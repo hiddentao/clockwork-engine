@@ -123,9 +123,9 @@ export class DemoGameEngine extends GameEngine {
   update(deltaTicks: number): void {
     super.update(deltaTicks)
 
-    if (this.getState() === GameState.PLAYING) {
-      this.checkCollisions()
-    }
+    if (this.getState() !== GameState.PLAYING) return
+
+    this.checkCollisions()
 
     // Check if explosion finished during ending state
     if (this.isEnding && this.activeExplosion) {
