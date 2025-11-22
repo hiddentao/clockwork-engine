@@ -1,8 +1,10 @@
 import {
   type GameConfig,
   GameEngine,
+  type GameEngineOptions,
   GameState,
-  Loader,
+  type Loader,
+  MemoryPlatformLayer,
   Vector2D,
 } from "@hiddentao/clockwork-engine"
 import { Apple, Bomb, Snake, Wall } from "../gameObjects"
@@ -20,8 +22,15 @@ export class DemoGameEngine extends GameEngine {
   private isEnding: boolean = false
   private activeExplosion: ExplosionEffect | null = null
 
-  constructor(loader: Loader) {
-    super(loader)
+  constructor(loader: Loader)
+  constructor(options: GameEngineOptions)
+  constructor(loaderOrOptions: Loader | GameEngineOptions) {
+    // Support both old and new constructor signatures for gradual migration
+    const options: GameEngineOptions =
+      "fetchData" in loaderOrOptions
+        ? { loader: loaderOrOptions, platform: new MemoryPlatformLayer() }
+        : loaderOrOptions
+    super(options)
   }
 
   async setup(gameConfig: GameConfig): Promise<void> {

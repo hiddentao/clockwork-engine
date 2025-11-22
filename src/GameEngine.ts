@@ -8,6 +8,7 @@ import { PRNG } from "./PRNG"
 import { Timer } from "./Timer"
 import { UserInputEventSource } from "./UserInputEventSource"
 import { CollisionGrid } from "./geometry"
+import type { PlatformLayer } from "./platform"
 import { type GameConfig, GameState } from "./types"
 
 export enum GameEngineEventType {
@@ -20,6 +21,11 @@ export interface GameEngineEvents
     newState: GameState,
     oldState: GameState,
   ) => void
+}
+
+export interface GameEngineOptions {
+  loader: Loader
+  platform: PlatformLayer
 }
 
 export abstract class GameEngine
@@ -37,10 +43,12 @@ export abstract class GameEngine
   protected recorder: GameRecorder | undefined = undefined
   protected collisionTree: CollisionGrid
   protected loader: Loader
+  protected platform: PlatformLayer
 
-  constructor(loader: Loader) {
+  constructor(options: GameEngineOptions) {
     super()
-    this.loader = loader
+    this.loader = options.loader
+    this.platform = options.platform
     this.eventManager = new GameEventManager(new UserInputEventSource(), this)
     this.collisionTree = new CollisionGrid()
   }
@@ -301,5 +309,12 @@ export abstract class GameEngine
    */
   getLoader(): Loader {
     return this.loader
+  }
+
+  /**
+   * Get the platform layer
+   */
+  getPlatform(): PlatformLayer {
+    return this.platform
   }
 }
