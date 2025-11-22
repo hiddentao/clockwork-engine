@@ -55,7 +55,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   private textures = new Map<TextureId, PIXI.Texture>()
   private spritesheets = new Map<
     SpritesheetId,
-    { tileWidth: number; tileHeight: number }
+    { pixiSpritesheet: PIXI.Spritesheet; frames: Map<string, TextureId> }
   >()
   private _needsRepaint = false
   private initialized = false
@@ -408,13 +408,39 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   async loadSpritesheet(
-    _imageUrl: string,
+    imageUrl: string,
     jsonData: any,
   ): Promise<SpritesheetId> {
     const id = asSpritesheetId(this.spritesheets.size + 1)
-    const tileWidth = jsonData.tileWidth ?? 32
-    const tileHeight = jsonData.tileHeight ?? 32
-    this.spritesheets.set(id, { tileWidth, tileHeight })
+
+    // Load the texture for the spritesheet image
+    const baseTexture = await PIXI.Assets.load<PIXI.Texture>(imageUrl)
+
+    // Normalize JSON format
+    let normalizedJson = jsonData
+    if (Array.isArray(jsonData.frames)) {
+      normalizedJson = {
+        ...jsonData,
+        frames: Object.fromEntries(
+          jsonData.frames.map((frame: any) => [frame.filename, frame]),
+        ),
+      }
+    }
+
+    // Create PIXI.Spritesheet from the texture and JSON data
+    const pixiSpritesheet = new PIXI.Spritesheet(baseTexture, normalizedJson)
+    await pixiSpritesheet.parse()
+
+    // Store frame mappings
+    const frames = new Map<string, TextureId>()
+    for (const frameName of Object.keys(pixiSpritesheet.textures)) {
+      const frameTexture = pixiSpritesheet.textures[frameName]
+      const textureId = asTextureId(this.textures.size + 1)
+      this.textures.set(textureId, frameTexture)
+      frames.set(frameName, textureId)
+    }
+
+    this.spritesheets.set(id, { pixiSpritesheet, frames })
     return id
   }
 
@@ -702,12 +728,9 @@ export class PixiRenderingLayer implements RenderingLayer {
     return window.devicePixelRatio || 1
   }
 
-  getTexture(
-    _spritesheet: SpritesheetId,
-    _frameName: string,
-  ): TextureId | null {
-    // TODO: Implement spritesheet frame lookup
-    return null
+  getTexture(spritesheet: SpritesheetId, frameName: string): TextureId | null {
+    const sheet = this.spritesheets.get(spritesheet)
+    return sheet?.frames.get(frameName) ?? null
   }
 
   setViewport(_id: NodeId, _options: ViewportOptions): void {

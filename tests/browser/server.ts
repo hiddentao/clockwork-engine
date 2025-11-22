@@ -39,6 +39,32 @@ const server = Bun.serve({
       }
     }
 
+    // Serve test-data files
+    if (filePath.startsWith("/tests/browser/test-data/")) {
+      try {
+        const file = Bun.file("." + filePath)
+        const exists = await file.exists()
+        if (exists) {
+          let contentType = "application/octet-stream"
+          if (filePath.endsWith(".json")) {
+            contentType = "application/json"
+          } else if (filePath.endsWith(".webp")) {
+            contentType = "image/webp"
+          } else if (filePath.endsWith(".png")) {
+            contentType = "image/png"
+          }
+          return new Response(file, {
+            headers: {
+              "Content-Type": contentType,
+              "Access-Control-Allow-Origin": "*",
+            },
+          })
+        }
+      } catch (_e) {
+        // File not found
+      }
+    }
+
     return new Response("Not Found", { status: 404 })
   },
 })
