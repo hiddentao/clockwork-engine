@@ -440,6 +440,14 @@ export class MockRenderingLayer implements RenderingLayer {
     // No-op for mock
   }
 
+  // Cleanup
+  destroy(): void {
+    this.nodes.clear()
+    this.textures.clear()
+    this.spritesheets.clear()
+    this.tickCallback = null
+  }
+
   // Test helpers
   getNode(id: NodeId): MockNode | undefined {
     return this.nodes.get(id)

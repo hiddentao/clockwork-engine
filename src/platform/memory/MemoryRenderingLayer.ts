@@ -470,6 +470,14 @@ export class MemoryRenderingLayer implements RenderingLayer {
     this.canvasSize = { width, height }
   }
 
+  // Cleanup
+  destroy(): void {
+    this.nodes.clear()
+    this.textures.clear()
+    this.spritesheets.clear()
+    this.tickCallbacks = []
+  }
+
   // Test helpers (not part of RenderingLayer interface)
   hasNode(id: NodeId): boolean {
     return this.nodes.has(id)

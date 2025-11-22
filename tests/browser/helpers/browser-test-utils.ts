@@ -115,6 +115,8 @@ export function getRenderingSetup(
     })
 
     await rendering.init()
+
+    const platform = { rendering }
   `
 }
 

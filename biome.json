@@ -6,6 +6,7 @@
       "dist/**",
       "dist-bin/**",
       "public/**",
+      "test-results/**",
       "package.json",
       "biome.json"
     ]

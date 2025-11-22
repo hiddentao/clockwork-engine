@@ -138,4 +138,7 @@ export interface RenderingLayer {
 
   // Canvas resize
   resize(width: number, height: number): void
+
+  // Cleanup
+  destroy(): void
 }

@@ -335,4 +335,11 @@ export abstract class GameEngine
   getPlatform(): PlatformLayer {
     return this.platform
   }
+
+  /**
+   * Get the asset loader for managing game assets
+   */
+  getAssetLoader(): AssetLoader | undefined {
+    return this.assetLoader
+  }
 }

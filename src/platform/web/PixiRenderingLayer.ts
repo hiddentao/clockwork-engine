@@ -853,14 +853,16 @@ export class PixiRenderingLayer implements RenderingLayer {
         }
         case "polyline": {
           const { points, color, width } = cmd.data
-          for (let i = 0; i < points.length - 2; i += 2) {
-            state.graphics.moveTo(points[i], points[i + 1])
-            state.graphics.lineTo(points[i + 2], points[i + 3])
+          if (points.length >= 2) {
+            state.graphics.moveTo(points[0], points[1])
+            for (let i = 2; i < points.length; i += 2) {
+              state.graphics.lineTo(points[i], points[i + 1])
+            }
+            state.graphics.stroke({
+              width: width ?? 1,
+              color: normalizeColor(color),
+            })
           }
-          state.graphics.stroke({
-            width: width ?? 1,
-            color: normalizeColor(color),
-          })
           break
         }
       }

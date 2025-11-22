@@ -18,9 +18,9 @@ Clockwork is written in Typescript and is designed for browser-based games.
 
 The engine is distributed as an NPM package: [@hiddentao/clockwork-engine](https://github.com/hiddentao/clockwork-engine). The package contains modern Javascript (transpiled from the source Typescript) as well as Typescript types. 
 
-The engine does not (currently) include any networking or audio stack - games are free to _"bring their own"_. Object-oriented Javascript is used to keep the code neat and organised and to also make it easy to extend.
+The engine does not (currently) include any networking stack - games are free to _"bring their own"_. Object-oriented Javascript is used to keep the code neat and organised and to also make it easy to extend.
 
-The engine has been built around [Pixi.js](https://pixijs.com/) as the underlying rendering library of choice. Pixi is a well-established rendering library that provides fast hardware-accelerated rendering into a WebGL `canvas` so any performance bottleneck you encounter is likely to be due to inefficiencies in your own game logic.
+The engine uses a platform abstraction layer that decouples game logic from rendering and audio implementations. The default implementation uses [Pixi.js](https://pixijs.com/) for rendering and Web Audio API for sound. Pixi is a well-established rendering library that provides fast hardware-accelerated rendering into a WebGL `canvas` so any performance bottleneck you encounter is likely to be due to inefficiencies in your own game logic. The platform abstraction also enables headless replay validation - see [Platform Layer Guide](./platform-layer.md) and [Headless Replay Guide](./headless-replay.md) for details.
 
 ### Deterministic replays
 
@@ -49,9 +49,12 @@ The code is organized into classes (object-oriented programming) to make it easy
 * [`GameRecorder`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameRecorder.ts) - Used to record a gameplay session for replay later on.
 * [`ReplayManager`](https://github.com/hiddentao/clockwork-engine/blob/main/src/ReplayManager.ts) - Used to replay a previously recorded gameplay session.
 * [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) - Abstract base class for data loaders. The engine uses the data loader instance to load external data at runtime. This is how you can inject external data and assets into your game in a clean, reproducible way.
+* [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts) - Concrete asset loader for spritesheets, images, and sounds with automatic preloading during engine reset.
+* [`Spritesheet`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/Spritesheet.ts) - Spritesheet loader supporting TexturePacker and Leshy JSON formats with frame-based texture access.
 * [`Vector2D`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/Vector2D.ts) - Simple vector math implementation with basic vector arithmetic.
 * [`CollisionGrid`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/CollisionGrid.ts) - Extremely fast and simple collision detection with hashmaps for game grids of fixed sizes.
 * [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) - Base class for rendering layers (used by `GameCanvas`) with platform-agnostic rendering and helper methods that make it easy to render large numbers of items.
+* [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/DisplayNode.ts) - Platform-agnostic scene graph node with fluent API for transforms, graphics, and sprite rendering.
 
 ### Demo game
 
@@ -260,16 +263,24 @@ And subclasses of `GameObject` can define a custom set of event identifiers whic
 
 ## Rendering system
 
-The rendering system in Clockwork uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. `GameObject` instances are queried for their size, position, etc and rendered using DisplayNode instances that represent visual elements in the scene graph.
+The rendering system in Clockwork uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. `GameObject` instances are queried for their size, position, etc and rendered using [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/DisplayNode.ts) instances that represent visual elements in the scene graph.
+
+The platform layer provides:
+
+* **Platform independence** - Same rendering code works in browser (WebGL via PIXI.js) and headless (for replay validation)
+* **Fluent API** - Chain method calls for concise node setup: `node.setPosition(x, y).setScale(2).setAlpha(0.5)`
+* **Primitives** - Built-in shapes (rectangles, circles, polygons, lines) without external graphics libraries
+
+See [Platform Layer Guide](./platform-layer.md) for architecture details.
 
 Clockwork makes rendering easier and efficient by:
 
-* **GameObject-specific renderers** - `AbstractRenderer` is the base class for any and all renderers which render a list of game objects. It handles per-object updates, adding and removing objects from the renderer nodes, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
+* **GameObject-specific renderers** - [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) is the base class for any and all renderers which render a list of game objects. It handles per-object updates, adding and removing objects from the renderer nodes, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
 * **Only re-rendering what has changed** - the `GameObject.needsRepaint` boolean value indicates whether a given game object needs to be re-rendered by the rendering pipeline. This helps with rendering performance. The boolean is set from within the game loop, and it must be unset by the renderer instance that is responsible for rendering that item, once the item has re-rendered.
 
 *Note: `AbstractRenderer` is actually a generic type, meaning you don't need to use `GameObject`s with it, you could use any type of object you want.*
 
-Renderers are loaded and executed from within the `GameCanvas` instance. This object holds a list of renderers and sets up the rendering system and associated viewport (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
+Renderers are loaded and executed from within the [`GameCanvas`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameCanvas.ts) instance. This object holds a list of renderers and sets up the rendering system and associated viewport (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
 
 `GameCanvas` provides the game loop entrypoint method, which internally calls the `GameEngine` game loop method:
 
@@ -343,27 +354,47 @@ export type AnyGameEvent = UserInputEvent | ObjectUpdateEvent
 
 Very often a game may need to load assets and other data in from external data sources rather than bundling them within. This is especially true for games which have dynamically changing assets - for example, you may wish to make the background map of your game be changeable and store the map on a server somewhere.
 
-The `GameEngine` holds a reference to a [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) object which must implement the following:
+The `GameEngine` holds a reference to a [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) object which must implement a simple `fetchData()` method. This provides flexibility in terms of where assets come from - local files, remote servers, or dynamically generated data. You could also use the `Loader` to load in dynamic configuration at runtime. For instance, the colours used in the game, the speed of movement, and various other parameters could, if you wanted, be loaded in dynamically.
+
+### AssetLoader
+
+For game assets (spritesheets, images, sounds), use [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts):
 
 ```typescript
-/**
- * Abstract base class for data loading
- * Provides a flexible interface for loading data from different sources
- */
-export abstract class Loader {
-  /**
-   * Fetch data by ID from the configured source
-   * @param id - The identifier for the data to fetch
-   * @param meta - Optional metadata object containing additional properties like type
-   * @returns Promise that resolves to the data as a string
-   */
-  abstract fetchData(id: string, meta?: Record<string, any>): Promise<string>
-}
+const assetLoader = new AssetLoader(loader, platform.rendering, platform.audio)
+
+// Register assets for automatic preloading
+assetLoader.register('sprites/player.png', 'spritesheet')
+assetLoader.register('images/logo.png', 'staticImage')
+assetLoader.register('sounds/jump.mp3', 'sound')
+
+// Pass to engine
+const engine = new MyGameEngine({ loader, platform, assetLoader })
+
+// Assets automatically preload during reset() before setup() is called
+await engine.reset(config)
+
+// Access loaded assets in your game code
+const playerSheet = assetLoader.getSpritesheet('sprites/player.png')
+const logoTexture = assetLoader.getStaticImage('images/logo.png')
 ```
 
-As you can see, this interface provides a lot of flexibility in terms of how you specify what needs to be loaded and from where. The Clockwork demo game implements this by loading the Snake game map asset from a local folder, but you could just as easily load assets from a remote server given that the loading mechanism is asynchronous.
+Assets are preloaded automatically before `GameEngine.setup()` is called, ensuring all required resources are ready when your game initializes.
 
-You could also use the `Loader` to load in dynamic configuration at runtime. For instance, the colours used in the game, the speed of movement, and various other parameters could, if you wanted, be loaded in dynamically.
+### Spritesheets
+
+Load spritesheets with frame-based texture access using [`Spritesheet`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/Spritesheet.ts):
+
+```typescript
+// Spritesheet loads automatically via AssetLoader
+const sheet = assetLoader.getSpritesheet('sprites/player.png')
+
+// Get individual frames
+const idleTexture = sheet.getTexture('player-idle-0.png')
+const walkTextures = sheet.getAnimationFrames('player-walk-')
+```
+
+Supports TexturePacker and Leshy JSON formats. See [AssetLoader tests](https://github.com/hiddentao/clockwork-engine/blob/main/tests/assets/AssetLoader.test.ts) for usage examples.
 
 
 
@@ -469,4 +500,14 @@ When working with Clockwork here are some general coding guidelines you should f
 * When writing renderers they should be concrete subclasses of `AbstractRenderer` and they should use the base class methods as much as possible for common operations like drawing graphics.
 
 * All game objects should have serialization support.
+
+
+
+## Related Documentation
+
+* **[Platform Layer Guide](./platform-layer.md)** - Platform abstraction, DisplayNode, WebPlatformLayer vs MemoryPlatformLayer
+* **[Headless Replay Guide](./headless-replay.md)** - Server-side validation, HeadlessLoader, determinism verification
+* **[Testing Guide](./testing.md)** - Unit testing, integration testing, browser testing, test patterns
+* **[Performance Guide](./performance.md)** - Optimization strategies, profiling, benchmarking
+* **[Collision Detection](./collision-detection.md)** - Spatial indexing, CollisionGrid usage
 
