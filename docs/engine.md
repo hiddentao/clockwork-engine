@@ -505,9 +505,8 @@ When working with Clockwork here are some general coding guidelines you should f
 
 ## Related Documentation
 
-* **[Platform Layer Guide](./platform-layer.md)** - Platform abstraction, DisplayNode, WebPlatformLayer vs MemoryPlatformLayer
-* **[Headless Replay Guide](./headless-replay.md)** - Server-side validation, HeadlessLoader, determinism verification
+* **[Platform Layer Guide](./platform-layer.md)** - Platform abstraction, `DisplayNode`, `WebPlatformLayer` vs `MemoryPlatformLayer`
+* **[Headless Replay Guide](./headless-replay.md)** - Server-side validation, `HeadlessLoader`, determinism verification
 * **[Testing Guide](./testing.md)** - Unit testing, integration testing, browser testing, test patterns
 * **[Performance Guide](./performance.md)** - Optimization strategies, profiling, benchmarking
-* **[Collision Detection](./collision-detection.md)** - Spatial indexing, CollisionGrid usage
 
