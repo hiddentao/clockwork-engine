@@ -6,7 +6,7 @@ This project is a browser-based game engine focused on deterministic, replayable
 
 ## Project Overview
 
-Clockwork is a TypeScript/PIXI.js game engine focused on deterministic, replayable games. It provides deterministic game loops, recording/replay functionality, spatial collision systems, and a complete 2D rendering system with GameCanvas, AbstractRenderer, and BaseRenderer classes.
+Clockwork is a TypeScript game engine focused on deterministic, replayable games with platform-agnostic rendering. It provides deterministic game loops, recording/replay functionality, spatial collision systems, and a complete 2D rendering system with GameCanvas, AbstractRenderer, and BaseRenderer classes.
 
 ## Build System & Commands
 
@@ -31,22 +31,22 @@ Clockwork is a TypeScript/PIXI.js game engine focused on deterministic, replayab
 
 ### Rendering System
 
-The rendering system is built on PIXI.js and provides a complete 2D graphics solution with three main components:
+The rendering system uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. The current implementation uses PIXI.js through the WebPlatformLayer, but the design supports alternative rendering backends. The system provides three main components:
 
-- **GameCanvas**: Abstract PIXI.js-based canvas class that manages:
-  - PIXI Application and viewport setup with pixi-viewport for camera/zoom controls
+- **GameCanvas**: Abstract canvas class that manages:
+  - Platform layer integration for rendering, audio, and input
   - Game engine integration with automatic update loops
   - Event handling for user interactions
   - Viewport management (drag, zoom, pan) with configurable limits
   - Canvas resizing and responsive behavior
-  - Game layer initialization through `initializeGameLayers()` method
+  - Game layer initialization through `setupRenderers()` method
 
 - **AbstractRenderer<T>**: Generic base class for rendering game objects, providing:
-  - Automatic PIXI container management (add/update/remove/setItems methods)
+  - Platform-agnostic DisplayNode management (add/update/remove/setItems methods)
   - Generic typing for specific game object types (T extends GameObject)
-  - Helper methods: `createRectangle()`, `createCircle()`, `addNamedChild()`, `getNamedChild()`
+  - Helper methods: `createRectangle()`, `createCircle()`, `createPolygon()`, `createBorderRectangle()`, `createStandardNode()`
   - Abstract methods: `create()` for initial setup, `getId()` for object identification
-  - Optional `updateContainer()` method for dynamic updates
+  - Optional `repaintNode()` method for dynamic updates with needsRepaint optimization
 
 - **BaseRenderer**: TypeScript interface defining the renderer contract:
   - Standard methods: `add()`, `update()`, `remove()`, `setItems()`
@@ -70,7 +70,7 @@ The rendering system is built on PIXI.js and provides a complete 2D graphics sol
 
 ### Dependencies
 
-- **Runtime**: pixi.js (2D graphics engine), pixi-viewport (viewport/camera), alea (seeded PRNG)
+- **Runtime**: pixi.js (2D graphics through WebPlatformLayer), pixi-viewport (viewport/camera), alea (seeded PRNG)
 - **Development**: TypeScript, Biome (linting/formatting), Bun (runtime/testing)
 
 ## Development Guidelines

@@ -563,7 +563,8 @@ describe("Record-Replay Integration Tests", () => {
       }
 
       expect(replayFrames).toBeGreaterThanOrEqual(10)
-      expect(replayFrames).toBeLessThanOrEqual(12)
+      expect(proxyEngineReplay.getTotalTicks()).toBe(10) // Verify exact tick count
+      expect(replayManager.isCurrentlyReplaying()).toBe(false) // Verify completion
     })
 
     test("should handle replay speed variations", async () => {

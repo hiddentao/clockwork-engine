@@ -36,9 +36,9 @@ export class Snake extends GameObject<SnakeEvents> {
 
   // Movement methods (these will be recorded for replay)
   setDirection(newDirection: Direction): void {
-    // Only validate against hitting neck, don't queue
     if (!this.wouldHitNeck(newDirection)) {
       this.direction = newDirection
+      this.needsRepaint = true
     }
   }
 
@@ -83,11 +83,14 @@ export class Snake extends GameObject<SnakeEvents> {
         )
       }
     }
+
+    this.needsRepaint = true
   }
 
   grow(): void {
     this.pendingGrowth++
     this.applesEaten++
+    this.needsRepaint = true
   }
 
   private wouldHitNeck(newDirection: Direction): boolean {

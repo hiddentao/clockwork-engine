@@ -1,14 +1,14 @@
-import { AbstractRenderer, PIXI } from "@hiddentao/clockwork-engine"
+import { AbstractRenderer, DisplayNode } from "@hiddentao/clockwork-engine"
 import { ExplosionEffect } from "../gameObjects/ExplosionEffect"
 
 export class ExplosionRenderer extends AbstractRenderer<ExplosionEffect> {
-  private particleGraphics: Map<string, PIXI.Graphics[]> = new Map()
+  private particleNodes: Map<string, DisplayNode[]> = new Map()
 
-  constructor(gameContainer: PIXI.Container) {
-    super(gameContainer)
+  constructor(gameNode: DisplayNode) {
+    super(gameNode)
   }
 
-  protected create(explosion: ExplosionEffect): PIXI.Container {
+  protected create(explosion: ExplosionEffect): DisplayNode {
     const cellSize = 24
     const position = explosion.getPosition()
 
@@ -16,42 +16,38 @@ export class ExplosionRenderer extends AbstractRenderer<ExplosionEffect> {
       `💥 Creating explosion at grid position ${position.x}, ${position.y}`,
     )
 
-    // Create container for explosion
-    const container = new PIXI.Container()
-    container.position.set(
+    const nodeId = this.rendering.createNode()
+    const container = new DisplayNode(nodeId, this.rendering)
+    container.setPosition(
       position.x * cellSize + cellSize / 2,
       position.y * cellSize + cellSize / 2,
     )
 
     console.log(
-      `💥 Explosion container positioned at pixel ${container.position.x}, ${container.position.y}`,
+      `💥 Explosion container positioned at pixel ${position.x * cellSize + cellSize / 2}, ${position.y * cellSize + cellSize / 2}`,
     )
 
-    // Create graphics for each particle
-    const graphics: PIXI.Graphics[] = []
     const particles = explosion.getParticles()
+    const particleNodesList: DisplayNode[] = []
 
     for (let i = 0; i < particles.length; i++) {
-      const graphic = this.createGraphics()
-      container.addChild(graphic)
-      graphics.push(graphic)
+      const particleNodeId = this.rendering.createNode()
+      const particleNode = new DisplayNode(particleNodeId, this.rendering)
+      container.addChild(particleNode)
+      particleNodesList.push(particleNode)
     }
 
-    // Store graphics for this explosion
-    this.particleGraphics.set(explosion.getId(), graphics)
+    this.particleNodes.set(explosion.getId(), particleNodesList)
 
     console.log(
-      `💥 Created ${graphics.length} particle graphics for explosion ${explosion.getId()}`,
+      `💥 Created ${particleNodesList.length} particle nodes for explosion ${explosion.getId()}`,
     )
     return container
   }
 
-  protected repaintContainer(
-    _container: PIXI.Container,
-    explosion: ExplosionEffect,
-  ): void {
-    const graphics = this.particleGraphics.get(explosion.getId())
-    if (!graphics) return
+  protected repaintNode(_node: DisplayNode, explosion: ExplosionEffect): void {
+    const nodes = this.particleNodes.get(explosion.getId())
+    if (!nodes) return
 
     const particles = explosion.getParticles()
 
@@ -61,28 +57,25 @@ export class ExplosionRenderer extends AbstractRenderer<ExplosionEffect> {
       )
     }
 
-    // Update each particle graphic based on particle data
-    for (let i = 0; i < graphics.length && i < particles.length; i++) {
-      const graphic = graphics[i]
+    for (let i = 0; i < nodes.length && i < particles.length; i++) {
+      const particleNode = nodes[i]
       const particle = particles[i]
 
-      // Update position from particle data
-      graphic.position.set(particle.currentX, particle.currentY)
+      particleNode.setPosition(particle.currentX, particle.currentY)
 
-      // Redraw particle with current state
-      graphic.clear()
-      graphic.circle(0, 0, particle.currentSize)
-      graphic.fill({ color: particle.color, alpha: particle.alpha })
+      particleNode.clearGraphics()
+      particleNode.drawCircle(0, 0, particle.currentSize, particle.color)
+      particleNode.setAlpha(particle.alpha)
     }
   }
 
   public remove(id: string): void {
-    this.particleGraphics.delete(id)
+    this.particleNodes.delete(id)
     super.remove(id)
   }
 
   public clear(): void {
-    this.particleGraphics.clear()
+    this.particleNodes.clear()
     super.clear()
   }
 

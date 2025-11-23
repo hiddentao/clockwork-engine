@@ -2,6 +2,10 @@
 
 // Data loading abstraction
 export * from "./Loader"
+export * from "./loaders/HeadlessLoader"
+// Asset management
+export * from "./assets/Spritesheet"
+export * from "./assets/AssetLoader"
 // Event emitter and listener infrastructure
 export * from "./EventEmitter"
 // Core type definitions and game state enums
@@ -27,11 +31,11 @@ export * from "./Timer"
 // Rendering system components
 export * from "./rendering"
 export * from "./GameCanvas"
-// PIXI.js and pixi-viewport integration
-export * from "./lib/pixi"
 // Color utilities
 export * from "./lib/color"
 // Performance measurement
 export * from "./lib/performance"
 // Internal constants and utilities
 export * from "./lib/internals"
+// Platform abstraction layer
+export * from "./platform"

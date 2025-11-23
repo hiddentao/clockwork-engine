@@ -1,5 +1,7 @@
+import type { GameEngineOptions } from "../../src/GameEngine"
 import { GameEngine } from "../../src/GameEngine"
-import { Loader } from "../../src/Loader"
+import type { Loader } from "../../src/Loader"
+import { MemoryPlatformLayer } from "../../src/platform"
 import { TestEnemy } from "./TestEnemy"
 import { TestPlayer } from "./TestPlayer"
 
@@ -7,8 +9,15 @@ export class TestGameEngine extends GameEngine {
   public setupCalled = false
   public setupCallCount = 0
 
-  constructor(loader: Loader) {
-    super(loader)
+  constructor(loader: Loader)
+  constructor(options: GameEngineOptions)
+  constructor(loaderOrOptions: Loader | GameEngineOptions) {
+    // Support both old and new constructor signatures for gradual migration
+    const options: GameEngineOptions =
+      "fetchData" in loaderOrOptions
+        ? { loader: loaderOrOptions, platform: new MemoryPlatformLayer() }
+        : loaderOrOptions
+    super(options)
   }
 
   async setup(): Promise<void> {

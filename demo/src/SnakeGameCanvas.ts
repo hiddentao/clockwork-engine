@@ -1,7 +1,8 @@
 import {
+  DisplayNode,
   GameCanvas,
   type GameCanvasOptions,
-  PIXI,
+  type PlatformLayer,
 } from "@hiddentao/clockwork-engine"
 import { Apple, Bomb, Snake, Wall } from "./gameObjects"
 import { ExplosionEffect } from "./gameObjects/ExplosionEffect"
@@ -13,34 +14,33 @@ import { WallRenderer } from "./renderers/WallRenderer"
 import { GAME_CONFIG } from "./utils/constants"
 
 export class SnakeGameCanvas extends GameCanvas {
-  private gridGraphics: PIXI.Graphics | null = null
+  private gridNode: DisplayNode | null = null
   private appleRenderer: AppleRenderer | null = null
   private bombRenderer: BombRenderer | null = null
   private snakeRenderer: SnakeRenderer | null = null
   private wallRenderer: WallRenderer | null = null
   private explosionRenderer: ExplosionRenderer | null = null
 
-  constructor(options: GameCanvasOptions) {
-    super(options)
+  constructor(options: GameCanvasOptions, platform: PlatformLayer) {
+    super(options, platform)
   }
 
   protected setupRenderers(): void {
     // Clean up existing grid
-    if (this.gridGraphics) {
-      this.gameContainer.removeChild(this.gridGraphics)
-      this.gridGraphics.destroy()
-      this.gridGraphics = null
+    if (this.gridNode) {
+      this.gridNode.destroy()
+      this.gridNode = null
     }
 
     // Create and add grid background
     this.drawGrid()
 
     // Initialize renderers for game objects
-    this.appleRenderer = new AppleRenderer(this.gameContainer)
-    this.bombRenderer = new BombRenderer(this.gameContainer)
-    this.snakeRenderer = new SnakeRenderer(this.gameContainer)
-    this.wallRenderer = new WallRenderer(this.gameContainer)
-    this.explosionRenderer = new ExplosionRenderer(this.gameContainer)
+    this.appleRenderer = new AppleRenderer(this.gameNode)
+    this.bombRenderer = new BombRenderer(this.gameNode)
+    this.snakeRenderer = new SnakeRenderer(this.gameNode)
+    this.wallRenderer = new WallRenderer(this.gameNode)
+    this.explosionRenderer = new ExplosionRenderer(this.gameNode)
 
     // Register renderers with GameCanvas for state management
     this.registerRenderer("apple", this.appleRenderer)
@@ -51,38 +51,43 @@ export class SnakeGameCanvas extends GameCanvas {
   }
 
   private drawGrid(): void {
-    this.gridGraphics = new PIXI.Graphics()
-
-    // Auto-cleanup when removed from parent
-    this.gridGraphics.on("removed", () => {
-      this.gridGraphics?.destroy()
-    })
+    const gridNodeId = this.rendering.createNode()
+    this.gridNode = new DisplayNode(gridNodeId, this.rendering)
 
     const cellSize = GAME_CONFIG.CELL_SIZE
     const gridSize = GAME_CONFIG.GRID_SIZE
 
-    // Grid lines
-    this.gridGraphics.setStrokeStyle({
-      width: 1,
-      color: GAME_CONFIG.COLORS.GRID,
-    })
-
     // Vertical lines
     for (let x = 0; x <= gridSize; x++) {
       const xPos = x * cellSize
-      this.gridGraphics.moveTo(xPos, 0)
-      this.gridGraphics.lineTo(xPos, gridSize * cellSize)
+      this.rendering.drawLine(
+        gridNodeId,
+        xPos,
+        0,
+        xPos,
+        gridSize * cellSize,
+        GAME_CONFIG.COLORS.GRID,
+        1,
+      )
     }
 
     // Horizontal lines
     for (let y = 0; y <= gridSize; y++) {
       const yPos = y * cellSize
-      this.gridGraphics.moveTo(0, yPos)
-      this.gridGraphics.lineTo(gridSize * cellSize, yPos)
+      this.rendering.drawLine(
+        gridNodeId,
+        0,
+        yPos,
+        gridSize * cellSize,
+        yPos,
+        GAME_CONFIG.COLORS.GRID,
+        1,
+      )
     }
 
-    this.gridGraphics.stroke()
-    this.gameContainer.addChildAt(this.gridGraphics, 0) // Add as background layer
+    // Add grid as first child of game node (background layer)
+    this.gameNode.addChild(this.gridNode)
+    this.gridNode.setZIndex(-1)
   }
 
   protected render(_deltaTicks: number): void {
@@ -150,9 +155,9 @@ export class SnakeGameCanvas extends GameCanvas {
     }
 
     // Clean up grid
-    if (this.gridGraphics) {
-      this.gridGraphics.destroy()
-      this.gridGraphics = null
+    if (this.gridNode) {
+      this.gridNode.destroy()
+      this.gridNode = null
     }
 
     super.destroy()

@@ -26,6 +26,7 @@ dist-ssr
 # Test
 coverage
 lcov.info
+test-results/
 
 # Build info
 tsconfig.tsbuildinfo
@@ -38,3 +39,4 @@ tsconfig.declarations.tsbuildinfo
 
 # Demo build
 demo/dist
+

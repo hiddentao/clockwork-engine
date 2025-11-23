@@ -1,0 +1,51 @@
+{
+  "frames": [
+    {
+      "filename": "idle-000",
+      "frame": { "x": 1, "y": 0, "w": 14, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 16 },
+      "sourceSize": { "w": 14, "h": 16 }
+    },
+    {
+      "filename": "idle-001",
+      "frame": { "x": 19, "y": 0, "w": 10, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 10, "h": 16 },
+      "sourceSize": { "w": 10, "h": 16 }
+    },
+    {
+      "filename": "idle-002",
+      "frame": { "x": 37, "y": 0, "w": 6, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 6, "h": 16 },
+      "sourceSize": { "w": 6, "h": 16 }
+    },
+    {
+      "filename": "idle-003",
+      "frame": { "x": 51, "y": 0, "w": 10, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 10, "h": 16 },
+      "sourceSize": { "w": 10, "h": 16 }
+    },
+    {
+      "filename": "idle-004",
+      "frame": { "x": 65, "y": 0, "w": 13, "h": 16 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 16 },
+      "sourceSize": { "w": 13, "h": 16 }
+    }
+  ],
+  "meta": {
+    "app": "https://www.leshylabs.com/apps/sstool/",
+    "version": "Leshy SpriteSheet Tool v0.8.4",
+    "image": "coin-spritesheet.png",
+    "size": { "w": 80, "h": 16 },
+    "scale": 1
+  }
+}

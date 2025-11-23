@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clockwork Platform Tests</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #test-container {
+      margin-top: 20px;
+    }
+    canvas {
+      border: 1px solid #333;
+      display: block;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clockwork Platform Browser Tests</h1>
+  <p>This page is used for running Playwright tests with WebGL support.</p>
+  <div id="test-container"></div>
+
+  <script type="module">
+    // Test page ready indicator
+    window.testPageReady = true
+  </script>
+</body>
+</html>

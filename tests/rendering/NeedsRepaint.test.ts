@@ -1,69 +1,10 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test"
+import { beforeEach, describe, expect, it } from "bun:test"
 import { GameObject } from "../../src/GameObject"
 import { Vector2D } from "../../src/geometry/Vector2D"
+import { DisplayNode } from "../../src/platform/DisplayNode"
 import { AbstractRenderer } from "../../src/rendering/AbstractRenderer"
+import { MockPlatformLayer } from "../helpers/PlatformMocks"
 
-// Mock PIXI for testing
-class MockContainer {
-  public children: MockContainer[] = []
-  public position = {
-    x: 0,
-    y: 0,
-    set: (x: number, y: number) => {
-      this.position.x = x
-      this.position.y = y
-    },
-  }
-  public destroyed = false
-  public label?: string
-
-  addChild(child: MockContainer): MockContainer {
-    this.children.push(child)
-    return child
-  }
-
-  removeChild(child: MockContainer): MockContainer {
-    const index = this.children.indexOf(child)
-    if (index > -1) {
-      this.children.splice(index, 1)
-    }
-    return child
-  }
-
-  getChildByLabel(label: string): MockContainer | null {
-    return this.children.find((child) => child.label === label) || null
-  }
-
-  destroy(): void {
-    this.destroyed = true
-    this.children.forEach((child) => child.destroy())
-    this.children = []
-  }
-}
-
-class MockGraphics extends MockContainer {
-  rect(): this {
-    return this
-  }
-  circle(): this {
-    return this
-  }
-  fill(): this {
-    return this
-  }
-}
-
-const PIXI = {
-  Container: MockContainer as any,
-  Graphics: MockGraphics as any,
-}
-
-// Mock the PIXI module
-mock.module("../../src/lib/pixi", () => ({
-  PIXI: PIXI,
-}))
-
-// Test GameObject implementation
 class TestGameObject extends GameObject {
   constructor(id: string, x: number, y: number) {
     super(id, new Vector2D(x, y), new Vector2D(1, 1), 100)
@@ -74,41 +15,42 @@ class TestGameObject extends GameObject {
   }
 }
 
-// Test renderer implementation
 class TestRenderer extends AbstractRenderer<TestGameObject> {
   public repaintCallCount = 0
   public lastRepaintedItem: TestGameObject | null = null
 
-  protected create(item: TestGameObject): any {
-    const container = new PIXI.Container()
-    container.position.set(item.getPosition().x, item.getPosition().y)
-    return container
+  protected create(item: TestGameObject): DisplayNode {
+    const node = this.createRectangle(10, 10, 0xff0000)
+    node.setPosition(item.getPosition().x, item.getPosition().y)
+    return node
   }
 
-  protected repaintContainer(container: any, item: TestGameObject): void {
+  protected repaintNode(node: DisplayNode, item: TestGameObject): void {
     this.repaintCallCount++
     this.lastRepaintedItem = item
-    container.position.set(item.getPosition().x, item.getPosition().y)
+    node.setPosition(item.getPosition().x, item.getPosition().y)
   }
 
   public getId(item: TestGameObject): string {
     return item.getId()
   }
 
-  // Expose protected methods for testing
-  public testUpdateContainer(container: any, item: TestGameObject): void {
-    this.updateContainer(container, item)
+  public testUpdateNode(node: DisplayNode, item: TestGameObject): void {
+    this.updateNode(node, item)
   }
 }
 
 describe("NeedsRepaint Functionality", () => {
   let renderer: TestRenderer
-  let gameContainer: any
+  let gameNode: DisplayNode
+  let platform: MockPlatformLayer
   let testObject: TestGameObject
 
   beforeEach(() => {
-    gameContainer = new PIXI.Container()
-    renderer = new TestRenderer(gameContainer)
+    platform = new MockPlatformLayer()
+    const nodeId = platform.rendering.createNode()
+    gameNode = new DisplayNode(nodeId, platform.rendering)
+    renderer = new TestRenderer(gameNode)
     testObject = new TestGameObject("test-1", 10, 20)
   })
 
@@ -159,7 +101,7 @@ describe("NeedsRepaint Functionality", () => {
 
     it("should not set needsRepaint when rotation doesn't change", () => {
       testObject.needsRepaint = false
-      testObject.setRotation(0) // default rotation
+      testObject.setRotation(0)
       expect(testObject.needsRepaint).toBe(false)
     })
 
@@ -171,7 +113,7 @@ describe("NeedsRepaint Functionality", () => {
 
     it("should not set needsRepaint when health doesn't change", () => {
       testObject.needsRepaint = false
-      testObject.setHealth(100) // current health
+      testObject.setHealth(100)
       expect(testObject.needsRepaint).toBe(false)
     })
 
@@ -183,7 +125,7 @@ describe("NeedsRepaint Functionality", () => {
 
     it("should not set needsRepaint when maxHealth doesn't change", () => {
       testObject.needsRepaint = false
-      testObject.setMaxHealth(100) // current maxHealth
+      testObject.setMaxHealth(100)
       expect(testObject.needsRepaint).toBe(false)
     })
 
@@ -207,7 +149,6 @@ describe("NeedsRepaint Functionality", () => {
     })
 
     it("should not set needsRepaint when healing has no effect", () => {
-      // Already at full health
       testObject.needsRepaint = false
       testObject.heal(10)
       expect(testObject.needsRepaint).toBe(false)
@@ -248,31 +189,28 @@ describe("NeedsRepaint Functionality", () => {
   })
 
   describe("AbstractRenderer needsRepaint optimization", () => {
-    it("should call repaintContainer when needsRepaint is true", () => {
+    it("should call repaintNode when needsRepaint is true", () => {
       renderer.add(testObject)
-      const container = gameContainer.children[0]
+      const node = renderer.getNode(testObject.getId())!
 
-      // After add, the object should have been repainted and flag reset
       expect(testObject.needsRepaint).toBe(false)
       expect(renderer.repaintCallCount).toBe(1)
 
-      // Set flag to true and test again
       testObject.needsRepaint = true
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
 
       expect(renderer.repaintCallCount).toBe(2)
       expect(testObject.needsRepaint).toBe(false)
     })
 
-    it("should not call repaintContainer when needsRepaint is false", () => {
+    it("should not call repaintNode when needsRepaint is false", () => {
       renderer.add(testObject)
-      const container = gameContainer.children[0]
+      const node = renderer.getNode(testObject.getId())!
 
-      // Set needsRepaint to false
       testObject.needsRepaint = false
       renderer.repaintCallCount = 0
 
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
 
       expect(renderer.repaintCallCount).toBe(0)
       expect(testObject.needsRepaint).toBe(false)
@@ -280,46 +218,40 @@ describe("NeedsRepaint Functionality", () => {
 
     it("should reset needsRepaint to false after repainting", () => {
       renderer.add(testObject)
-      const container = gameContainer.children[0]
+      const node = renderer.getNode(testObject.getId())!
 
       testObject.needsRepaint = true
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
 
       expect(testObject.needsRepaint).toBe(false)
     })
 
     it("should handle multiple update calls efficiently", () => {
       renderer.add(testObject)
-      const container = gameContainer.children[0]
+      const node = renderer.getNode(testObject.getId())!
 
-      // First update should call repaint
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
       expect(renderer.repaintCallCount).toBe(1)
 
-      // Subsequent updates without changes should not call repaint
-      renderer.testUpdateContainer(container, testObject)
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
+      renderer.testUpdateNode(node, testObject)
       expect(renderer.repaintCallCount).toBe(1)
 
-      // Making a change should trigger repaint again
       testObject.setPosition(new Vector2D(50, 60))
-      renderer.testUpdateContainer(container, testObject)
+      renderer.testUpdateNode(node, testObject)
       expect(renderer.repaintCallCount).toBe(2)
     })
 
     it("should work correctly with renderer update method", () => {
       renderer.add(testObject)
 
-      // Initial add should trigger create and update
       expect(renderer.repaintCallCount).toBe(1)
 
-      // Update without changes should not trigger repaint
       renderer.repaintCallCount = 0
       testObject.needsRepaint = false
       renderer.update(testObject)
       expect(renderer.repaintCallCount).toBe(0)
 
-      // Update with changes should trigger repaint
       testObject.setPosition(new Vector2D(70, 80))
       renderer.update(testObject)
       expect(renderer.repaintCallCount).toBe(1)

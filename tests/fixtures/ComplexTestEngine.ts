@@ -1,7 +1,9 @@
+import type { GameEngineOptions } from "../../src/GameEngine"
 import { GameEngine } from "../../src/GameEngine"
-import { Loader } from "../../src/Loader"
+import type { Loader } from "../../src/Loader"
 import { Serializer } from "../../src/Serializer"
 import { Vector2D } from "../../src/geometry/Vector2D"
+import { MemoryPlatformLayer } from "../../src/platform"
 import type { GameConfig } from "../../src/types"
 import { TestEnemy } from "./TestEnemy"
 import { TestPlayer } from "./TestPlayer"
@@ -24,8 +26,15 @@ export class ComplexTestEngine extends GameEngine {
   private serializer: Serializer
   private setupConfig: SetupConfig = {}
 
-  constructor(loader: Loader) {
-    super(loader)
+  constructor(loader: Loader)
+  constructor(options: GameEngineOptions)
+  constructor(loaderOrOptions: Loader | GameEngineOptions) {
+    // Support both old and new constructor signatures for gradual migration
+    const options: GameEngineOptions =
+      "fetchData" in loaderOrOptions
+        ? { loader: loaderOrOptions, platform: new MemoryPlatformLayer() }
+        : loaderOrOptions
+    super(options)
     this.serializer = new Serializer()
     this.registerSerializationTypes()
   }
