@@ -4,6 +4,7 @@
  * DOM-based input implementation wrapping pointer and keyboard events.
  */
 
+import type { AudioLayer } from "../AudioLayer"
 import type { InputEvent, InputLayer, KeyboardInputEvent } from "../InputLayer"
 import { EventCallbackManager } from "../utils/EventCallbackManager"
 
@@ -22,7 +23,10 @@ export class WebInputLayer implements InputLayer {
   private boundKeyDownHandler: (e: KeyboardEvent) => void
   private boundKeyUpHandler: (e: KeyboardEvent) => void
 
-  constructor(private readonly container: HTMLElement) {
+  constructor(
+    private readonly container: HTMLElement,
+    private readonly audioLayer?: AudioLayer,
+  ) {
     this.boundPointerDownHandler = this.handlePointerDown.bind(this)
     this.boundPointerUpHandler = this.handlePointerUp.bind(this)
     this.boundPointerMoveHandler = this.handlePointerMove.bind(this)
@@ -100,11 +104,13 @@ export class WebInputLayer implements InputLayer {
   }
 
   private handleClick(e: MouseEvent): void {
+    this.audioLayer?.tryResumeOnce()
     const event = this.normalizePointerEvent(e)
     this.clickCallbacks.trigger(event)
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
+    this.audioLayer?.tryResumeOnce()
     const event: KeyboardInputEvent = {
       key: e.key,
       code: e.code,

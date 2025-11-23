@@ -9,6 +9,7 @@ import {
   WebPlatformLayer,
   type WebPlatformOptions,
 } from "@hiddentao/clockwork-engine"
+import pkg from "../../package.json"
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
@@ -56,6 +57,8 @@ export class Game {
       platformOptions,
     )
     await this.platform.init()
+
+    console.log(`Clockwork Engine v${pkg.version}`)
 
     // Initialize engines with loader and platform
     this.playEngine = new DemoGameEngine({

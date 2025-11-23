@@ -66,7 +66,7 @@ export class MemoryAudioLayer implements AudioLayer {
   }
 
   // Context management
-  async resumeContext(): Promise<void> {
+  async tryResumeOnce(): Promise<void> {
     if (this.state === AudioContextState.SUSPENDED) {
       this.state = AudioContextState.RUNNING
     }

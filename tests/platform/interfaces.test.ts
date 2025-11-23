@@ -177,7 +177,7 @@ describe("Interface Contracts", () => {
 
     it("should have context management methods", () => {
       const checkInterface = (audio: AudioLayer) => {
-        expect(audio).toHaveProperty("resumeContext")
+        expect(audio).toHaveProperty("tryResumeOnce")
         expect(audio).toHaveProperty("getState")
       }
       expect(checkInterface).toBeDefined()

@@ -52,6 +52,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   private viewport!: Viewport
   private canvas: HTMLCanvasElement
   private options: ViewportOptions
+  private viewportOptions: ViewportOptions | null = null
   private nodes = new Map<NodeId, NodeState>()
   private nextNodeId = 1
   private textures = new Map<TextureId, PIXI.Texture>()
@@ -82,12 +83,16 @@ export class PixiRenderingLayer implements RenderingLayer {
     })
 
     this.viewport = new Viewport({
-      screenWidth: this.canvas.width,
-      screenHeight: this.canvas.height,
-      worldWidth: this.options.worldWidth,
-      worldHeight: this.options.worldHeight,
+      screenWidth: this.app.screen.width,
+      screenHeight: this.app.screen.height,
+      worldWidth: this.options.worldWidth ?? this.app.screen.width,
+      worldHeight: this.options.worldHeight ?? this.app.screen.height,
       events: this.app.renderer.events,
     })
+
+    const worldWidth = this.options.worldWidth ?? this.app.screen.width
+    const worldHeight = this.options.worldHeight ?? this.app.screen.height
+    this.viewport.moveCenter(worldWidth / 2, worldHeight / 2)
 
     if (
       this.options.maxScale !== undefined ||
@@ -99,7 +104,12 @@ export class PixiRenderingLayer implements RenderingLayer {
       })
     }
 
-    this.viewport.drag().wheel().pinch()
+    if (this.viewportOptions) {
+      if (this.viewportOptions.enableDrag) this.viewport.drag()
+      if (this.viewportOptions.enablePinch) this.viewport.pinch()
+      if (this.viewportOptions.enableZoom) this.viewport.wheel()
+    }
+
     this.app.stage.addChild(this.viewport)
     this.initialized = true
   }
@@ -738,9 +748,8 @@ export class PixiRenderingLayer implements RenderingLayer {
     return sheet?.frames.get(frameName) ?? null
   }
 
-  setViewport(_id: NodeId, _options: ViewportOptions): void {
-    // NOTE: PixiRenderingLayer uses a single global viewport, not per-node viewports
-    // This method is a no-op for compatibility with the interface
+  setViewport(_id: NodeId, options: ViewportOptions): void {
+    this.viewportOptions = options
   }
 
   getViewportPosition(_id: NodeId): { x: number; y: number } {
@@ -754,7 +763,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   setViewportZoom(_id: NodeId, zoom: number): void {
-    this.viewport.setZoom(zoom)
+    this.viewport.setZoom(zoom, true)
     this._needsRepaint = true
   }
 

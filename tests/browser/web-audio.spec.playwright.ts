@@ -57,7 +57,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       const initialState = audio.getState()
 
       if (initialState === "suspended") {
-        await audio.resumeContext()
+        await audio.tryResumeOnce()
       }
 
       const resumedState = audio.getState()
@@ -139,7 +139,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       const buffer = createTestBuffer(audio)
       audio.loadSoundFromBuffer("test-tone", buffer)
 
-      await audio.resumeContext()
+      await audio.tryResumeOnce()
 
       audio.playSound("test-tone", 0.5, false)
 
@@ -167,7 +167,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       const buffer = createTestBuffer(audio, 440, 0.05)
       audio.loadSoundFromBuffer("loop-tone", buffer)
 
-      await audio.resumeContext()
+      await audio.tryResumeOnce()
 
       audio.playSound("loop-tone", 0.3, true)
 
@@ -195,7 +195,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       audio.loadSoundFromBuffer("tone2", buffer)
       audio.loadSoundFromBuffer("tone3", buffer)
 
-      await audio.resumeContext()
+      await audio.tryResumeOnce()
 
       audio.playSound("tone1", 0.3, false)
       audio.playSound("tone2", 0.3, false)
@@ -219,7 +219,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       `(async () => {
       ${getAudioSetup()}
 
-      await audio.resumeContext()
+      await audio.tryResumeOnce()
 
       audio.playSound("nonexistent-sound", 1.0, false)
 
@@ -243,7 +243,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
       const buffer = createTestBuffer(audio)
       audio.loadSoundFromBuffer("cleanup-test", buffer)
 
-      await audio.resumeContext()
+      await audio.tryResumeOnce()
       audio.playSound("cleanup-test", 0.5, true)
 
       await new Promise(resolve => setTimeout(resolve, 20))
@@ -257,5 +257,229 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
     )
 
     expect(result.destroyed).toBe(true)
+  })
+})
+
+test.describe("WebAudioLayer Autoplay Policy Fix", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/tests/browser/test-page.html")
+  })
+
+  test("should only attempt resume once with tryResumeOnce()", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      let resumeCallCount = 0
+      const originalResume = audio.context ? audio.context.resume.bind(audio.context) : null
+
+      if (audio.context && originalResume) {
+        audio.context.resume = async function() {
+          resumeCallCount++
+          return originalResume.apply(this, arguments)
+        }
+      }
+
+      await audio.tryResumeOnce()
+      await audio.tryResumeOnce()
+      await audio.tryResumeOnce()
+
+      return {
+        resumeCallCount,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.resumeCallCount).toBeLessThanOrEqual(1)
+  })
+
+  test("should integrate WebInputLayer with audio resume on click", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+
+      const testContainer = document.createElement("div")
+      document.body.appendChild(testContainer)
+
+      const audio = new WebAudioLayer()
+      await audio.initialize()
+
+      const input = new WebInputLayer(testContainer, audio)
+
+      const initialState = audio.getState()
+
+      const clickEvent = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 50,
+        clientY: 50,
+      })
+      testContainer.dispatchEvent(clickEvent)
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const stateAfterClick = audio.getState()
+
+      input.removeAllListeners()
+      document.body.removeChild(testContainer)
+
+      return {
+        initialState,
+        stateAfterClick,
+      }
+    })()`,
+    )
+
+    expect(result.stateAfterClick).toBe(AudioContextState.RUNNING)
+  })
+
+  test("should integrate WebInputLayer with audio resume on keydown", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+
+      const testContainer = document.createElement("div")
+      document.body.appendChild(testContainer)
+
+      const audio = new WebAudioLayer()
+      await audio.initialize()
+
+      const input = new WebInputLayer(testContainer, audio)
+
+      const initialState = audio.getState()
+
+      const keyEvent = new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        code: "ArrowUp",
+        bubbles: true,
+      })
+      window.dispatchEvent(keyEvent)
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const stateAfterKey = audio.getState()
+
+      input.removeAllListeners()
+      document.body.removeChild(testContainer)
+
+      return {
+        initialState,
+        stateAfterKey,
+      }
+    })()`,
+    )
+
+    expect(result.stateAfterKey).toBe(AudioContextState.RUNNING)
+  })
+
+  test("should not resume multiple times with multiple clicks", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+
+      const testContainer = document.createElement("div")
+      document.body.appendChild(testContainer)
+
+      const audio = new WebAudioLayer()
+      await audio.initialize()
+
+      let resumeCallCount = 0
+      const originalResume = audio.context ? audio.context.resume.bind(audio.context) : null
+
+      if (audio.context && originalResume) {
+        audio.context.resume = async function() {
+          resumeCallCount++
+          return originalResume.apply(this, arguments)
+        }
+      }
+
+      const input = new WebInputLayer(testContainer, audio)
+
+      for (let i = 0; i < 5; i++) {
+        const clickEvent = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 50 + i * 10,
+          clientY: 50 + i * 10,
+        })
+        testContainer.dispatchEvent(clickEvent)
+        await new Promise(resolve => setTimeout(resolve, 10))
+      }
+
+      input.removeAllListeners()
+      document.body.removeChild(testContainer)
+
+      return {
+        resumeCallCount,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.resumeCallCount).toBeLessThanOrEqual(1)
+    expect(result.state).toBe(AudioContextState.RUNNING)
+  })
+
+  test("should allow audio playback after user interaction", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+      ${CREATE_TEST_BUFFER}
+
+      const testContainer = document.createElement("div")
+      document.body.appendChild(testContainer)
+
+      const audio = new WebAudioLayer()
+      await audio.initialize()
+
+      const buffer = createTestBuffer(audio, 440, 0.05)
+      audio.loadSoundFromBuffer("test-sound", buffer)
+
+      const input = new WebInputLayer(testContainer, audio)
+
+      const clickEvent = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 50,
+        clientY: 50,
+      })
+      testContainer.dispatchEvent(clickEvent)
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      let playbackSuccessful = false
+      try {
+        audio.playSound("test-sound", 0.5, false)
+        playbackSuccessful = true
+      } catch (error) {
+        playbackSuccessful = false
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      audio.stopAll()
+      input.removeAllListeners()
+      document.body.removeChild(testContainer)
+
+      return {
+        playbackSuccessful,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.playbackSuccessful).toBe(true)
+    expect(result.state).toBe(AudioContextState.RUNNING)
   })
 })

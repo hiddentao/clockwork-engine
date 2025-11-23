@@ -120,7 +120,7 @@ describe("WebAudioLayer", () => {
     })
 
     it("should resume context without errors", async () => {
-      await expect(audio.resumeContext()).resolves.toBeUndefined()
+      await expect(audio.tryResumeOnce()).resolves.toBeUndefined()
     })
 
     it("should return running state", () => {

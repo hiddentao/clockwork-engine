@@ -28,7 +28,7 @@ export class WebPlatformLayer implements PlatformLayer {
 
     this.rendering = new PixiRenderingLayer(this.canvas, options)
     this.audio = new WebAudioLayer()
-    this.input = new WebInputLayer(container)
+    this.input = new WebInputLayer(container, this.audio)
   }
 
   async init(): Promise<void> {

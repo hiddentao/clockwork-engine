@@ -50,6 +50,6 @@ export interface AudioLayer {
   stopAll(): void
 
   // Context management
-  resumeContext(): Promise<void>
+  tryResumeOnce(): Promise<void>
   getState(): AudioContextState
 }

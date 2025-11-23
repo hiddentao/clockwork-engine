@@ -179,6 +179,44 @@ describe("GameCanvas Platform Integration", () => {
       expect(center.y).toBe(400) // worldHeight / 2
     })
 
+    it("should initialize viewport at world center", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 600,
+          height: 600,
+          worldWidth: 600,
+          worldHeight: 600,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      const center = canvas.getViewportCenter()
+      expect(center.x).toBe(300)
+      expect(center.y).toBe(300)
+    })
+
+    it("should set position before zoom during initialization", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+          initialZoom: 2.0,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      const center = canvas.getViewportCenter()
+      expect(center.x).toBe(500)
+      expect(center.y).toBe(400)
+      expect(canvas.getZoom()).toBe(2.0)
+    })
+
     it("should support moving viewport", async () => {
       const canvas = new TestGameCanvas(
         {
@@ -216,6 +254,46 @@ describe("GameCanvas Platform Integration", () => {
 
       const zoom = canvas.getZoom()
       expect(zoom).toBe(2.0)
+    })
+
+    it("should maintain viewport center when zooming", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      const initialCenter = canvas.getViewportCenter()
+      canvas.setZoom(2.0)
+      const centerAfterZoom = canvas.getViewportCenter()
+
+      expect(centerAfterZoom.x).toBe(initialCenter.x)
+      expect(centerAfterZoom.y).toBe(initialCenter.y)
+    })
+
+    it("should respect disabled drag/pinch/wheel options", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+          enableDrag: false,
+          enablePinch: false,
+          enableWheel: false,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      expect(canvas).toBeDefined()
     })
   })
 
@@ -301,6 +379,48 @@ describe("GameCanvas Platform Integration", () => {
 
       // Should not throw
       expect(canvas).toBeDefined()
+    })
+
+    it("should maintain world center after resize", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      canvas.resize(1024, 768)
+
+      const center = canvas.getViewportCenter()
+      expect(center.x).toBe(500) // worldWidth / 2
+      expect(center.y).toBe(400) // worldHeight / 2
+    })
+
+    it("should recalculate zoom on resize", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+          minZoom: 0.1,
+          maxZoom: 5.0,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      const initialZoom = canvas.getZoom()
+      canvas.resize(1600, 1200)
+      const newZoom = canvas.getZoom()
+
+      expect(newZoom).not.toBe(initialZoom)
     })
   })
 })

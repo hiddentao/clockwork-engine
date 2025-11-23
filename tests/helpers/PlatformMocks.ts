@@ -553,7 +553,7 @@ export class MockAudioLayer implements AudioLayer {
     this.playingSounds.clear()
   }
 
-  async resumeContext(): Promise<void> {
+  async tryResumeOnce(): Promise<void> {
     this.state = AudioContextState.RUNNING
   }
 

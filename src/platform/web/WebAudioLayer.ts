@@ -12,6 +12,7 @@ export class WebAudioLayer implements AudioLayer {
   private buffers = new Map<string, AudioBuffer>()
   private activeSources = new Map<string, AudioBufferSourceNode[]>()
   private isClosed = false
+  private hasResumed = false
 
   private async resumeWithTimeout(maxWaitMs = 2000): Promise<void> {
     if (!this.context) {
@@ -34,7 +35,6 @@ export class WebAudioLayer implements AudioLayer {
       return
     }
     this.context = new AudioContext()
-    await this.resumeWithTimeout()
   }
 
   destroy(): void {
@@ -154,7 +154,11 @@ export class WebAudioLayer implements AudioLayer {
     }
   }
 
-  async resumeContext(): Promise<void> {
+  async tryResumeOnce(): Promise<void> {
+    if (this.hasResumed) {
+      return
+    }
+    this.hasResumed = true
     await this.resumeWithTimeout()
   }
 
