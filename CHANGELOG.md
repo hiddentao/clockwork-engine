@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.0.0](https://github.com/hiddentao/clockwork-engine/compare/v1.9.5...v2.0.0) (2025-11-23)
+
+
+### Features
+
+* refactor engine to be platform-independent ([#3](https://github.com/hiddentao/clockwork-engine/issues/3)) ([2c1433b](https://github.com/hiddentao/clockwork-engine/commit/2c1433b924ddc9349fd3077e31e9b8714cb630e4))
+
 ## [1.9.5](https://github.com/hiddentao/clockwork-engine/compare/v1.9.4...v1.9.5) (2025-11-11)
 
 
