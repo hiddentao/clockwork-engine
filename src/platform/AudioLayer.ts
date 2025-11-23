@@ -8,7 +8,11 @@
 /**
  * Audio context state (matches Web Audio API states)
  */
-export type AudioContextState = "suspended" | "running" | "closed"
+export enum AudioContextState {
+  SUSPENDED = "suspended",
+  RUNNING = "running",
+  CLOSED = "closed",
+}
 
 /**
  * AudioBuffer interface (compatible with Web Audio API AudioBuffer)

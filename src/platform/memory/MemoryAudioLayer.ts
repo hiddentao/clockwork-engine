@@ -5,20 +5,21 @@
  * Used for testing, replay validation, and server-side game logic.
  */
 
-import type { AudioBuffer, AudioContextState, AudioLayer } from "../AudioLayer"
+import { AudioContextState } from "../AudioLayer"
+import type { AudioBuffer, AudioLayer } from "../AudioLayer"
 
 export class MemoryAudioLayer implements AudioLayer {
   private sounds = new Map<string, string | ArrayBuffer>()
   private playingSounds = new Set<string>()
-  private state: AudioContextState = "running"
+  private state: AudioContextState = AudioContextState.RUNNING
 
   // Lifecycle
   async initialize(): Promise<void> {
-    this.state = "running"
+    this.state = AudioContextState.RUNNING
   }
 
   destroy(): void {
-    this.state = "closed"
+    this.state = AudioContextState.CLOSED
     this.sounds.clear()
     this.playingSounds.clear()
   }
@@ -66,8 +67,8 @@ export class MemoryAudioLayer implements AudioLayer {
 
   // Context management
   async resumeContext(): Promise<void> {
-    if (this.state === "suspended") {
-      this.state = "running"
+    if (this.state === AudioContextState.SUSPENDED) {
+      this.state = AudioContextState.RUNNING
     }
   }
 

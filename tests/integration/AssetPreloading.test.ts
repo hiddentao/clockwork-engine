@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { GameEngine } from "../../src/GameEngine"
 import { Loader } from "../../src/Loader"
-import { AssetLoader } from "../../src/assets/AssetLoader"
+import { AssetLoader, AssetType } from "../../src/assets/AssetLoader"
 import { MemoryPlatformLayer } from "../../src/platform/memory"
 import { GameConfig } from "../../src/types"
 
@@ -40,9 +40,9 @@ test("Asset preloading - assets loaded before setup", async () => {
   )
 
   // Register assets
-  assetLoader.register("sprites/player.png", "spritesheet")
-  assetLoader.register("sprites/enemy.png", "spritesheet")
-  assetLoader.register("sounds/jump.mp3", "sound")
+  assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+  assetLoader.register("sprites/enemy.png", AssetType.SPRITESHEET)
+  assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
 
   const engine = new TestEngine({ loader, platform, assetLoader })
 
@@ -77,7 +77,7 @@ test("Asset preloading - progress tracking", async () => {
 
   // Register multiple assets
   for (let i = 0; i < 10; i++) {
-    assetLoader.register(`asset${i}.png`, "staticImage")
+    assetLoader.register(`asset${i}.png`, AssetType.STATIC_IMAGE)
   }
 
   const progressUpdates: Array<{ loaded: number; total: number }> = []
@@ -140,9 +140,9 @@ test("Asset preloading - duplicate registrations", async () => {
   )
 
   // Register same asset multiple times
-  assetLoader.register("sprites/player.png", "spritesheet")
-  assetLoader.register("sprites/player.png", "spritesheet")
-  assetLoader.register("sprites/player.png", "spritesheet")
+  assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+  assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+  assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
 
   await assetLoader.preloadAssets()
 
@@ -161,8 +161,8 @@ test("Asset preloading - get loaded assets", async () => {
     platform.audio,
   )
 
-  assetLoader.register("sprites/hero.png", "spritesheet")
-  assetLoader.register("images/logo.png", "staticImage")
+  assetLoader.register("sprites/hero.png", AssetType.SPRITESHEET)
+  assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
 
   await assetLoader.preloadAssets()
 
@@ -188,12 +188,12 @@ test("Asset preloading - mixed asset types", async () => {
   )
 
   // Register different types
-  assetLoader.register("sprites/player.png", "spritesheet")
-  assetLoader.register("sprites/enemy.png", "spritesheet")
-  assetLoader.register("images/logo.png", "staticImage")
-  assetLoader.register("images/background.png", "staticImage")
-  assetLoader.register("sounds/jump.mp3", "sound")
-  assetLoader.register("sounds/hit.mp3", "sound")
+  assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+  assetLoader.register("sprites/enemy.png", AssetType.SPRITESHEET)
+  assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
+  assetLoader.register("images/background.png", AssetType.STATIC_IMAGE)
+  assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
+  assetLoader.register("sounds/hit.mp3", AssetType.SOUND)
 
   await assetLoader.preloadAssets()
 
@@ -227,8 +227,8 @@ test("Asset preloading - concurrent preload calls", async () => {
     platform.audio,
   )
 
-  assetLoader.register("asset1.png", "staticImage")
-  assetLoader.register("asset2.png", "staticImage")
+  assetLoader.register("asset1.png", AssetType.STATIC_IMAGE)
+  assetLoader.register("asset2.png", AssetType.STATIC_IMAGE)
 
   // Call preload multiple times concurrently
   await Promise.all([

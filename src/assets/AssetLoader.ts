@@ -2,7 +2,11 @@ import type { Loader } from "../Loader"
 import type { AudioLayer, RenderingLayer, TextureId } from "../platform"
 import { Spritesheet } from "./Spritesheet"
 
-export type AssetType = "spritesheet" | "staticImage" | "sound"
+export enum AssetType {
+  SPRITESHEET = "spritesheet",
+  STATIC_IMAGE = "staticImage",
+  SOUND = "sound",
+}
 
 /**
  * Asset loader for managing game assets with registration and preloading.
@@ -66,17 +70,17 @@ export class AssetLoader {
    */
   register(id: string, type: AssetType): void {
     switch (type) {
-      case "spritesheet":
+      case AssetType.SPRITESHEET:
         if (!this.registeredSpritesheets.includes(id)) {
           this.registeredSpritesheets.push(id)
         }
         break
-      case "staticImage":
+      case AssetType.STATIC_IMAGE:
         if (!this.registeredStaticImages.includes(id)) {
           this.registeredStaticImages.push(id)
         }
         break
-      case "sound":
+      case AssetType.SOUND:
         if (!this.registeredSounds.includes(id)) {
           this.registeredSounds.push(id)
         }

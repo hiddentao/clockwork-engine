@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { AudioContextState } from "../../src/platform/AudioLayer"
 import { WebAudioLayer } from "../../src/platform/web/WebAudioLayer"
 import {
   cleanupBrowserEnvironment,
@@ -25,7 +26,7 @@ describe("WebAudioLayer", () => {
 
     it("should create AudioContext after initialization", async () => {
       await audio.initialize()
-      expect(audio.getState()).toBe("running")
+      expect(audio.getState()).toBe(AudioContextState.RUNNING)
     })
 
     it("should destroy without errors", () => {
@@ -35,7 +36,7 @@ describe("WebAudioLayer", () => {
     it("should change state to closed after destroy", async () => {
       await audio.initialize()
       audio.destroy()
-      expect(audio.getState()).toBe("closed")
+      expect(audio.getState()).toBe(AudioContextState.CLOSED)
     })
   })
 
@@ -123,12 +124,12 @@ describe("WebAudioLayer", () => {
     })
 
     it("should return running state", () => {
-      expect(audio.getState()).toBe("running")
+      expect(audio.getState()).toBe(AudioContextState.RUNNING)
     })
 
     it("should return closed state after destroy", () => {
       audio.destroy()
-      expect(audio.getState()).toBe("closed")
+      expect(audio.getState()).toBe(AudioContextState.CLOSED)
     })
   })
 
@@ -151,7 +152,7 @@ describe("WebAudioLayer", () => {
   describe("Error Handling", () => {
     it("should handle operations before initialization", () => {
       expect(() => audio.getState()).not.toThrow()
-      expect(audio.getState()).toBe("suspended")
+      expect(audio.getState()).toBe(AudioContextState.SUSPENDED)
     })
 
     it("should handle destroy before initialization", () => {

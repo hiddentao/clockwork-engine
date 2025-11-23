@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test"
+import { AudioContextState } from "../../src/platform/AudioLayer"
 import { MemoryAudioLayer } from "../../src/platform/memory/MemoryAudioLayer"
 
 describe("MemoryAudioLayer", () => {
@@ -101,12 +102,12 @@ describe("MemoryAudioLayer", () => {
     })
 
     it("should return running state", () => {
-      expect(audio.getState()).toBe("running")
+      expect(audio.getState()).toBe(AudioContextState.RUNNING)
     })
 
     it("should return closed state after destroy", () => {
       audio.destroy()
-      expect(audio.getState()).toBe("closed")
+      expect(audio.getState()).toBe(AudioContextState.CLOSED)
     })
   })
 
@@ -141,6 +142,24 @@ describe("MemoryAudioLayer", () => {
 
       expect(audio.isPlaying("sound1")).toBe(false)
       expect(audio.isPlaying("sound2")).toBe(false)
+    })
+  })
+
+  describe("AudioContextState enum", () => {
+    it("should have correct string values", () => {
+      expect(AudioContextState.SUSPENDED).toBe(AudioContextState.SUSPENDED)
+      expect(AudioContextState.RUNNING).toBe(AudioContextState.RUNNING)
+      expect(AudioContextState.CLOSED).toBe(AudioContextState.CLOSED)
+    })
+
+    it("should return all valid AudioContextState enum values", () => {
+      const state: AudioContextState = audio.getState()
+      expect(Object.values(AudioContextState).includes(state)).toBe(true)
+    })
+
+    it("should be usable in type guards", () => {
+      const state: AudioContextState = AudioContextState.RUNNING
+      expect(Object.values(AudioContextState).includes(state)).toBe(true)
     })
   })
 })

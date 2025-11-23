@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "bun:test"
 import { GameEngine } from "../../src/GameEngine"
 import { Loader } from "../../src/Loader"
-import { AssetLoader } from "../../src/assets/AssetLoader"
+import { AssetLoader, AssetType } from "../../src/assets/AssetLoader"
 import { HeadlessLoader } from "../../src/loaders/HeadlessLoader"
 import { MemoryPlatformLayer } from "../../src/platform/memory"
 import type { GameConfig } from "../../src/types"
@@ -56,7 +56,7 @@ describe("GameEngine + AssetLoader Integration", () => {
         platform.rendering,
         platform.audio,
       )
-      assetLoader.register("test", "spritesheet")
+      assetLoader.register("test", AssetType.SPRITESHEET)
 
       // Create engine with asset loader
       const engine = new TestGameEngine({ loader, platform, assetLoader })
@@ -104,8 +104,8 @@ describe("GameEngine + AssetLoader Integration", () => {
         platform.rendering,
         platform.audio,
       )
-      assetLoader.register("player", "spritesheet")
-      assetLoader.register("logo", "staticImage")
+      assetLoader.register("player", AssetType.SPRITESHEET)
+      assetLoader.register("logo", AssetType.STATIC_IMAGE)
 
       const engine = new TestGameEngine({ loader, platform, assetLoader })
 
@@ -127,9 +127,9 @@ describe("GameEngine + AssetLoader Integration", () => {
         platform.audio,
       )
 
-      assetLoader.register("player", "spritesheet")
-      assetLoader.register("logo", "staticImage")
-      assetLoader.register("jump", "sound")
+      assetLoader.register("player", AssetType.SPRITESHEET)
+      assetLoader.register("logo", AssetType.STATIC_IMAGE)
+      assetLoader.register("jump", AssetType.SOUND)
 
       const engine = new TestGameEngine({
         loader: headlessLoader,
@@ -158,7 +158,7 @@ describe("GameEngine + AssetLoader Integration", () => {
         platform.rendering,
         platform.audio,
       )
-      assetLoader.register("test", "spritesheet")
+      assetLoader.register("test", AssetType.SPRITESHEET)
 
       const engine = new TestGameEngine({ loader, platform, assetLoader })
 
@@ -193,7 +193,7 @@ describe("GameEngine + AssetLoader Integration", () => {
         platform.rendering,
         platform.audio,
       )
-      assetLoader.register("test", "spritesheet")
+      assetLoader.register("test", AssetType.SPRITESHEET)
 
       const engine = new TestGameEngine({
         loader: errorLoader,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test"
 import { Loader } from "../../src/Loader"
-import { AssetLoader } from "../../src/assets/AssetLoader"
+import { AssetLoader, AssetType } from "../../src/assets/AssetLoader"
 import { Spritesheet } from "../../src/assets/Spritesheet"
 import { HeadlessLoader } from "../../src/loaders/HeadlessLoader"
 import { MemoryPlatformLayer } from "../../src/platform/memory"
@@ -31,30 +31,30 @@ describe("AssetLoader", () => {
 
   describe("register()", () => {
     it("should register spritesheet assets", () => {
-      assetLoader.register("sprites/player.png", "spritesheet")
-      assetLoader.register("sprites/enemy.png", "spritesheet")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+      assetLoader.register("sprites/enemy.png", AssetType.SPRITESHEET)
 
       // Registration itself doesn't throw
       expect(true).toBe(true)
     })
 
     it("should register static image assets", () => {
-      assetLoader.register("images/logo.png", "staticImage")
-      assetLoader.register("images/background.png", "staticImage")
+      assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
+      assetLoader.register("images/background.png", AssetType.STATIC_IMAGE)
 
       expect(true).toBe(true)
     })
 
     it("should register sound assets", () => {
-      assetLoader.register("sounds/jump.mp3", "sound")
-      assetLoader.register("sounds/coin.mp3", "sound")
+      assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
+      assetLoader.register("sounds/coin.mp3", AssetType.SOUND)
 
       expect(true).toBe(true)
     })
 
     it("should not duplicate registrations", () => {
-      assetLoader.register("sprites/player.png", "spritesheet")
-      assetLoader.register("sprites/player.png", "spritesheet")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
 
       // Should only register once (verified during preload)
       expect(true).toBe(true)
@@ -72,7 +72,7 @@ describe("AssetLoader", () => {
         }),
       )
 
-      assetLoader.register("sprites/player.png", "spritesheet")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
       await assetLoader.preloadAssets()
 
       const spritesheet = assetLoader.getSpritesheet("sprites/player.png")
@@ -82,7 +82,7 @@ describe("AssetLoader", () => {
     it("should preload registered static images", async () => {
       loader.setData("images/logo.png", "")
 
-      assetLoader.register("images/logo.png", "staticImage")
+      assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
       await assetLoader.preloadAssets()
 
       const texture = assetLoader.getStaticImage("images/logo.png")
@@ -92,7 +92,7 @@ describe("AssetLoader", () => {
     it("should preload registered sounds", async () => {
       loader.setData("sounds/jump.mp3", "")
 
-      assetLoader.register("sounds/jump.mp3", "sound")
+      assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
       await assetLoader.preloadAssets()
 
       // Sound is loaded in audio layer, no getter but no error
@@ -106,9 +106,9 @@ describe("AssetLoader", () => {
       loader.setData("images/logo.png", "")
       loader.setData("sounds/jump.mp3", "")
 
-      assetLoader.register("sprites/player.png", "spritesheet")
-      assetLoader.register("images/logo.png", "staticImage")
-      assetLoader.register("sounds/jump.mp3", "sound")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+      assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
+      assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
 
       await assetLoader.preloadAssets()
 
@@ -122,9 +122,9 @@ describe("AssetLoader", () => {
       loader.setData("images/logo.png", "")
       loader.setData("sounds/jump.mp3", "")
 
-      assetLoader.register("sprites/player.png", "spritesheet")
-      assetLoader.register("images/logo.png", "staticImage")
-      assetLoader.register("sounds/jump.mp3", "sound")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+      assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
+      assetLoader.register("sounds/jump.mp3", AssetType.SOUND)
 
       const progressUpdates: Array<{ loaded: number; total: number }> = []
 
@@ -150,7 +150,7 @@ describe("AssetLoader", () => {
       loader.setData("sprites/player.png", "")
       loader.setData("sprites/player.json", JSON.stringify({ frames: {} }))
 
-      assetLoader.register("sprites/player.png", "spritesheet")
+      assetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
       await assetLoader.preloadAssets()
 
       const spritesheet = assetLoader.getSpritesheet("sprites/player.png")
@@ -167,7 +167,7 @@ describe("AssetLoader", () => {
     it("should return loaded static image", async () => {
       loader.setData("images/logo.png", "")
 
-      assetLoader.register("images/logo.png", "staticImage")
+      assetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
       await assetLoader.preloadAssets()
 
       const texture = assetLoader.getStaticImage("images/logo.png")
@@ -189,9 +189,9 @@ describe("AssetLoader", () => {
         platform.audio,
       )
 
-      headlessAssetLoader.register("sprites/player.png", "spritesheet")
-      headlessAssetLoader.register("images/logo.png", "staticImage")
-      headlessAssetLoader.register("sounds/jump.mp3", "sound")
+      headlessAssetLoader.register("sprites/player.png", AssetType.SPRITESHEET)
+      headlessAssetLoader.register("images/logo.png", AssetType.STATIC_IMAGE)
+      headlessAssetLoader.register("sounds/jump.mp3", AssetType.SOUND)
 
       await headlessAssetLoader.preloadAssets()
 
@@ -251,14 +251,37 @@ describe("AssetLoader", () => {
         platform.audio,
       )
 
-      customLoader.register("player", "spritesheet")
-      customLoader.register("logo", "staticImage")
-      customLoader.register("jump", "sound")
+      customLoader.register("player", AssetType.SPRITESHEET)
+      customLoader.register("logo", AssetType.STATIC_IMAGE)
+      customLoader.register("jump", AssetType.SOUND)
 
       await customLoader.preloadAssets()
 
       expect(customLoader.getSpritesheet("player")).toBeDefined()
       expect(customLoader.getStaticImage("logo")).toBeDefined()
+    })
+  })
+
+  describe("AssetType enum", () => {
+    it("should have correct string values", () => {
+      expect(AssetType.SPRITESHEET).toBe(AssetType.SPRITESHEET)
+      expect(AssetType.STATIC_IMAGE).toBe(AssetType.STATIC_IMAGE)
+      expect(AssetType.SOUND).toBe(AssetType.SOUND)
+    })
+
+    it("should accept all enum values in register", () => {
+      expect(() =>
+        assetLoader.register("test1", AssetType.SPRITESHEET),
+      ).not.toThrow()
+      expect(() =>
+        assetLoader.register("test2", AssetType.STATIC_IMAGE),
+      ).not.toThrow()
+      expect(() => assetLoader.register("test3", AssetType.SOUND)).not.toThrow()
+    })
+
+    it("should be usable in type guards", () => {
+      const type: AssetType = AssetType.SPRITESHEET
+      expect(Object.values(AssetType).includes(type)).toBe(true)
     })
   })
 })

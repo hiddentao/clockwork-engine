@@ -77,11 +77,13 @@ Full API: [RenderingLayer.ts](https://github.com/hiddentao/clockwork-engine/blob
 The platform layer integrates with asset loading through [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts):
 
 ```typescript
+import { AssetLoader, AssetType } from 'clockwork-engine'
+
 const assetLoader = new AssetLoader(loader, platform.rendering, platform.audio)
 
 // Register assets for preloading
-assetLoader.register('sprites/player.png', 'spritesheet')
-assetLoader.register('sounds/jump.mp3', 'sound')
+assetLoader.register('sprites/player.png', AssetType.SPRITESHEET)
+assetLoader.register('sounds/jump.mp3', AssetType.SOUND)
 
 const engine = new GameEngine({ loader, platform, assetLoader })
 
@@ -113,132 +115,18 @@ class MyPlatformLayer implements PlatformLayer {
   }
 
   getDevicePixelRatio(): number {
-    return 1
+    return 1 // or the correct value for your platform
   }
 }
 ```
 
 See [MemoryPlatformLayer](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts) for a minimal reference implementation.
 
-### Custom Asset Loader
-
-Extend `AssetLoader` to customize asset path resolution:
-
-```typescript
-class GameAssetLoader extends AssetLoader {
-  async loadSpritesheet(id: string): Promise<Spritesheet> {
-    const spritesheet = await Spritesheet.load(
-      this.loader,
-      this.rendering,
-      `game-assets/spritesheets/${id}.png`
-    )
-    this.spritesheets.set(id, spritesheet)
-    return spritesheet
-  }
-}
-```
-
-Register with short IDs and let the loader add path prefixes:
-
-```typescript
-assetLoader.register('player', 'spritesheet') // Becomes 'game-assets/spritesheets/player.png'
-```
 
 ## Error Handling
 
-**Missing textures**: Return pink/magenta checkerboard error texture, game continues
+* In the Web platform layer, if an image file (spritesheet or static image) fails to load then a default pink checkerboard texture is used in its place to indicate this error.
 
-**Missing sounds**: No-op, game continues
 
-**Platform errors**: Check console logs for rendering/audio initialization failures
 
-## Testing with Platforms
 
-**Unit tests**: Use `MemoryPlatformLayer` for fast, deterministic testing
-
-```typescript
-const platform = new MemoryPlatformLayer()
-const engine = new TestGameEngine({ loader, platform })
-```
-
-**Browser tests**: Use Playwright with real WebGL rendering
-
-See [tests/browser/](https://github.com/hiddentao/clockwork-engine/tree/main/tests/browser) for examples.
-
-**Integration tests**: Test platform switching and state independence
-
-See [tests/integration/PlatformSwitching.test.ts](https://github.com/hiddentao/clockwork-engine/blob/main/tests/integration/PlatformSwitching.test.ts).
-
-## Performance Considerations
-
-Platform abstraction adds minimal overhead (<5% measured):
-
-* DisplayNode wrapper: Negligible memory cost
-* Method dispatch: Inlined by modern JIT compilers
-* State tracking (Memory): No rendering cost
-
-See [tests/benchmarks/](https://github.com/hiddentao/clockwork-engine/tree/main/tests/benchmarks) for performance measurements.
-
-## Common Patterns
-
-**Multi-platform initialization**:
-
-```typescript
-// Browser
-const platform = new WebPlatformLayer(container, width, height)
-
-// Headless
-const platform = new MemoryPlatformLayer()
-
-// Same engine code for both!
-const engine = new GameEngine({ loader, platform })
-```
-
-**Accessing platform layers**:
-
-```typescript
-class MyGameCanvas extends GameCanvas {
-  constructor(options, engine) {
-    super(options, engine)
-    this.rendering = engine.platform.rendering
-    this.audio = engine.platform.audio
-    this.input = engine.platform.input
-  }
-}
-```
-
-**Platform-agnostic rendering**:
-
-```typescript
-// Works identically on Web and Memory platforms
-const sprite = rendering.createNode()
-  .setSprite(textureId)
-  .setPosition(x, y)
-  .setScale(2)
-
-container.addChild(sprite)
-```
-
-## Migration from Direct PIXI.js
-
-Old code using PIXI.js directly:
-
-```typescript
-import * as PIXI from 'pixi.js'
-
-const sprite = new PIXI.Sprite(texture)
-sprite.position.set(100, 200)
-container.addChild(sprite)
-```
-
-New platform-agnostic code:
-
-```typescript
-const node = rendering.createNode()
-  .setSprite(textureId)
-  .setPosition(100, 200)
-
-containerNode.addChild(node)
-```
-
-Renderers automatically receive the platform's RenderingLayer - see [AbstractRenderer](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts).

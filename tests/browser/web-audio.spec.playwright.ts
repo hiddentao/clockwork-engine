@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { AudioContextState } from "../../src/platform/AudioLayer"
 
 /**
  * Setup code for creating audio layer
@@ -43,7 +44,9 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
     )
 
     expect(result.initialized).toBe(true)
-    expect(["running", "suspended"]).toContain(result.state)
+    expect([AudioContextState.RUNNING, AudioContextState.SUSPENDED]).toContain(
+      result.state,
+    )
   })
 
   test("should handle context state transitions", async ({ page }) => {
@@ -66,8 +69,10 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
     })()`,
     )
 
-    expect(["running", "suspended"]).toContain(result.initialState)
-    expect(result.resumedState).toBe("running")
+    expect([AudioContextState.RUNNING, AudioContextState.SUSPENDED]).toContain(
+      result.initialState,
+    )
+    expect(result.resumedState).toBe(AudioContextState.RUNNING)
   })
 
   test("should load sound from ArrayBuffer", async ({ page }) => {
@@ -150,7 +155,7 @@ test.describe("WebAudioLayer (Browser with Web Audio API)", () => {
     )
 
     expect(result.played).toBe(true)
-    expect(result.state).toBe("running")
+    expect(result.state).toBe(AudioContextState.RUNNING)
   })
 
   test("should handle looping sounds", async ({ page }) => {

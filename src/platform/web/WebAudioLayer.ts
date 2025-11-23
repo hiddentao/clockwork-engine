@@ -4,7 +4,8 @@
  * Web Audio API-based audio implementation.
  */
 
-import type { AudioBuffer, AudioContextState, AudioLayer } from "../AudioLayer"
+import { AudioContextState } from "../AudioLayer"
+import type { AudioBuffer, AudioLayer } from "../AudioLayer"
 
 export class WebAudioLayer implements AudioLayer {
   private context: AudioContext | null = null
@@ -21,7 +22,7 @@ export class WebAudioLayer implements AudioLayer {
 
     const startTime = Date.now()
     while (
-      this.context.state === "suspended" &&
+      this.context.state === AudioContextState.SUSPENDED &&
       Date.now() - startTime < maxWaitMs
     ) {
       await new Promise((resolve) => setTimeout(resolve, 10))
@@ -159,10 +160,10 @@ export class WebAudioLayer implements AudioLayer {
 
   getState(): AudioContextState {
     if (this.isClosed) {
-      return "closed"
+      return AudioContextState.CLOSED
     }
     if (!this.context) {
-      return "suspended"
+      return AudioContextState.SUSPENDED
     }
     return this.context.state as AudioContextState
   }

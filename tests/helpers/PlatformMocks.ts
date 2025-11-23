@@ -6,11 +6,8 @@
  * provide inspection capabilities without requiring actual rendering/audio/input.
  */
 
-import type {
-  AudioBuffer,
-  AudioContextState,
-  AudioLayer,
-} from "../../src/platform/AudioLayer"
+import type { AudioBuffer, AudioLayer } from "../../src/platform/AudioLayer"
+import { AudioContextState } from "../../src/platform/AudioLayer"
 import type {
   InputEvent,
   InputLayer,
@@ -510,17 +507,17 @@ class MockNode {
 export class MockAudioLayer implements AudioLayer {
   private sounds = new Map<string, MockAudioBuffer>()
   private playingSounds = new Set<string>()
-  private state: AudioContextState = "suspended"
+  private state: AudioContextState = AudioContextState.SUSPENDED
   private initialized = false
 
   async initialize(): Promise<void> {
     this.initialized = true
-    this.state = "running"
+    this.state = AudioContextState.RUNNING
   }
 
   destroy(): void {
     this.initialized = false
-    this.state = "closed"
+    this.state = AudioContextState.CLOSED
     this.sounds.clear()
     this.playingSounds.clear()
   }
@@ -557,7 +554,7 @@ export class MockAudioLayer implements AudioLayer {
   }
 
   async resumeContext(): Promise<void> {
-    this.state = "running"
+    this.state = AudioContextState.RUNNING
   }
 
   getState(): AudioContextState {

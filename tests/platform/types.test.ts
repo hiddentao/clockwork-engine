@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test"
+import { AudioContextState } from "../../src/platform/AudioLayer"
 import {
+  BlendMode,
+  TextureFiltering,
   asNodeId,
   asSpritesheetId,
   asTextureId,
@@ -50,6 +53,47 @@ describe("Branded Types", () => {
 
       // Compile-time: TypeScript should prevent this
       // const mixedId: NodeId = textureId // TS Error!
+    })
+  })
+})
+
+describe("Enums", () => {
+  describe("BlendMode", () => {
+    it("should have correct string values", () => {
+      expect(BlendMode.NORMAL).toBe(BlendMode.NORMAL)
+      expect(BlendMode.ADD).toBe(BlendMode.ADD)
+      expect(BlendMode.MULTIPLY).toBe(BlendMode.MULTIPLY)
+      expect(BlendMode.SCREEN).toBe(BlendMode.SCREEN)
+    })
+
+    it("should be usable in type guards", () => {
+      const mode: BlendMode = BlendMode.ADD
+      expect(Object.values(BlendMode).includes(mode)).toBe(true)
+    })
+  })
+
+  describe("TextureFiltering", () => {
+    it("should have correct string values", () => {
+      expect(TextureFiltering.LINEAR).toBe(TextureFiltering.LINEAR)
+      expect(TextureFiltering.NEAREST).toBe(TextureFiltering.NEAREST)
+    })
+
+    it("should be usable in type guards", () => {
+      const filtering: TextureFiltering = TextureFiltering.NEAREST
+      expect(Object.values(TextureFiltering).includes(filtering)).toBe(true)
+    })
+  })
+
+  describe("AudioContextState", () => {
+    it("should have correct string values", () => {
+      expect(AudioContextState.SUSPENDED).toBe(AudioContextState.SUSPENDED)
+      expect(AudioContextState.RUNNING).toBe(AudioContextState.RUNNING)
+      expect(AudioContextState.CLOSED).toBe(AudioContextState.CLOSED)
+    })
+
+    it("should be usable in type guards", () => {
+      const state: AudioContextState = AudioContextState.RUNNING
+      expect(Object.values(AudioContextState).includes(state)).toBe(true)
     })
   })
 })
