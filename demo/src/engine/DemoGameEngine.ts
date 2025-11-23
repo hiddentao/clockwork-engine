@@ -10,6 +10,11 @@ import {
 import { Apple, Bomb, Snake, Wall } from "../gameObjects"
 import { ExplosionEffect } from "../gameObjects/ExplosionEffect"
 import { Direction, GAME_CONFIG } from "../utils/constants"
+import {
+  generateEatSound,
+  generateExplosionSound,
+  generateThudSound,
+} from "../utils/soundGenerator"
 
 export class DemoGameEngine extends GameEngine {
   private applesEaten: number = 0
@@ -64,6 +69,11 @@ export class DemoGameEngine extends GameEngine {
 
     // Set up timers for game mechanics
     this.setupTimers()
+
+    // Generate sound effects
+    generateEatSound(this.platform.audio)
+    generateExplosionSound(this.platform.audio)
+    generateThudSound(this.platform.audio)
   }
 
   private setupInputHandling(): void {
@@ -175,6 +185,7 @@ export class DemoGameEngine extends GameEngine {
       // Wall collision
       if (sourceId.startsWith("wall-")) {
         this.gameLost = true
+        this.platform.audio.playSound("thud", 0.8)
         this.end()
         return // Game ended, don't spawn anything
       }
@@ -183,6 +194,7 @@ export class DemoGameEngine extends GameEngine {
       if (sourceId.startsWith("bomb-")) {
         this.gameLost = true
         this.isEnding = true
+        this.platform.audio.playSound("explosion", 1.0)
 
         // Create explosion at bomb position
         const bomb = this.getBombs().find((b) => b.getId() === sourceId)
@@ -207,6 +219,7 @@ export class DemoGameEngine extends GameEngine {
           snake.grow()
           replaceApples.push(apple)
           this.applesEaten++
+          this.platform.audio.playSound("eat", 0.7)
 
           // Check win condition
           if (this.applesEaten >= GAME_CONFIG.TARGET_APPLES) {
