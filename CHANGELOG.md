@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.1.1](https://github.com/hiddentao/clockwork-engine/compare/v2.1.0...v2.1.1) (2025-11-23)
+
+
+### Bug Fixes
+
+* resolve AudioContext autoplay policy violation ([b7b3512](https://github.com/hiddentao/clockwork-engine/commit/b7b35127398daf82c21abf9208f0ccc0a655a08e))
+
 ## [2.1.0](https://github.com/hiddentao/clockwork-engine/compare/v2.0.0...v2.1.0) (2025-11-23)
 
 
