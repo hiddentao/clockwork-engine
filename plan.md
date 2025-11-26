@@ -1,198 +1,59 @@
-# Feature: Add drawRoundRect Support
+# Clockwork Engine: WebAudioLayer Data URL Support
 
-## Summary
+## Problem
 
-Add rounded rectangle drawing capability to the rendering abstraction layer. This is needed for games that use rounded corners (e.g., potion bottles in snakes-on-a-chain).
-
-## Files to Modify
-
-### 1. `src/platform/RenderingLayer.ts`
-
-Add the new method to the `RenderingLayer` interface in the "Primitives" section (after `drawPolygon`):
+`WebAudioLayer.loadSound()` throws an error when receiving data URL strings:
 
 ```typescript
-drawRoundRect(
-  id: NodeId,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  radius: number,
-  fill?: Color,
-  stroke?: Color,
-  strokeWidth?: number,
-): void
-```
-
-### 2. `src/platform/DisplayNode.ts`
-
-Add the wrapper method (after `drawPolygon`):
-
-```typescript
-drawRoundRect(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-  fill?: Color,
-  stroke?: Color,
-  strokeWidth?: number,
-): this {
-  this.rendering.drawRoundRect(
-    this.id,
-    x,
-    y,
-    width,
-    height,
-    radius,
-    fill,
-    stroke,
-    strokeWidth,
-  )
-  return this
+// src/platform/web/WebAudioLayer.ts:59-61
+if (typeof data === "string") {
+  throw new Error("Loading from URL strings not yet implemented")
 }
 ```
 
-### 3. `src/platform/web/PixiRenderingLayer.ts`
+But `DemoLoader.fetchData()` (in game-base) returns data URLs for binary assets including audio files. This breaks the engine's `AssetLoader.loadSound()` flow.
 
-**Update `NodeState` interface** - add `"roundRect"` to the graphicsCommands type union:
+## Fix Required
 
-```typescript
-graphicsCommands: Array<{
-  type: "rectangle" | "roundRect" | "circle" | "polygon" | "line" | "polyline"
-  data: any
-}>
-```
+**File:** `src/platform/web/WebAudioLayer.ts`
 
-**Add the method** (after `drawPolygon`):
+**Change:** Replace the error throw with data URL → ArrayBuffer conversion:
 
 ```typescript
-drawRoundRect(
-  id: NodeId,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-  fill?: Color,
-  stroke?: Color,
-  strokeWidth?: number,
-): void {
-  const state = this.nodes.get(id)
-  if (!state) return
-
-  this.ensureGraphics(state)
-
-  state.graphicsCommands.push({
-    type: "roundRect",
-    data: { x, y, width, height, radius, fill, stroke, strokeWidth },
-  })
-
-  this.redrawGraphics(state)
-  this._needsRepaint = true
-}
-```
-
-**Update `redrawGraphics` method** - add case in the switch statement:
-
-```typescript
-case "roundRect": {
-  const { x, y, width, height, radius, fill, stroke, strokeWidth } = cmd.data
-  if (fill !== undefined) {
-    state.graphics.roundRect(x, y, width, height, radius)
-    state.graphics.fill(normalizeColor(fill))
+async loadSound(id: string, data: string | ArrayBuffer): Promise<void> {
+  if (!this.context) {
+    return
   }
-  if (stroke !== undefined) {
-    state.graphics.roundRect(x, y, width, height, radius)
-    state.graphics.stroke({
-      width: strokeWidth ?? 1,
-      color: normalizeColor(stroke),
-    })
+
+  // Convert data URL string to ArrayBuffer
+  if (typeof data === "string") {
+    const response = await fetch(data)
+    data = await response.arrayBuffer()
   }
-  break
-}
-```
 
-### 4. `src/platform/memory/MemoryRenderingLayer.ts`
+  if (data.byteLength === 0) {
+    const emptyBuffer = this.createBuffer(1, 1, 44100)
+    this.buffers.set(id, emptyBuffer)
+    return
+  }
 
-**Update `GraphicsCommand` interface**:
-
-```typescript
-interface GraphicsCommand {
-  type: "rectangle" | "roundRect" | "circle" | "polygon" | "line" | "polyline"
-  data: any
-}
-```
-
-**Add the method** (after `drawPolygon`):
-
-```typescript
-drawRoundRect(
-  id: NodeId,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  radius: number,
-  fill?: Color,
-  stroke?: Color,
-  strokeWidth?: number,
-): void {
-  const node = this.nodes.get(id)
-  if (node) {
-    node.graphics.push({
-      type: "roundRect",
-      data: { x, y, w, h, radius, fill, stroke, strokeWidth },
-    })
+  try {
+    const audioBuffer = await this.context.decodeAudioData(data)
+    this.buffers.set(id, audioBuffer as AudioBuffer)
+  } catch (error) {
+    console.warn(`Failed to decode audio data for ${id}:`, error)
   }
 }
 ```
 
-### 5. `tests/platform/MemoryRenderingLayer.test.ts`
+## Why This Works
 
-Add test in the "Graphics Primitives" describe block:
+- `fetch()` can handle data URLs (e.g., `data:audio/mpeg;base64,...`)
+- `response.arrayBuffer()` converts it to the format `decodeAudioData()` expects
+- This maintains backwards compatibility - ArrayBuffer inputs still work as before
 
-```typescript
-it("should draw rounded rectangle", () => {
-  const node = rendering.createNode()
-  rendering.drawRoundRect(node, 10, 20, 100, 50, 8, 0xff0000, 0x000000, 2)
+## Testing
 
-  const graphics = rendering.getGraphics(node)
-  expect(graphics.length).toBe(1)
-  expect(graphics[0].type).toBe("roundRect")
-  expect(graphics[0].data.x).toBe(10)
-  expect(graphics[0].data.y).toBe(20)
-  expect(graphics[0].data.w).toBe(100)
-  expect(graphics[0].data.h).toBe(50)
-  expect(graphics[0].data.radius).toBe(8)
-  expect(graphics[0].data.fill).toBe(0xff0000)
-  expect(graphics[0].data.stroke).toBe(0x000000)
-  expect(graphics[0].data.strokeWidth).toBe(2)
-})
-
-it("should draw rounded rectangle with only fill", () => {
-  const node = rendering.createNode()
-  rendering.drawRoundRect(node, 0, 0, 50, 50, 5, 0x00ff00)
-
-  const graphics = rendering.getGraphics(node)
-  expect(graphics.length).toBe(1)
-  expect(graphics[0].data.fill).toBe(0x00ff00)
-  expect(graphics[0].data.stroke).toBeUndefined()
-})
-
-it("should clear rounded rectangles with clearGraphics", () => {
-  const node = rendering.createNode()
-  rendering.drawRoundRect(node, 0, 0, 100, 100, 10)
-  rendering.clearGraphics(node)
-
-  const graphics = rendering.getGraphics(node)
-  expect(graphics.length).toBe(0)
-})
-```
-
-## Verification
-
-1. Run `bun run lint` to check types
-2. Run `bun test` to verify all tests pass
-3. Run `bun run build` to ensure dist is updated
+After making this change:
+1. Run existing tests: `bun test`
+2. Test with a game that loads sounds via DemoLoader (e.g., tiki-kong)

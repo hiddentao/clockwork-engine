@@ -483,3 +483,187 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
     expect(result.state).toBe(AudioContextState.RUNNING)
   })
 })
+
+test.describe("WebAudioLayer Data URL Loading", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/tests/browser/test-page.html")
+  })
+
+  test("should load sound from base64 data URL", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+      ${CREATE_TEST_BUFFER}
+
+      const buffer = createTestBuffer(audio, 440, 0.1)
+      const channelData = buffer.getChannelData(0)
+
+      const wavHeader = new ArrayBuffer(44)
+      const view = new DataView(wavHeader)
+      const sampleRate = 48000
+      const numChannels = 1
+      const bitsPerSample = 16
+      const dataSize = channelData.length * 2
+
+      view.setUint32(0, 0x52494646, false)
+      view.setUint32(4, 36 + dataSize, true)
+      view.setUint32(8, 0x57415645, false)
+      view.setUint32(12, 0x666d7420, false)
+      view.setUint32(16, 16, true)
+      view.setUint16(20, 1, true)
+      view.setUint16(22, numChannels, true)
+      view.setUint32(24, sampleRate, true)
+      view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true)
+      view.setUint16(32, numChannels * bitsPerSample / 8, true)
+      view.setUint16(34, bitsPerSample, true)
+      view.setUint32(36, 0x64617461, false)
+      view.setUint32(40, dataSize, true)
+
+      const samples = new Int16Array(channelData.length)
+      for (let i = 0; i < channelData.length; i++) {
+        samples[i] = Math.max(-32768, Math.min(32767, Math.floor(channelData[i] * 32767)))
+      }
+
+      const wavBuffer = new Uint8Array(44 + samples.byteLength)
+      wavBuffer.set(new Uint8Array(wavHeader), 0)
+      wavBuffer.set(new Uint8Array(samples.buffer), 44)
+
+      let binary = ''
+      for (let i = 0; i < wavBuffer.length; i++) {
+        binary += String.fromCharCode(wavBuffer[i])
+      }
+      const base64 = btoa(binary)
+      const dataUrl = 'data:audio/wav;base64,' + base64
+
+      await audio.loadSound("data-url-sound", dataUrl)
+
+      return {
+        loaded: true,
+        dataUrlLength: dataUrl.length,
+      }
+    })()`,
+    )
+
+    expect(result.loaded).toBe(true)
+    expect(result.dataUrlLength).toBeGreaterThan(100)
+  })
+
+  test("should play sound loaded from data URL", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+      ${CREATE_TEST_BUFFER}
+
+      const buffer = createTestBuffer(audio, 440, 0.05)
+      const channelData = buffer.getChannelData(0)
+
+      const wavHeader = new ArrayBuffer(44)
+      const view = new DataView(wavHeader)
+      const sampleRate = 48000
+      const numChannels = 1
+      const bitsPerSample = 16
+      const dataSize = channelData.length * 2
+
+      view.setUint32(0, 0x52494646, false)
+      view.setUint32(4, 36 + dataSize, true)
+      view.setUint32(8, 0x57415645, false)
+      view.setUint32(12, 0x666d7420, false)
+      view.setUint32(16, 16, true)
+      view.setUint16(20, 1, true)
+      view.setUint16(22, numChannels, true)
+      view.setUint32(24, sampleRate, true)
+      view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true)
+      view.setUint16(32, numChannels * bitsPerSample / 8, true)
+      view.setUint16(34, bitsPerSample, true)
+      view.setUint32(36, 0x64617461, false)
+      view.setUint32(40, dataSize, true)
+
+      const samples = new Int16Array(channelData.length)
+      for (let i = 0; i < channelData.length; i++) {
+        samples[i] = Math.max(-32768, Math.min(32767, Math.floor(channelData[i] * 32767)))
+      }
+
+      const wavBuffer = new Uint8Array(44 + samples.byteLength)
+      wavBuffer.set(new Uint8Array(wavHeader), 0)
+      wavBuffer.set(new Uint8Array(samples.buffer), 44)
+
+      let binary = ''
+      for (let i = 0; i < wavBuffer.length; i++) {
+        binary += String.fromCharCode(wavBuffer[i])
+      }
+      const base64 = btoa(binary)
+      const dataUrl = 'data:audio/wav;base64,' + base64
+
+      await audio.loadSound("playable-data-url", dataUrl)
+      await audio.tryResumeOnce()
+
+      let playbackSuccessful = false
+      try {
+        audio.playSound("playable-data-url", 0.5, false)
+        playbackSuccessful = true
+      } catch (error) {
+        playbackSuccessful = false
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+      audio.stopSound("playable-data-url")
+
+      return {
+        playbackSuccessful,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.playbackSuccessful).toBe(true)
+    expect(result.state).toBe(AudioContextState.RUNNING)
+  })
+
+  test("should handle empty data URL content", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      const dataUrl = 'data:audio/wav;base64,'
+
+      let noError = true
+      try {
+        await audio.loadSound("empty-data-url", dataUrl)
+      } catch (error) {
+        noError = false
+      }
+
+      return {
+        noError,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.noError).toBe(true)
+  })
+
+  test("should handle data URL with plain text mime type", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      const dataUrl = 'data:text/plain;base64,' + btoa('not audio data')
+
+      let noError = true
+      try {
+        await audio.loadSound("text-data-url", dataUrl)
+      } catch (error) {
+        noError = false
+      }
+
+      return {
+        noError,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.noError).toBe(true)
+  })
+})

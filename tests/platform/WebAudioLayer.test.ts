@@ -147,6 +147,21 @@ describe("WebAudioLayer", () => {
       const buffer = new ArrayBuffer(0)
       await expect(audio.loadSound("test", buffer)).resolves.toBeUndefined()
     })
+
+    it("should load sound from data URL string", async () => {
+      const base64Data = btoa(String.fromCharCode(...new Uint8Array(100)))
+      const dataUrl = `data:audio/wav;base64,${base64Data}`
+      await expect(
+        audio.loadSound("test-url", dataUrl),
+      ).resolves.toBeUndefined()
+    })
+
+    it("should handle empty data URL content", async () => {
+      const dataUrl = "data:audio/wav;base64,"
+      await expect(
+        audio.loadSound("test-empty", dataUrl),
+      ).resolves.toBeUndefined()
+    })
   })
 
   describe("Error Handling", () => {

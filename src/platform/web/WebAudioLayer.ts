@@ -57,7 +57,8 @@ export class WebAudioLayer implements AudioLayer {
     }
 
     if (typeof data === "string") {
-      throw new Error("Loading from URL strings not yet implemented")
+      const response = await fetch(data)
+      data = await response.arrayBuffer()
     }
 
     if (data.byteLength === 0) {
