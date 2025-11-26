@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.1](https://github.com/hiddentao/clockwork-engine/compare/v2.3.0...v2.3.1) (2025-11-26)
+
+
+### Bug Fixes
+
+* **assets:** derive spritesheet JSON path by stripping image extension ([fea1e81](https://github.com/hiddentao/clockwork-engine/commit/fea1e81e5ce7c4893818986fe114187c3c118cac))
+
 ## [2.3.0](https://github.com/hiddentao/clockwork-engine/compare/v2.2.0...v2.3.0) (2025-11-26)
 
 
