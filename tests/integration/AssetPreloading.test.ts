@@ -60,9 +60,9 @@ test("Asset preloading - assets loaded before setup", async () => {
   // 2 spritesheets * 2 + 1 sound = 5 total fetches
   expect(loader.fetchedAssets.length).toBe(5)
   expect(loader.fetchedAssets).toContain("sprites/player.png")
-  expect(loader.fetchedAssets).toContain("sprites/player.png.json")
+  expect(loader.fetchedAssets).toContain("sprites/player.json")
   expect(loader.fetchedAssets).toContain("sprites/enemy.png")
-  expect(loader.fetchedAssets).toContain("sprites/enemy.png.json")
+  expect(loader.fetchedAssets).toContain("sprites/enemy.json")
   expect(loader.fetchedAssets).toContain("sounds/jump.mp3")
 })
 
@@ -149,7 +149,7 @@ test("Asset preloading - duplicate registrations", async () => {
   // Should only load once (spritesheet loads 2 files: image + JSON)
   expect(loader.fetchedAssets.length).toBe(2)
   expect(loader.fetchedAssets).toContain("sprites/player.png")
-  expect(loader.fetchedAssets).toContain("sprites/player.png.json")
+  expect(loader.fetchedAssets).toContain("sprites/player.json")
 })
 
 test("Asset preloading - get loaded assets", async () => {

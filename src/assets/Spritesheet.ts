@@ -44,7 +44,7 @@ export class Spritesheet {
     const imageUrl = Spritesheet.createUrlFromData(imageData, "image/png")
 
     // Load JSON data - use provided path or derive from imageFile
-    const jsonPath = jsonFile || `${imageFile}.json`
+    const jsonPath = jsonFile || `${imageFile.replace(/\.[^.]+$/, "")}.json`
     const jsonContent = await loader.fetchData(jsonPath)
 
     // Parse JSON if it's a string (handle empty string for headless mode)

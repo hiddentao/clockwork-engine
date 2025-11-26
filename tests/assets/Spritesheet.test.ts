@@ -54,7 +54,7 @@ describe("Spritesheet", () => {
       // Set up mock data
       loader.setData("player.png", "")
       loader.setData(
-        "player.png.json",
+        "player.json",
         JSON.stringify({
           frames: {
             player_idle_0: { x: 0, y: 0, w: 32, h: 32 },
@@ -66,6 +66,107 @@ describe("Spritesheet", () => {
         loader,
         platform.rendering,
         "player.png",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
+    it("should infer JSON path for .webp images", async () => {
+      loader.setData("bomb-spritesheet.webp", "")
+      loader.setData(
+        "bomb-spritesheet.json",
+        JSON.stringify({
+          frames: {
+            bomb_0: { x: 0, y: 0, w: 32, h: 32 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "bomb-spritesheet.webp",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
+    it("should infer JSON path for .jpg images", async () => {
+      loader.setData("texture.jpg", "")
+      loader.setData(
+        "texture.json",
+        JSON.stringify({
+          frames: {
+            texture_0: { x: 0, y: 0, w: 64, h: 64 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "texture.jpg",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
+    it("should handle filenames with multiple dots", async () => {
+      loader.setData("player.sprite.webp", "")
+      loader.setData(
+        "player.sprite.json",
+        JSON.stringify({
+          frames: {
+            frame_0: { x: 0, y: 0, w: 32, h: 32 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "player.sprite.webp",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
+    it("should handle files with directory paths", async () => {
+      loader.setData("assets/sprites/player.png", "")
+      loader.setData(
+        "assets/sprites/player.json",
+        JSON.stringify({
+          frames: {
+            player_0: { x: 0, y: 0, w: 32, h: 32 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "assets/sprites/player.png",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
+    it("should use explicit jsonFile when provided", async () => {
+      loader.setData("player.png", "")
+      loader.setData(
+        "custom-path/player-data.json",
+        JSON.stringify({
+          frames: {
+            player_0: { x: 0, y: 0, w: 32, h: 32 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "player.png",
+        "custom-path/player-data.json",
       )
 
       expect(spritesheet).toBeDefined()
