@@ -122,6 +122,18 @@ describe("DisplayNode", () => {
       const zIndex = rendering.getZIndex(node.getId())
       expect(zIndex).toBe(10)
     })
+
+    it("should get rotation", () => {
+      node.setRotation(Math.PI / 4)
+      expect(node.getRotation()).toBe(Math.PI / 4)
+    })
+
+    it("should get scale", () => {
+      node.setScale(2, 3)
+      const scale = node.getScale()
+      expect(scale.x).toBe(2)
+      expect(scale.y).toBe(3)
+    })
   })
 
   describe("Size", () => {

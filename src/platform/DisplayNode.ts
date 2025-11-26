@@ -51,6 +51,14 @@ export class DisplayNode {
     return this
   }
 
+  getRotation(): number {
+    return this.rendering.getRotation(this.id)
+  }
+
+  getScale(): { x: number; y: number } {
+    return this.rendering.getScale(this.id)
+  }
+
   setAnchor(anchorX: number, anchorY: number): this {
     this.rendering.setAnchor(this.id, anchorX, anchorY)
     return this

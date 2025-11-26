@@ -51,6 +51,10 @@ export interface RenderingLayer {
   setVisible(id: NodeId, visible: boolean): void
   setZIndex(id: NodeId, z: number): void
 
+  // Transform getters
+  getRotation(id: NodeId): number
+  getScale(id: NodeId): { x: number; y: number }
+
   // Size
   setSize(id: NodeId, width: number, height: number): void
   getSize(id: NodeId): { width: number; height: number }

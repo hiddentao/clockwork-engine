@@ -148,6 +148,16 @@ export class MockRenderingLayer implements RenderingLayer {
     }
   }
 
+  getRotation(id: NodeId): number {
+    const node = this.nodes.get(id)
+    return node?.rotation ?? 0
+  }
+
+  getScale(id: NodeId): { x: number; y: number } {
+    const node = this.nodes.get(id)
+    return node ? { x: node.scaleX, y: node.scaleY } : { x: 1, y: 1 }
+  }
+
   // Size
   setSize(id: NodeId, width: number, height: number): void {
     const node = this.nodes.get(id)
