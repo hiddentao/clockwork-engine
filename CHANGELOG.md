@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.3](https://github.com/hiddentao/clockwork-engine/compare/v2.3.2...v2.3.3) (2025-11-26)
+
+
+### Code Refactoring
+
+* **assets:** assume loader returns data URLs for binary assets ([b63b382](https://github.com/hiddentao/clockwork-engine/commit/b63b382961f0d9d6215f1e6b0965d8ee5ebf030b))
+
 ## [2.3.2](https://github.com/hiddentao/clockwork-engine/compare/v2.3.1...v2.3.2) (2025-11-26)
 
 
