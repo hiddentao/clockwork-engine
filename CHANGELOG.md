@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.0](https://github.com/hiddentao/clockwork-engine/compare/v2.2.0...v2.3.0) (2025-11-26)
+
+
+### Features
+
+* **audio:** add data URL support to WebAudioLayer.loadSound() ([46c1b13](https://github.com/hiddentao/clockwork-engine/commit/46c1b1320a58679d21ad95ce1bd0608b0596f44d))
+
 ## [2.2.0](https://github.com/hiddentao/clockwork-engine/compare/v2.1.1...v2.2.0) (2025-11-26)
 
 
