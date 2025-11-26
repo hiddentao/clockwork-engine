@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.4](https://github.com/hiddentao/clockwork-engine/compare/v2.3.3...v2.3.4) (2025-11-26)
+
+
+### Bug Fixes
+
+* **rendering:** use atomic counters for texture/spritesheet IDs ([4160dde](https://github.com/hiddentao/clockwork-engine/commit/4160ddeb8cb712774fed3f97556c30ab21b73966))
+
 ## [2.3.3](https://github.com/hiddentao/clockwork-engine/compare/v2.3.2...v2.3.3) (2025-11-26)
 
 
