@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.3.2](https://github.com/hiddentao/clockwork-engine/compare/v2.3.1...v2.3.2) (2025-11-26)
+
+
+### Bug Fixes
+
+* **assets:** infer MIME type from file extension for blob URLs ([41eee5f](https://github.com/hiddentao/clockwork-engine/commit/41eee5f84f6e01fdcf7b453806a372222a4acdc9))
+
 ## [2.3.1](https://github.com/hiddentao/clockwork-engine/compare/v2.3.0...v2.3.1) (2025-11-26)
 
 
