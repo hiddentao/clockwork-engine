@@ -641,4 +641,74 @@ describe("MemoryRenderingLayer", () => {
       expect(size.height).toBe(768)
     })
   })
+
+  describe("Parallel Loading (Race Condition Prevention)", () => {
+    it("should generate unique texture IDs when loading in parallel", async () => {
+      const [id1, id2, id3] = await Promise.all([
+        rendering.loadTexture("texture1.png"),
+        rendering.loadTexture("texture2.png"),
+        rendering.loadTexture("texture3.png"),
+      ])
+
+      const ids = new Set([id1, id2, id3])
+      expect(ids.size).toBe(3)
+    })
+
+    it("should generate unique spritesheet IDs when loading in parallel", async () => {
+      const jsonData = {
+        frames: { frame1: { frame: { x: 0, y: 0, w: 32, h: 32 } } },
+      }
+      const [id1, id2, id3] = await Promise.all([
+        rendering.loadSpritesheet("sheet1.png", jsonData),
+        rendering.loadSpritesheet("sheet2.png", jsonData),
+        rendering.loadSpritesheet("sheet3.png", jsonData),
+      ])
+
+      const ids = new Set([id1, id2, id3])
+      expect(ids.size).toBe(3)
+    })
+
+    it("should generate unique frame texture IDs across parallel spritesheet loads", async () => {
+      const jsonData = {
+        frames: {
+          frame1: { frame: { x: 0, y: 0, w: 32, h: 32 } },
+          frame2: { frame: { x: 32, y: 0, w: 32, h: 32 } },
+        },
+      }
+      const [sheet1, sheet2] = await Promise.all([
+        rendering.loadSpritesheet("sheet1.png", jsonData),
+        rendering.loadSpritesheet("sheet2.png", jsonData),
+      ])
+
+      const frame1FromSheet1 = rendering.getTexture(sheet1, "frame1")
+      const frame2FromSheet1 = rendering.getTexture(sheet1, "frame2")
+      const frame1FromSheet2 = rendering.getTexture(sheet2, "frame1")
+      const frame2FromSheet2 = rendering.getTexture(sheet2, "frame2")
+
+      const ids = new Set([
+        frame1FromSheet1,
+        frame2FromSheet1,
+        frame1FromSheet2,
+        frame2FromSheet2,
+      ])
+      expect(ids.size).toBe(4)
+    })
+
+    it("should handle mixed parallel texture and spritesheet loading", async () => {
+      const jsonData = {
+        frames: { frame1: { frame: { x: 0, y: 0, w: 32, h: 32 } } },
+      }
+      const [texId1, sheetId, texId2] = await Promise.all([
+        rendering.loadTexture("texture1.png"),
+        rendering.loadSpritesheet("sheet.png", jsonData),
+        rendering.loadTexture("texture2.png"),
+      ])
+
+      const frameId = rendering.getTexture(sheetId, "frame1")
+
+      const textureIds = new Set([texId1, texId2, frameId])
+      expect(textureIds.size).toBe(3)
+      expect(sheetId).toBeDefined()
+    })
+  })
 })

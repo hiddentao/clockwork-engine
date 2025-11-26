@@ -55,6 +55,8 @@ export class PixiRenderingLayer implements RenderingLayer {
   private viewportOptions: ViewportOptions | null = null
   private nodes = new Map<NodeId, NodeState>()
   private nextNodeId = 1
+  private nextTextureId = 1
+  private nextSpritesheetId = 1
   private textures = new Map<TextureId, PIXI.Texture>()
   private spritesheets = new Map<
     SpritesheetId,
@@ -411,7 +413,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   }
 
   async loadTexture(url: string): Promise<TextureId> {
-    const id = asTextureId(this.textures.size + 1)
+    const id = asTextureId(this.nextTextureId++)
     try {
       const texture = await PIXI.Assets.load(url)
       this.textures.set(id, texture)
@@ -426,7 +428,7 @@ export class PixiRenderingLayer implements RenderingLayer {
     imageUrl: string,
     jsonData: any,
   ): Promise<SpritesheetId> {
-    const id = asSpritesheetId(this.spritesheets.size + 1)
+    const id = asSpritesheetId(this.nextSpritesheetId++)
 
     // Load the texture for the spritesheet image
     const baseTexture = await PIXI.Assets.load<PIXI.Texture>(imageUrl)
@@ -450,7 +452,7 @@ export class PixiRenderingLayer implements RenderingLayer {
     const frames = new Map<string, TextureId>()
     for (const frameName of Object.keys(pixiSpritesheet.textures)) {
       const frameTexture = pixiSpritesheet.textures[frameName]
-      const textureId = asTextureId(this.textures.size + 1)
+      const textureId = asTextureId(this.nextTextureId++)
       this.textures.set(textureId, frameTexture)
       frames.set(frameName, textureId)
     }
