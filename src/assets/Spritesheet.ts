@@ -1,4 +1,5 @@
 import type { Loader } from "../Loader"
+import { getImageMimeType } from "../lib/mimeTypes"
 import type { RenderingLayer, SpritesheetId, TextureId } from "../platform"
 
 /**
@@ -41,7 +42,10 @@ export class Spritesheet {
   ): Promise<Spritesheet> {
     // Load image data
     const imageData = await loader.fetchData(imageFile)
-    const imageUrl = Spritesheet.createUrlFromData(imageData, "image/png")
+    const imageUrl = Spritesheet.createUrlFromData(
+      imageData,
+      getImageMimeType(imageFile),
+    )
 
     // Load JSON data - use provided path or derive from imageFile
     const jsonPath = jsonFile || `${imageFile.replace(/\.[^.]+$/, "")}.json`

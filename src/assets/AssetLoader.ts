@@ -1,4 +1,5 @@
 import type { Loader } from "../Loader"
+import { getImageMimeType } from "../lib/mimeTypes"
 import type { AudioLayer, RenderingLayer, TextureId } from "../platform"
 import { Spritesheet } from "./Spritesheet"
 
@@ -167,7 +168,7 @@ export class AssetLoader {
    */
   async loadStaticImage(id: string): Promise<TextureId> {
     const imageData = await this.loader.fetchData(id)
-    const imageUrl = this.createUrlFromData(imageData, "image/png")
+    const imageUrl = this.createUrlFromData(imageData, getImageMimeType(id))
     const textureId = await this.rendering.loadTexture(imageUrl)
     this.staticImages.set(id, textureId)
     return textureId

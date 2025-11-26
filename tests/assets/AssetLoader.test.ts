@@ -178,6 +178,36 @@ describe("AssetLoader", () => {
       const texture = assetLoader.getStaticImage("nonexistent")
       expect(texture).toBeUndefined()
     })
+
+    it("should load .webp static images", async () => {
+      loader.setData("images/background.webp", "")
+
+      assetLoader.register("images/background.webp", AssetType.STATIC_IMAGE)
+      await assetLoader.preloadAssets()
+
+      const texture = assetLoader.getStaticImage("images/background.webp")
+      expect(texture).toBeDefined()
+    })
+
+    it("should load .jpg static images", async () => {
+      loader.setData("images/photo.jpg", "")
+
+      assetLoader.register("images/photo.jpg", AssetType.STATIC_IMAGE)
+      await assetLoader.preloadAssets()
+
+      const texture = assetLoader.getStaticImage("images/photo.jpg")
+      expect(texture).toBeDefined()
+    })
+
+    it("should load .gif static images", async () => {
+      loader.setData("images/animation.gif", "")
+
+      assetLoader.register("images/animation.gif", AssetType.STATIC_IMAGE)
+      await assetLoader.preloadAssets()
+
+      const texture = assetLoader.getStaticImage("images/animation.gif")
+      expect(texture).toBeDefined()
+    })
   })
 
   describe("Headless mode", () => {
