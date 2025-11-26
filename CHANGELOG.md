@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.2.0](https://github.com/hiddentao/clockwork-engine/compare/v2.1.1...v2.2.0) (2025-11-26)
+
+
+### Features
+
+* **rendering:** add drawRoundRect support ([6e36116](https://github.com/hiddentao/clockwork-engine/commit/6e361164a990279db139d21d572972af5904ca9e))
+
 ## [2.1.1](https://github.com/hiddentao/clockwork-engine/compare/v2.1.0...v2.1.1) (2025-11-23)
 
 
