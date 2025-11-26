@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.5.0](https://github.com/hiddentao/clockwork-engine/compare/v2.4.0...v2.5.0) (2025-11-26)
+
+
+### Features
+
+* **platform:** add animation complete callback for non-looping sprites ([87a7059](https://github.com/hiddentao/clockwork-engine/commit/87a70597a46ab48cd1f943085ca48621490c590a))
+
 ## [2.4.0](https://github.com/hiddentao/clockwork-engine/compare/v2.3.4...v2.4.0) (2025-11-26)
 
 
