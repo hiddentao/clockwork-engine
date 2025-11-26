@@ -47,7 +47,7 @@ interface NodeState {
 }
 
 interface GraphicsCommand {
-  type: "rectangle" | "circle" | "polygon" | "line" | "polyline"
+  type: "rectangle" | "roundRect" | "circle" | "polygon" | "line" | "polyline"
   data: any
 }
 
@@ -302,6 +302,26 @@ export class MemoryRenderingLayer implements RenderingLayer {
       node.graphics.push({
         type: "polygon",
         data: { points, fill, stroke, strokeWidth },
+      })
+    }
+  }
+
+  drawRoundRect(
+    id: NodeId,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    radius: number,
+    fill?: Color,
+    stroke?: Color,
+    strokeWidth?: number,
+  ): void {
+    const node = this.nodes.get(id)
+    if (node) {
+      node.graphics.push({
+        type: "roundRect",
+        data: { x, y, w, h, radius, fill, stroke, strokeWidth },
       })
     }
   }

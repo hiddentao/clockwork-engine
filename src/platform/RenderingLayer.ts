@@ -100,6 +100,17 @@ export interface RenderingLayer {
     stroke?: Color,
     strokeWidth?: number,
   ): void
+  drawRoundRect(
+    id: NodeId,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    radius: number,
+    fill?: Color,
+    stroke?: Color,
+    strokeWidth?: number,
+  ): void
 
   // Line drawing
   drawLine(

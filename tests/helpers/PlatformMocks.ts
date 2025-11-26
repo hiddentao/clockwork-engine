@@ -296,6 +296,33 @@ export class MockRenderingLayer implements RenderingLayer {
     }
   }
 
+  drawRoundRect(
+    id: NodeId,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    radius: number,
+    fill?: Color,
+    stroke?: Color,
+    strokeWidth?: number,
+  ): void {
+    const node = this.nodes.get(id)
+    if (node) {
+      node.graphics.push({
+        type: "roundRect",
+        x,
+        y,
+        w,
+        h,
+        radius,
+        fill,
+        stroke,
+        strokeWidth,
+      })
+    }
+  }
+
   // Line drawing
   drawLine(
     id: NodeId,

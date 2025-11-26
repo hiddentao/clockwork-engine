@@ -296,6 +296,42 @@ describe("MemoryRenderingLayer", () => {
       const graphics = rendering.getGraphics(node)
       expect(graphics.length).toBe(0)
     })
+
+    it("should draw rounded rectangle", () => {
+      const node = rendering.createNode()
+      rendering.drawRoundRect(node, 10, 20, 100, 50, 8, 0xff0000, 0x000000, 2)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+      expect(graphics[0].type).toBe("roundRect")
+      expect(graphics[0].data.x).toBe(10)
+      expect(graphics[0].data.y).toBe(20)
+      expect(graphics[0].data.w).toBe(100)
+      expect(graphics[0].data.h).toBe(50)
+      expect(graphics[0].data.radius).toBe(8)
+      expect(graphics[0].data.fill).toBe(0xff0000)
+      expect(graphics[0].data.stroke).toBe(0x000000)
+      expect(graphics[0].data.strokeWidth).toBe(2)
+    })
+
+    it("should draw rounded rectangle with only fill", () => {
+      const node = rendering.createNode()
+      rendering.drawRoundRect(node, 0, 0, 50, 50, 5, 0x00ff00)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+      expect(graphics[0].data.fill).toBe(0x00ff00)
+      expect(graphics[0].data.stroke).toBeUndefined()
+    })
+
+    it("should clear rounded rectangles with clearGraphics", () => {
+      const node = rendering.createNode()
+      rendering.drawRoundRect(node, 0, 0, 100, 100, 10)
+      rendering.clearGraphics(node)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(0)
+    })
   })
 
   describe("Texture Loading", () => {

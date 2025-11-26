@@ -168,6 +168,30 @@ export class DisplayNode {
     return this
   }
 
+  drawRoundRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+    fill?: Color,
+    stroke?: Color,
+    strokeWidth?: number,
+  ): this {
+    this.rendering.drawRoundRect(
+      this.id,
+      x,
+      y,
+      width,
+      height,
+      radius,
+      fill,
+      stroke,
+      strokeWidth,
+    )
+    return this
+  }
+
   // Line drawing (fluent interface)
   drawLine(
     x1: number,

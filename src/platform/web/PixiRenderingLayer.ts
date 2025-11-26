@@ -36,7 +36,7 @@ interface NodeState {
   currentSprite: PIXI.Sprite | PIXI.AnimatedSprite | null
   graphics: PIXI.Graphics | null
   graphicsCommands: Array<{
-    type: "rectangle" | "circle" | "polygon" | "line" | "polyline"
+    type: "rectangle" | "roundRect" | "circle" | "polygon" | "line" | "polyline"
     data: any
   }>
   animationData: {
@@ -654,6 +654,31 @@ export class PixiRenderingLayer implements RenderingLayer {
     this._needsRepaint = true
   }
 
+  drawRoundRect(
+    id: NodeId,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+    fill?: Color,
+    stroke?: Color,
+    strokeWidth?: number,
+  ): void {
+    const state = this.nodes.get(id)
+    if (!state) return
+
+    this.ensureGraphics(state)
+
+    state.graphicsCommands.push({
+      type: "roundRect",
+      data: { x, y, width, height, radius, fill, stroke, strokeWidth },
+    })
+
+    this.redrawGraphics(state)
+    this._needsRepaint = true
+  }
+
   drawLine(
     id: NodeId,
     x1: number,
@@ -858,6 +883,22 @@ export class PixiRenderingLayer implements RenderingLayer {
           }
           if (stroke !== undefined) {
             state.graphics.poly(points)
+            state.graphics.stroke({
+              width: strokeWidth ?? 1,
+              color: normalizeColor(stroke),
+            })
+          }
+          break
+        }
+        case "roundRect": {
+          const { x, y, width, height, radius, fill, stroke, strokeWidth } =
+            cmd.data
+          if (fill !== undefined) {
+            state.graphics.roundRect(x, y, width, height, radius)
+            state.graphics.fill(normalizeColor(fill))
+          }
+          if (stroke !== undefined) {
+            state.graphics.roundRect(x, y, width, height, radius)
             state.graphics.stroke({
               width: strokeWidth ?? 1,
               color: normalizeColor(stroke),
