@@ -1,5 +1,4 @@
 import type { Loader } from "../Loader"
-import { getImageMimeType } from "../lib/mimeTypes"
 import type { AudioLayer, RenderingLayer, TextureId } from "../platform"
 import { Spritesheet } from "./Spritesheet"
 
@@ -167,8 +166,7 @@ export class AssetLoader {
    * @returns Promise resolving to TextureId
    */
   async loadStaticImage(id: string): Promise<TextureId> {
-    const imageData = await this.loader.fetchData(id)
-    const imageUrl = this.createUrlFromData(imageData, getImageMimeType(id))
+    const imageUrl = await this.loader.fetchData(id)
     const textureId = await this.rendering.loadTexture(imageUrl)
     this.staticImages.set(id, textureId)
     return textureId
@@ -207,25 +205,5 @@ export class AssetLoader {
    */
   getStaticImage(id: string): TextureId | undefined {
     return this.staticImages.get(id)
-  }
-
-  /**
-   * Create a data URL from raw data for browser loading.
-   * This is a utility method for converting Loader data to browser-compatible URLs.
-   *
-   * @param data - Raw data string (may be empty for headless)
-   * @param mimeType - MIME type for the data
-   * @returns Data URL or empty string for headless mode
-   */
-  protected createUrlFromData(data: string, mimeType: string): string {
-    if (!data) {
-      // Headless mode - return empty string
-      // MemoryRenderingLayer and MemoryAudioLayer handle this gracefully
-      return ""
-    }
-
-    // Browser mode - create blob URL
-    const blob = new Blob([data], { type: mimeType })
-    return URL.createObjectURL(blob)
   }
 }

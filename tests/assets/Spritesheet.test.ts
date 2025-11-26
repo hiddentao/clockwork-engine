@@ -50,6 +50,28 @@ describe("Spritesheet", () => {
       expect(spritesheet).toBeDefined()
     })
 
+    it("should pass data URL directly to rendering layer", async () => {
+      const dataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      loader.setData("sprite.png", dataUrl)
+      loader.setData(
+        "sprite.json",
+        JSON.stringify({
+          frames: {
+            frame_0: { x: 0, y: 0, w: 1, h: 1 },
+          },
+        }),
+      )
+
+      const spritesheet = await Spritesheet.load(
+        loader,
+        platform.rendering,
+        "sprite.png",
+      )
+
+      expect(spritesheet).toBeDefined()
+    })
+
     it("should load spritesheet with inferred JSON path", async () => {
       // Set up mock data
       loader.setData("player.png", "")

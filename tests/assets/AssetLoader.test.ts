@@ -174,6 +174,18 @@ describe("AssetLoader", () => {
       expect(texture).toBeDefined()
     })
 
+    it("should pass data URL directly to rendering layer", async () => {
+      const dataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      loader.setData("images/pixel.png", dataUrl)
+
+      assetLoader.register("images/pixel.png", AssetType.STATIC_IMAGE)
+      await assetLoader.preloadAssets()
+
+      const texture = assetLoader.getStaticImage("images/pixel.png")
+      expect(texture).toBeDefined()
+    })
+
     it("should return undefined for unloaded image", () => {
       const texture = assetLoader.getStaticImage("nonexistent")
       expect(texture).toBeUndefined()
@@ -250,9 +262,8 @@ describe("AssetLoader", () => {
       }
 
       async loadStaticImage(id: string) {
-        // Custom path logic
-        const imageData = await this.loader.fetchData(`custom/images/${id}.jpg`)
-        const imageUrl = this.createUrlFromData(imageData, "image/jpeg")
+        // Custom path logic - loader returns data URL directly
+        const imageUrl = await this.loader.fetchData(`custom/images/${id}.jpg`)
         const textureId = await this.rendering.loadTexture(imageUrl)
         this.staticImages.set(id, textureId)
         return textureId

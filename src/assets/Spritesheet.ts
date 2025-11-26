@@ -1,5 +1,4 @@
 import type { Loader } from "../Loader"
-import { getImageMimeType } from "../lib/mimeTypes"
 import type { RenderingLayer, SpritesheetId, TextureId } from "../platform"
 
 /**
@@ -40,12 +39,8 @@ export class Spritesheet {
     imageFile: string,
     jsonFile?: string,
   ): Promise<Spritesheet> {
-    // Load image data
-    const imageData = await loader.fetchData(imageFile)
-    const imageUrl = Spritesheet.createUrlFromData(
-      imageData,
-      getImageMimeType(imageFile),
-    )
+    // Load image data (loader returns data URL for binary assets)
+    const imageUrl = await loader.fetchData(imageFile)
 
     // Load JSON data - use provided path or derive from imageFile
     const jsonPath = jsonFile || `${imageFile.replace(/\.[^.]+$/, "")}.json`
@@ -104,25 +99,5 @@ export class Spritesheet {
     }
 
     return frames
-  }
-
-  /**
-   * Create a data URL from raw data for browser loading.
-   * This is a utility method for converting Loader data to browser-compatible URLs.
-   *
-   * @param data - Raw data string (may be empty for headless)
-   * @param mimeType - MIME type for the data
-   * @returns Data URL or empty string for headless mode
-   */
-  private static createUrlFromData(data: string, mimeType: string): string {
-    if (!data) {
-      // Headless mode - return empty string
-      // MemoryRenderingLayer handles this gracefully
-      return ""
-    }
-
-    // Browser mode - create blob URL
-    const blob = new Blob([data], { type: mimeType })
-    return URL.createObjectURL(blob)
   }
 }
