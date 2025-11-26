@@ -244,6 +244,13 @@ export class MockRenderingLayer implements RenderingLayer {
     }
   }
 
+  setAnimationCompleteCallback(
+    _id: NodeId,
+    _callback: ((id: NodeId) => void) | null,
+  ): void {
+    // No-op for mock
+  }
+
   // Primitives
   drawRectangle(
     id: NodeId,

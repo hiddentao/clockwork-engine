@@ -66,6 +66,7 @@ export class PixiRenderingLayer implements RenderingLayer {
   private initialized = false
   private tickCallbackManager = new EventCallbackManager<number>()
   private tickerCallbackAdded = false
+  private animationCompleteCallbacks = new Map<NodeId, (id: NodeId) => void>()
 
   constructor(canvas: HTMLCanvasElement, options: ViewportOptions) {
     this.canvas = canvas
@@ -158,6 +159,7 @@ export class PixiRenderingLayer implements RenderingLayer {
 
     state.container.destroy({ children: true })
     this.nodes.delete(id)
+    this.animationCompleteCallbacks.delete(id)
     this._needsRepaint = true
   }
 
@@ -556,10 +558,45 @@ export class PixiRenderingLayer implements RenderingLayer {
       state.currentSprite instanceof PIXI.AnimatedSprite
     ) {
       state.currentSprite.loop = loop
+
+      if (!loop) {
+        const callback = this.animationCompleteCallbacks.get(id)
+        if (callback) {
+          state.currentSprite.onComplete = () => callback(id)
+        }
+      } else {
+        state.currentSprite.onComplete = undefined
+      }
+
       state.currentSprite.play()
     }
 
     this._needsRepaint = true
+  }
+
+  setAnimationCompleteCallback(
+    id: NodeId,
+    callback: ((id: NodeId) => void) | null,
+  ): void {
+    const state = this.nodes.get(id)
+    if (!state) return
+
+    if (callback) {
+      this.animationCompleteCallbacks.set(id, callback)
+    } else {
+      this.animationCompleteCallbacks.delete(id)
+    }
+
+    if (
+      state.currentSprite &&
+      state.currentSprite instanceof PIXI.AnimatedSprite
+    ) {
+      if (callback && !state.currentSprite.loop) {
+        state.currentSprite.onComplete = () => callback(id)
+      } else if (!callback) {
+        state.currentSprite.onComplete = undefined
+      }
+    }
   }
 
   stopAnimation(id: NodeId): void {

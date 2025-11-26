@@ -238,6 +238,27 @@ describe("MemoryRenderingLayer", () => {
       const isPlaying = rendering.isAnimationPlaying(node)
       expect(isPlaying).toBe(false)
     })
+
+    it("should accept animation complete callback without throwing", () => {
+      const node = rendering.createNode()
+      const textures = [asTextureId(1), asTextureId(2)]
+      rendering.setAnimatedSprite(node, textures, 5)
+
+      expect(() => {
+        rendering.setAnimationCompleteCallback(node, (id) => {
+          console.log(`Animation complete for node ${id}`)
+        })
+      }).not.toThrow()
+    })
+
+    it("should accept null callback to clear", () => {
+      const node = rendering.createNode()
+      const noop = () => undefined
+      rendering.setAnimationCompleteCallback(node, noop)
+      expect(() => {
+        rendering.setAnimationCompleteCallback(node, null)
+      }).not.toThrow()
+    })
   })
 
   describe("Graphics Primitives", () => {

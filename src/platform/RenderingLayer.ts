@@ -76,6 +76,10 @@ export interface RenderingLayer {
   ): void
   playAnimation(id: NodeId, loop: boolean): void
   stopAnimation(id: NodeId): void
+  setAnimationCompleteCallback(
+    id: NodeId,
+    callback: ((id: NodeId) => void) | null,
+  ): void
 
   // Primitives
   drawRectangle(

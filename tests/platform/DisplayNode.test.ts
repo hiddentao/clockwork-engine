@@ -257,6 +257,39 @@ describe("DisplayNode", () => {
 
       expect(result).toBe(node)
     })
+
+    it("should set animation complete callback and return self", () => {
+      const textures = [asTextureId(1), asTextureId(2)]
+      node.setAnimatedSprite(textures, 5)
+
+      const result = node.setAnimationCompleteCallback((id) => {
+        console.log(`Animation complete for node ${id}`)
+      })
+
+      expect(result).toBe(node)
+    })
+
+    it("should chain setAnimationCompleteCallback with playAnimation", () => {
+      const textures = [asTextureId(1), asTextureId(2)]
+      const noop = () => undefined
+      const result = node
+        .setAnimatedSprite(textures, 5)
+        .setAnimationCompleteCallback(noop)
+        .playAnimation(false)
+
+      expect(result).toBe(node)
+    })
+
+    it("should clear callback with null", () => {
+      const textures = [asTextureId(1), asTextureId(2)]
+      const noop = () => undefined
+      const result = node
+        .setAnimatedSprite(textures, 5)
+        .setAnimationCompleteCallback(noop)
+        .setAnimationCompleteCallback(null)
+
+      expect(result).toBe(node)
+    })
   })
 
   describe("Graphics Primitives", () => {

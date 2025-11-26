@@ -252,6 +252,13 @@ export class MemoryRenderingLayer implements RenderingLayer {
     }
   }
 
+  setAnimationCompleteCallback(
+    _id: NodeId,
+    _callback: ((id: NodeId) => void) | null,
+  ): void {
+    // Memory layer doesn't play animations, so this is a no-op
+  }
+
   // Primitives
   drawRectangle(
     id: NodeId,

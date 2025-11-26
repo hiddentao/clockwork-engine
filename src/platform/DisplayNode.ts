@@ -131,6 +131,11 @@ export class DisplayNode {
     return this
   }
 
+  setAnimationCompleteCallback(callback: ((id: NodeId) => void) | null): this {
+    this.rendering.setAnimationCompleteCallback(this.id, callback)
+    return this
+  }
+
   // Primitives (fluent interface)
   drawRectangle(
     x: number,
