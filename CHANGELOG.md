@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.6.0](https://github.com/hiddentao/clockwork-engine/compare/v2.5.0...v2.6.0) (2025-11-29)
+
+
+### Features
+
+* **canvas:** trigger initial render when game engine is set ([135bc2e](https://github.com/hiddentao/clockwork-engine/commit/135bc2e87f975ce7ce653d27111e774cf9c25d28))
+
 ## [2.5.0](https://github.com/hiddentao/clockwork-engine/compare/v2.4.0...v2.5.0) (2025-11-26)
 
 
