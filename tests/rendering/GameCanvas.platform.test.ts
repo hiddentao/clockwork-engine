@@ -27,6 +27,7 @@ describe("GameCanvas Platform Integration", () => {
 
   class TestGameCanvas extends GameCanvas {
     public renderCallCount = 0
+    public lastRenderDelta: number | null = null
 
     constructor(options: GameCanvasOptions, platform: MockPlatformLayer) {
       super(options, platform)
@@ -36,8 +37,9 @@ describe("GameCanvas Platform Integration", () => {
       // Empty for testing
     }
 
-    protected render(_deltaTicks: number): void {
+    protected render(deltaTicks: number): void {
       this.renderCallCount++
+      this.lastRenderDelta = deltaTicks
     }
   }
 
@@ -318,6 +320,68 @@ describe("GameCanvas Platform Integration", () => {
       engine.start()
 
       expect(engine.getState()).toBe(GameState.PLAYING)
+    })
+
+    it("should trigger initial render when setting game engine", async () => {
+      engine = new TestGameEngine({ loader, platform })
+      await engine.reset({})
+
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      expect(canvas.renderCallCount).toBe(0)
+
+      canvas.setGameEngine(engine)
+
+      expect(canvas.renderCallCount).toBe(1)
+    })
+
+    it("should not trigger render when setting null game engine", async () => {
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      canvas.setGameEngine(null)
+
+      expect(canvas.renderCallCount).toBe(0)
+    })
+
+    it("should call initial render with deltaTicks of 0", async () => {
+      engine = new TestGameEngine({ loader, platform })
+      await engine.reset({})
+
+      const canvas = new TestGameCanvas(
+        {
+          width: 800,
+          height: 600,
+          worldWidth: 1000,
+          worldHeight: 800,
+        },
+        platform,
+      )
+
+      await canvas.initialize()
+
+      canvas.setGameEngine(engine)
+
+      expect(canvas.lastRenderDelta).toBe(0)
     })
   })
 

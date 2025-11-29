@@ -253,6 +253,11 @@ export abstract class GameCanvas extends EventEmitter<GameCanvasEventMap> {
 
     this.clearRenderers()
     this.setupRenderers()
+
+    // Trigger initial render so renderers are positioned correctly
+    if (this.gameEngine) {
+      this.render(0)
+    }
   }
 
   /**
