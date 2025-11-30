@@ -419,8 +419,8 @@ describe("Record-Replay Integration Tests", () => {
         await originalTicker.tick(1)
       }
 
-      // Pause original engine to match replay engine state before comparison
-      originalEngine.pause()
+      // End original engine to match replay engine state before comparison
+      originalEngine.end()
       const originalFinalState = originalEngine.captureState()
       recorder.stopRecording()
       const recording = recorder.getCurrentRecording()
@@ -629,7 +629,7 @@ describe("Record-Replay Integration Tests", () => {
           originalFinalState.totalTicks,
           1, // Reduced precision to allow for async timing differences
         )
-        expect(finalReplayState.gameState).toBe("PAUSED") // Replay engine pauses when replay completes
+        expect(finalReplayState.gameState).toBe("ENDED") // Replay engine ends when replay completes
       }
     })
   })

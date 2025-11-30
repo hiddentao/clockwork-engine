@@ -1,6 +1,5 @@
 import type { GameEngine } from "./GameEngine"
 import { RecordedEventSource } from "./RecordedEventSource"
-// Note: REPLAY_CONSTANTS removed as ticks system eliminates floating-point precision issues
 import type { AnyGameEvent, GameRecording } from "./types"
 import { GameState } from "./types"
 
@@ -44,11 +43,11 @@ export class ReplayManager {
 
             // Process recorded ticks while we have enough accumulated ticks
             while (
-              replayManager.isReplaying && // if we are replaying
-              target.getState() === GameState.PLAYING && // if the engine is in the playing state
+              replayManager.isReplaying &&
+              target.getState() === GameState.PLAYING &&
               replayManager.deltaTicksIndex <
-                replayManager.recording!.deltaTicks.length && // if we have more ticks to process
-              replayManager.accumulatedTicks >= // if we have enough accumulated ticks
+                replayManager.recording!.deltaTicks.length &&
+              replayManager.accumulatedTicks >=
                 replayManager.recording!.deltaTicks[
                   replayManager.deltaTicksIndex
                 ]
@@ -75,7 +74,7 @@ export class ReplayManager {
               replayManager.deltaTicksIndex >=
                 replayManager.recording!.deltaTicks.length
             ) {
-              replayManager.stopReplay()
+              replayManager._endReplay()
             }
           }
         }
@@ -127,19 +126,19 @@ export class ReplayManager {
   }
 
   /**
-   * Stop the current replay and pause the engine
+   * Stop the current replay and end the engine
    * Preserves current frame position for inspection
    */
-  stopReplay(): void {
+  protected _endReplay(): void {
     if (!this.isReplaying) {
       return
     }
 
     this.isReplaying = false
 
-    // Pause engine to preserve final state
+    // End engine to mark game session as complete
     if (this.__engine.getState() === GameState.PLAYING) {
-      this.__engine.pause()
+      this.__engine.end()
     }
 
     // Reset playback state (preserve currentReplayTick for inspection)
@@ -186,7 +185,7 @@ export class ReplayManager {
 
     return {
       isReplaying: this.isReplaying,
-      progress: Math.min(1, progress), // Clamp to 1.0 maximum
+      progress: Math.min(1, progress),
       hasMoreTicks,
     }
   }

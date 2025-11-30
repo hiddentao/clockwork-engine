@@ -14,9 +14,15 @@ import {
 } from "../../src/types"
 import { ComplexTestEngine, MockLoader } from "../fixtures"
 
+class TestReplayManager extends ReplayManager {
+  public endReplay(): void {
+    this._endReplay()
+  }
+}
+
 describe("ReplayManager", () => {
   let engine: ComplexTestEngine
-  let replayManager: ReplayManager
+  let replayManager: TestReplayManager
   let proxyEngine: GameEngine
   let sampleRecording: GameRecording
   let loader: MockLoader
@@ -31,7 +37,7 @@ describe("ReplayManager", () => {
 
     loader = new MockLoader()
     engine = new ComplexTestEngine(loader)
-    replayManager = new ReplayManager(engine)
+    replayManager = new TestReplayManager(engine)
     proxyEngine = replayManager.getReplayEngine()
 
     // Create a sample recording for testing
@@ -233,9 +239,21 @@ describe("ReplayManager", () => {
       proxyEngine.update(1) // Should process deltaTicks[3] = 1
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-      proxyEngine.update(1) // Should process deltaTicks[4] = 1 and auto-stop
+      proxyEngine.update(1) // Should process deltaTicks[4] = 1 and auto-end
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
       expect(replayManager.getCurrentTick()).toBe(5)
+      expect(engine.getState()).toBe(GameState.ENDED)
+    })
+
+    it("should auto-end game when all ticks processed in single update", () => {
+      // beforeEach already started replay with sampleRecording (5 ticks)
+      expect(replayManager.isCurrentlyReplaying()).toBe(true)
+
+      // Process all 5 ticks at once
+      proxyEngine.update(5)
+      expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(replayManager.getCurrentTick()).toBe(5)
+      expect(engine.getState()).toBe(GameState.ENDED)
     })
   })
 
@@ -247,17 +265,17 @@ describe("ReplayManager", () => {
       expect(replayManager.isCurrentlyReplaying()).toBe(true)
       expect(replayManager.getCurrentTick()).toBe(2)
 
-      replayManager.stopReplay()
+      replayManager.endReplay()
 
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
-      expect(engine.getState()).toBe(GameState.PAUSED)
+      expect(engine.getState()).toBe(GameState.ENDED)
     })
 
     it("should reset replay state", async () => {
       await replayManager.replay(sampleRecording)
       proxyEngine.update(3)
 
-      replayManager.stopReplay()
+      replayManager.endReplay()
 
       expect(replayManager.getCurrentTick()).toBe(3) // Frame count preserved after stop
 
@@ -268,14 +286,14 @@ describe("ReplayManager", () => {
     })
 
     it("should handle stop when not replaying", () => {
-      expect(() => replayManager.stopReplay()).not.toThrow()
+      expect(() => replayManager.endReplay()).not.toThrow()
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
     })
 
     it("should allow new replay after stopping", async () => {
       await replayManager.replay(sampleRecording)
       proxyEngine.update(2)
-      replayManager.stopReplay()
+      replayManager.endReplay()
 
       // Start new replay
       const newRecording: GameRecording = {
@@ -353,9 +371,10 @@ describe("ReplayManager", () => {
       proxyEngine.update(20) // Should process second frame (20) with 5 remaining
       expect(replayManager.getCurrentTick()).toBe(30)
 
-      proxyEngine.update(35) // Should process third frame (30) and auto-stop
+      proxyEngine.update(35) // Should process third frame (30) and auto-end
       expect(replayManager.getCurrentTick()).toBe(60)
-      expect(replayManager.isCurrentlyReplaying()).toBe(false) // Auto-stopped after all frames processed
+      expect(replayManager.isCurrentlyReplaying()).toBe(false)
+      expect(engine.getState()).toBe(GameState.ENDED)
     })
   })
 
@@ -481,7 +500,7 @@ describe("ReplayManager", () => {
       velocities.push(player1.getVelocity())
 
       // Second replay
-      replayManager.stopReplay() // Stop first replay before starting second
+      replayManager.endReplay() // Stop first replay before starting second
       await engine.reset({ prngSeed: "determinism-test" })
       const player2 = engine.createTestPlayer("player1", new Vector2D(0, 0))
 
@@ -544,8 +563,8 @@ describe("ReplayManager", () => {
         proxyEngine.update(300)
         expect(replayManager.isCurrentlyReplaying()).toBe(false)
 
-        // Ensure clean state for next cycle (though stopReplay should be idempotent)
-        replayManager.stopReplay()
+        // Ensure clean state for next cycle (though endReplay should be idempotent)
+        replayManager.endReplay()
       }
     })
 
@@ -579,7 +598,7 @@ describe("ReplayManager", () => {
         await replayManager.replay(sampleRecording)
         expect(replayManager.isCurrentlyReplaying()).toBe(true)
 
-        replayManager.stopReplay()
+        replayManager.endReplay()
         expect(replayManager.isCurrentlyReplaying()).toBe(false)
       }
     })
@@ -650,7 +669,7 @@ describe("ReplayManager", () => {
       expect(replayManager.getCurrentTick()).toBe(2)
 
       // Stop mid-replay
-      replayManager.stopReplay()
+      replayManager.endReplay()
       const _stoppedFrame = replayManager.getCurrentTick()
 
       // Resume with new replay (should reset)
@@ -690,7 +709,7 @@ describe("ReplayManager", () => {
         proxyEngine.update(2.5) // Partial replay
 
         results.push(replayManager.getCurrentTick())
-        replayManager.stopReplay()
+        replayManager.endReplay()
       }
 
       // All runs should produce identical results
@@ -763,7 +782,7 @@ describe("ReplayManager", () => {
       proxyEngine.update(2.5) // Partial processing
       expect(replayManager.getCurrentTick()).toBe(2)
 
-      replayManager.stopReplay()
+      replayManager.endReplay()
       expect(replayManager.getCurrentTick()).toBe(2) // Frame count preserved after stop
 
       // Restart
@@ -828,8 +847,9 @@ describe("ReplayManager", () => {
 
       expect(replayManager.isCurrentlyReplaying()).toBe(false)
 
-      // Engine should be paused after replay stops, resume it to test passthrough
-      engine.resume()
+      // Engine is now ENDED after replay stops, need to reset to test passthrough
+      await engine.reset({ prngSeed: "passthrough-test" })
+      engine.start()
       const initialFrames = engine.getTotalTicks()
       proxyEngine.update(3) // Should pass through normally now
       expect(engine.getTotalTicks()).toBe(initialFrames + 3)
