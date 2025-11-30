@@ -33,8 +33,10 @@ export class ReplayManager {
         ) {
           // Intercept update() calls during replay
           return function (deltaTicks: number) {
+            const initialState = target.getState()
+
             // Only process ticks when engine is in PLAYING state
-            if (target.getState() !== GameState.PLAYING) {
+            if (initialState !== GameState.PLAYING) {
               return
             }
 
@@ -66,6 +68,15 @@ export class ReplayManager {
 
               // Track current tick
               replayManager.currentReplayTick += recordedDeltaTicks
+            }
+
+            // Handle game ending naturally during replay
+            if (
+              target.getState() === GameState.ENDED &&
+              replayManager.isReplaying
+            ) {
+              replayManager._endReplay()
+              return
             }
 
             // Check if replay is complete after processing
@@ -144,6 +155,14 @@ export class ReplayManager {
     // Reset playback state (preserve currentReplayTick for inspection)
     this.deltaTicksIndex = 0
     this.accumulatedTicks = 0
+  }
+
+  /**
+   * Stop the current replay and end the engine
+   * Preserves current frame position for inspection
+   */
+  stopReplay(): void {
+    this._endReplay()
   }
 
   /**
