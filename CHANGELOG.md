@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.6.1](https://github.com/hiddentao/clockwork-engine/compare/v2.6.0...v2.6.1) (2025-11-30)
+
+
+### Code Refactoring
+
+* **replay:** change stopReplay to end game instead of pause ([3ec1293](https://github.com/hiddentao/clockwork-engine/commit/3ec129384c803648e0b01a63640f3e6980d4abe3))
+
 ## [2.6.0](https://github.com/hiddentao/clockwork-engine/compare/v2.5.0...v2.6.0) (2025-11-29)
 
 
