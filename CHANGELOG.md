@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.7.0](https://github.com/hiddentao/clockwork-engine/compare/v2.6.1...v2.7.0) (2025-11-30)
+
+
+### Features
+
+* **replay:** add public stopReplay() method to ReplayManager ([cd388d0](https://github.com/hiddentao/clockwork-engine/commit/cd388d0fd55712b55eae8f442543fda2af2348fe))
+
 ## [2.6.1](https://github.com/hiddentao/clockwork-engine/compare/v2.6.0...v2.6.1) (2025-11-30)
 
 
