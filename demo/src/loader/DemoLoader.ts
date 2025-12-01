@@ -1,4 +1,4 @@
-import { Loader } from "@hiddentao/clockwork-engine"
+import { type FetchDataOptions, Loader } from "@hiddentao/clockwork-engine"
 
 /**
  * Demo implementation of the Loader interface
@@ -39,14 +39,14 @@ export class DemoLoader extends Loader {
   /**
    * Fetch data by ID from the in-memory store
    * @param id - The identifier for the data to fetch
-   * @param meta - Optional metadata containing type and other properties
+   * @param options - Optional options containing type and other properties
    * @returns Promise that resolves to the data as a string
    */
-  async fetchData(id: string, meta?: Record<string, any>): Promise<string> {
+  async fetchData(id: string, options?: FetchDataOptions): Promise<string> {
     // Simulate network delay
     await this.simulateAsyncDelay()
 
-    const type = meta?.type || "unknown"
+    const type = options?.type || "unknown"
     const key = `${type}:${id}`
 
     if (this.data.has(key)) {
@@ -65,16 +65,16 @@ export class DemoLoader extends Loader {
    * Store data in the loader (useful for save games, user preferences, etc.)
    * @param id - The identifier for the data
    * @param data - The data to store as a string
-   * @param meta - Optional metadata containing type and other properties
+   * @param options - Optional options containing type and other properties
    */
   async storeData(
     id: string,
     data: string,
-    meta?: Record<string, any>,
+    options?: FetchDataOptions,
   ): Promise<void> {
     await this.simulateAsyncDelay()
 
-    const type = meta?.type || "unknown"
+    const type = options?.type || "unknown"
     const key = `${type}:${id}`
 
     this.data.set(key, data)
@@ -83,10 +83,10 @@ export class DemoLoader extends Loader {
   /**
    * Check if data exists for the given id
    * @param id - The identifier to check
-   * @param meta - Optional metadata containing type and other properties
+   * @param options - Optional options containing type and other properties
    */
-  async hasData(id: string, meta?: Record<string, any>): Promise<boolean> {
-    const type = meta?.type || "unknown"
+  async hasData(id: string, options?: FetchDataOptions): Promise<boolean> {
+    const type = options?.type || "unknown"
     const key = `${type}:${id}`
 
     return this.data.has(key) || this.data.has(id)

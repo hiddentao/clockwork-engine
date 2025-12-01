@@ -1,25 +1,34 @@
-import { Loader } from "../Loader"
+import { type FetchDataOptions, Loader } from "../Loader"
 
 /**
- * Headless loader implementation that returns empty strings for all data.
- * Enables headless replay and testing without requiring actual asset files.
- * Works with MemoryPlatformLayer which handles empty asset data gracefully.
+ * Headless loader wrapper that returns empty strings for non-essential data.
+ * For data marked as requiredForReplay, forwards the request to the wrapped loader.
  *
  * Use cases:
- * - Server-side replay validation
- * - Automated testing without asset dependencies
- * - CI/CD environments where assets aren't available
+ * - Server-side replay validation (loads only replay-essential data)
+ * - Automated testing with minimal asset dependencies
+ * - CI/CD environments where only critical assets are needed
  */
 export class HeadlessLoader extends Loader {
+  private wrappedLoader: Loader
+
+  constructor(loader: Loader) {
+    super()
+    this.wrappedLoader = loader
+  }
+
   /**
-   * Fetch data by ID - always returns empty string for headless operation.
-   * MemoryPlatformLayer is designed to handle empty data without errors.
+   * Fetch data by ID.
+   * Returns empty string for non-essential data, forwards to wrapped loader for replay-essential data.
    *
-   * @param _id - The identifier for the data (ignored in headless mode)
-   * @param _meta - Optional metadata (ignored in headless mode)
-   * @returns Promise that resolves to empty string
+   * @param id - The identifier for the data to fetch
+   * @param options - Options including requiredForValidation flag
+   * @returns Promise that resolves to the data or empty string
    */
-  async fetchData(_id: string, _meta?: Record<string, any>): Promise<string> {
+  async fetchData(id: string, options?: FetchDataOptions): Promise<string> {
+    if (options?.requiredForValidation) {
+      return this.wrappedLoader.fetchData(id, options)
+    }
     return ""
   }
 }

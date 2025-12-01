@@ -120,7 +120,7 @@ describe("GameEngine + AssetLoader Integration", () => {
 
   describe("Headless replay with AssetLoader", () => {
     it("should work with HeadlessLoader for replay", async () => {
-      const headlessLoader = new HeadlessLoader()
+      const headlessLoader = new HeadlessLoader(new MockLoader())
       const assetLoader = new AssetLoader(
         headlessLoader,
         platform.rendering,

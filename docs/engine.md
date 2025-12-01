@@ -64,7 +64,7 @@ The code is organized into classes (object-oriented programming) to make it easy
 * [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/InputLayer.ts) - Platform-agnostic input interface for pointer and keyboard event handling.
 * [`WebPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/web/WebPlatformLayer.ts) - Browser-based platform implementation using PIXI.js for rendering, Web Audio API for sound, and DOM events for input.
 * [`MemoryPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts) - Headless platform implementation for server-side replay validation and testing without browser dependencies.
-* [`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) - Loader implementation that returns empty data for headless replay validation and testing in CI/CD environments.
+* [`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) - Loader wrapper that returns empty data for non-essential assets, forwarding only replay-essential requests to the wrapped loader.
 
 ### Demo game
 
@@ -367,6 +367,8 @@ export type AnyGameEvent = UserInputEvent | ObjectUpdateEvent
 Very often a game may need to load assets and other data in from external data sources rather than bundling them within. This is especially true for games which have dynamically changing assets - for example, you may wish to make the background map of your game be changeable and store the map on a server somewhere.
 
 The `GameEngine` holds a reference to a [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) object which must implement a simple `fetchData()` method. This provides flexibility in terms of where assets come from - local files, remote servers, or dynamically generated data. You could also use the `Loader` to load in dynamic configuration at runtime. For instance, the colours used in the game, the speed of movement, and various other parameters could, if you wanted, be loaded in dynamically.
+
+The `fetchData()` method accepts an optional `options` parameter with a `requiredForValidation` flag. When set to `true`, this indicates the data is essential for deterministic replay validation (e.g., level maps that affect gameplay outcomes). This is used by `HeadlessLoader` to decide whether to forward the request to its wrapped loader or return empty data.
 
 ### AssetLoader
 

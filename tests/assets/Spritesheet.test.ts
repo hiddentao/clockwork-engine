@@ -195,7 +195,7 @@ describe("Spritesheet", () => {
     })
 
     it("should work with empty data (headless mode)", async () => {
-      const headlessLoader = new HeadlessLoader()
+      const headlessLoader = new HeadlessLoader(new MockSpritesheetLoader())
 
       const spritesheet = await Spritesheet.load(
         headlessLoader,
@@ -332,7 +332,7 @@ describe("Spritesheet", () => {
 
   describe("Headless mode", () => {
     it("should work with HeadlessLoader", async () => {
-      const headlessLoader = new HeadlessLoader()
+      const headlessLoader = new HeadlessLoader(new MockSpritesheetLoader())
 
       const spritesheet = await Spritesheet.load(
         headlessLoader,

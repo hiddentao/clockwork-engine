@@ -13,15 +13,22 @@ Headless replay is **significantly faster than real-time**:
 
 ### HeadlessLoader
 
-[`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) returns empty strings for all asset requests. Memory platform handles empty data gracefully:
+[`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) wraps an existing loader and selectively loads only replay-essential data:
 
 ```typescript
 import { HeadlessLoader } from '@hiddentao/clockwork-engine'
 
-const loader = new HeadlessLoader()
+const actualLoader = new MyDataLoader()
+const loader = new HeadlessLoader(actualLoader)
+
+// Non-essential data returns empty string
+await loader.fetchData('sprite.png')  // returns ""
+
+// Validation-essential data is forwarded to wrapped loader
+await loader.fetchData('level-map.json', { requiredForValidation: true })  // returns actual data
 ```
 
-No asset files required - perfect for server environments.
+This minimizes asset loading while still loading data that affects gameplay outcomes.
 
 ### MemoryPlatformLayer
 
@@ -42,8 +49,9 @@ import { HeadlessLoader } from '@hiddentao/clockwork-engine'
 import { MemoryPlatformLayer } from '@hiddentao/clockwork-engine'
 import { ReplayManager } from '@hiddentao/clockwork-engine'
 
-// Create headless components
-const loader = new HeadlessLoader()
+// Create headless components - HeadlessLoader wraps your actual data loader
+const actualLoader = new MyDataLoader()
+const loader = new HeadlessLoader(actualLoader)
 const platform = new MemoryPlatformLayer()
 
 // Initialize engine

@@ -224,7 +224,7 @@ describe("AssetLoader", () => {
 
   describe("Headless mode", () => {
     it("should work with HeadlessLoader", async () => {
-      const headlessLoader = new HeadlessLoader()
+      const headlessLoader = new HeadlessLoader(new MockAssetLoader())
       const headlessAssetLoader = new AssetLoader(
         headlessLoader,
         platform.rendering,

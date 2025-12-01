@@ -1,4 +1,4 @@
-import { Loader } from "../../src/Loader"
+import { type FetchDataOptions, Loader } from "../../src/Loader"
 
 /**
  * Mock implementation of Loader for testing purposes
@@ -14,10 +14,10 @@ export class MockLoader extends Loader {
   /**
    * Fetch data by ID from the mock store
    * @param id - The identifier for the data to fetch
-   * @param meta - Optional metadata containing type and other properties
+   * @param options - Optional options containing type and other properties
    * @returns Promise that resolves to the data as a string
    */
-  async fetchData(id: string, meta?: Record<string, any>): Promise<string> {
+  async fetchData(id: string, options?: FetchDataOptions): Promise<string> {
     this.fetchCallCount++
 
     // Simulate async delay if configured
@@ -25,7 +25,7 @@ export class MockLoader extends Loader {
       await new Promise((resolve) => setTimeout(resolve, this.asyncDelay))
     }
 
-    const type = meta?.type || "unknown"
+    const type = options?.type || "unknown"
     const key = `${type}:${id}`
 
     // Check if this ID should fail
