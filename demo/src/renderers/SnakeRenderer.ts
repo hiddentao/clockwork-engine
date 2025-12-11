@@ -1,4 +1,4 @@
-import { AbstractRenderer, DisplayNode } from "@hiddentao/clockwork-engine"
+import { AbstractRenderer, DisplayNode } from "@clockwork-engine/core"
 import { Snake } from "../gameObjects/Snake"
 import { GAME_CONFIG } from "../utils/constants"
 

@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,11 +36,9 @@ jobs:
       - name: Get changelog for this release
         id: changelog
         run: |
-          # Extract changelog section for this version
           VERSION="${{ steps.tag.outputs.tag }}"
-          if [ -f "CHANGELOG.md" ]; then
-            # Get content between this version and next version/end of file
-            awk "/^## \[?${VERSION#v}\]?/ {flag=1; next} /^## / && flag {exit} flag" CHANGELOG.md > release_notes.md
+          if [ -f "packages/engine/CHANGELOG.md" ]; then
+            awk "/^## \[?${VERSION#v}\]?/ {flag=1; next} /^## / && flag {exit} flag" packages/engine/CHANGELOG.md > release_notes.md
             if [ -s release_notes.md ]; then
               echo "HAS_CHANGELOG=true" >> $GITHUB_OUTPUT
             else

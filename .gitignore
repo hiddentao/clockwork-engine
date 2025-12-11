@@ -27,6 +27,7 @@ dist-ssr
 coverage
 lcov.info
 test-results/
+playwright-report/
 
 # Build info
 tsconfig.tsbuildinfo
@@ -40,3 +41,6 @@ tsconfig.declarations.tsbuildinfo
 # Demo build
 demo/dist
 
+# Packages
+packages/*/dist
+packages/*/node_modules

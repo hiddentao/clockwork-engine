@@ -1,95 +1,48 @@
 {
-  "name": "@hiddentao/clockwork-engine",
-  "version": "2.7.1",
-  "description": "A TypeScript/PIXI.js game engine for deterministic, replayable games with built-in rendering",
-  "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
-  "license": "MIT",
-  "homepage": "https://github.com/hiddentao/clockwork-engine",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hiddentao/clockwork-engine.git"
-  },
-  "bugs": {
-    "url": "https://github.com/hiddentao/clockwork-engine/issues"
-  },
-  "keywords": [
-    "game-engine",
-    "typescript",
-    "deterministic",
-    "replay",
-    "recording",
-    "pixi",
-    "pixijs",
-    "rendering",
-    "2d-graphics",
-    "collision-detection"
-  ],
+  "name": "clockwork-monorepo",
+  "private": true,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/",
-    "dist/clockwork-engine.js",
-    "dist/clockwork-engine.min.js",
-    "LICENSE.md",
-    "README.md",
-    "docs/",
-    "CLAUDE.md",
-    "package.json",
-    "bun.lock"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
+  "workspaces": ["packages/*", "demo"],
   "engineStrict": true,
   "engines": {
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "bun run scripts/build.ts",
-    "dev": "bun run clean && tsc --watch",
-    "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo",
-    "coverage": "bun test --coverage --coverage-reporter=lcov && ./scripts/sanitize-lcov.sh",
-    "test": "bun test",
-    "test:watch": "bun test --watch",
-    "test:server": "bun run tests/browser/server.ts",
-    "test:browser": "playwright test",
-    "lint": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && biome check .",
-    "lint:fix": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && biome check --write .",
+    "build": "bun run --cwd packages/engine build",
+    "dev": "bun run --cwd packages/engine dev",
+    "clean": "bun run --cwd packages/engine clean",
+    "coverage": "bun run --cwd packages/engine coverage",
+    "test": "bun run --cwd packages/engine test",
+    "test:watch": "bun run --cwd packages/engine test:watch",
+    "test:server": "bun run --cwd packages/engine test:server",
+    "test:browser": "bun run --cwd packages/engine test:browser",
+    "lint": "bun run --cwd packages/engine lint && bun run --cwd demo lint",
+    "lint:fix": "bun run --cwd packages/engine lint:fix && bun run --cwd demo lint:fix",
     "format": "biome format --write .",
-    "demo": "cd demo && bun run dev",
-    "demo:build": "cd demo && bun run build",
+    "demo": "bun run --cwd demo dev",
+    "demo:build": "bun run --cwd demo build",
     "prepare": "bun run husky",
     "prepublishOnly": "bun run build",
-    "release": "commit-and-tag-version && git push --follow-tags origin main && bun publish",
-    "release:dry-run": "commit-and-tag-version --dry-run",
-    "release:patch": "commit-and-tag-version --release-as patch && git push --follow-tags origin main && bun publish",
-    "release:minor": "commit-and-tag-version --release-as minor && git push --follow-tags origin main && bun publish",
-    "release:major": "commit-and-tag-version --release-as major && git push --follow-tags origin main && bun publish"
-  },
-  "dependencies": {
-    "alea": "=1.0.1",
-    "pixi.js": "=8.13.2",
-    "pixi-viewport": "=6.0.3"
+    "release": "bun run --cwd packages/engine release",
+    "release:dry-run": "bun run --cwd packages/engine release:dry-run",
+    "release:patch": "bun run --cwd packages/engine release:patch",
+    "release:minor": "bun run --cwd packages/engine release:minor",
+    "release:major": "bun run --cwd packages/engine release:major"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@playwright/test": "^1.56.1",
-    "@types/bun": "^1.2.21",
-    "bun-types": "^1.2.21",
     "commit-and-tag-version": "^12.6.0",
-    "happy-dom": "^20.0.10",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.6",
-    "playwright": "^1.56.1",
-    "typescript": "^5.3.3"
+    "lint-staged": "^16.1.6"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "bun run lint",
-      "cd demo && bun run lint"
+    "packages/engine/**/*.{ts,tsx}": [
+      "bun run --cwd packages/engine lint"
+    ],
+    "demo/**/*.{ts,tsx}": [
+      "bun run --cwd demo lint"
     ]
   }
 }

@@ -15,7 +15,7 @@
     "format": "biome format --write src"
   },
   "dependencies": {
-    "@hiddentao/clockwork-engine": "file:.."
+    "@clockwork-engine/core": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",

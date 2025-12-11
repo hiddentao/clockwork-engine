@@ -1,5 +1,5 @@
-import type { GameEngineInterface } from "@hiddentao/clockwork-engine"
-import { GameObject, Vector2D } from "@hiddentao/clockwork-engine"
+import type { GameEngineInterface } from "@clockwork-engine/core"
+import { GameObject, Vector2D } from "@clockwork-engine/core"
 
 export class Bomb extends GameObject {
   constructor(id: string, position: Vector2D, engine?: GameEngineInterface) {

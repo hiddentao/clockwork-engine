@@ -1,3 +1,4 @@
+import path from "node:path"
 import { defineConfig } from "vite"
 
 export default defineConfig({
@@ -8,7 +9,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@engine": "../src",
+      "@engine": path.resolve(__dirname, "../packages/engine/src"),
+      "@clockwork-engine/core": path.resolve(
+        __dirname,
+        "../packages/engine/src/index.ts",
+      ),
     },
   },
 })

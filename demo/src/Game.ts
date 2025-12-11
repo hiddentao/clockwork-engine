@@ -8,8 +8,8 @@ import {
   Vector2D,
   WebPlatformLayer,
   type WebPlatformOptions,
-} from "@hiddentao/clockwork-engine"
-import pkg from "../../package.json"
+} from "@clockwork-engine/core"
+import pkg from "../../packages/engine/package.json"
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"
