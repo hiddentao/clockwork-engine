@@ -15,7 +15,9 @@
     "format": "biome format --write src"
   },
   "dependencies": {
-    "@clockwork-engine/core": "workspace:*"
+    "@clockwork-engine/core": "workspace:*",
+    "@clockwork-engine/platform-memory": "workspace:*",
+    "@clockwork-engine/platform-web-pixi": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",

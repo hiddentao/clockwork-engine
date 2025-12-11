@@ -8,26 +8,26 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "bun run --cwd packages/engine build",
-    "dev": "bun run --cwd packages/engine dev",
-    "clean": "bun run --cwd packages/engine clean",
-    "coverage": "bun run --cwd packages/engine coverage",
-    "test": "bun run --cwd packages/engine test",
-    "test:watch": "bun run --cwd packages/engine test:watch",
-    "test:server": "bun run --cwd packages/engine test:server",
-    "test:browser": "bun run --cwd packages/engine test:browser",
-    "lint": "bun run --cwd packages/engine lint && bun run --cwd demo lint",
-    "lint:fix": "bun run --cwd packages/engine lint:fix && bun run --cwd demo lint:fix",
+    "build": "bun run --cwd packages/core build && bun run --cwd packages/platform-memory build && bun run --cwd packages/platform-web-pixi build",
+    "dev": "bun run --cwd packages/core dev",
+    "clean": "bun run --cwd packages/core clean && bun run --cwd packages/platform-memory clean && bun run --cwd packages/platform-web-pixi clean",
+    "coverage": "bun run --cwd packages/core coverage",
+    "test": "bun run --cwd packages/core test",
+    "test:watch": "bun run --cwd packages/core test:watch",
+    "test:server": "bun run --cwd packages/core test:server",
+    "test:browser": "bun run --cwd packages/core test:browser",
+    "lint": "bun run --cwd packages/core lint && bun run --cwd packages/platform-memory lint && bun run --cwd packages/platform-web-pixi lint && bun run --cwd demo lint",
+    "lint:fix": "bun run --cwd packages/core lint:fix && bun run --cwd packages/platform-memory lint:fix && bun run --cwd packages/platform-web-pixi lint:fix && bun run --cwd demo lint:fix",
     "format": "biome format --write .",
     "demo": "bun run --cwd demo dev",
     "demo:build": "bun run --cwd demo build",
     "prepare": "bun run husky",
     "prepublishOnly": "bun run build",
-    "release": "bun run --cwd packages/engine release",
-    "release:dry-run": "bun run --cwd packages/engine release:dry-run",
-    "release:patch": "bun run --cwd packages/engine release:patch",
-    "release:minor": "bun run --cwd packages/engine release:minor",
-    "release:major": "bun run --cwd packages/engine release:major"
+    "release": "bun run --cwd packages/core release",
+    "release:dry-run": "bun run --cwd packages/core release:dry-run",
+    "release:patch": "bun run --cwd packages/core release:patch",
+    "release:minor": "bun run --cwd packages/core release:minor",
+    "release:major": "bun run --cwd packages/core release:major"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",
@@ -38,8 +38,14 @@
     "lint-staged": "^16.1.6"
   },
   "lint-staged": {
-    "packages/engine/**/*.{ts,tsx}": [
-      "bun run --cwd packages/engine lint"
+    "packages/core/**/*.{ts,tsx}": [
+      "bun run --cwd packages/core lint"
+    ],
+    "packages/platform-memory/**/*.{ts,tsx}": [
+      "bun run --cwd packages/platform-memory lint"
+    ],
+    "packages/platform-web-pixi/**/*.{ts,tsx}": [
+      "bun run --cwd packages/platform-web-pixi lint"
     ],
     "demo/**/*.{ts,tsx}": [
       "bun run --cwd demo lint"

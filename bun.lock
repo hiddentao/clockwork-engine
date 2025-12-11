@@ -17,6 +17,8 @@
       "version": "1.0.0",
       "dependencies": {
         "@clockwork-engine/core": "workspace:*",
+        "@clockwork-engine/platform-memory": "workspace:*",
+        "@clockwork-engine/platform-web-pixi": "workspace:*",
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.2",
@@ -24,16 +26,16 @@
         "vite": "^7.0.4",
       },
     },
-    "packages/engine": {
+    "packages/core": {
       "name": "@clockwork-engine/core",
       "version": "2.7.1",
       "dependencies": {
         "alea": "=1.0.1",
-        "pixi-viewport": "=6.0.3",
-        "pixi.js": "=8.13.2",
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.2",
+        "@clockwork-engine/platform-memory": "workspace:*",
+        "@clockwork-engine/platform-web-pixi": "workspace:*",
         "@playwright/test": "^1.56.1",
         "@types/bun": "^1.2.21",
         "bun-types": "^1.2.21",
@@ -41,6 +43,34 @@
         "happy-dom": "^20.0.10",
         "playwright": "^1.56.1",
         "typescript": "^5.3.3",
+      },
+    },
+    "packages/platform-memory": {
+      "name": "@clockwork-engine/platform-memory",
+      "version": "2.7.1",
+      "devDependencies": {
+        "@biomejs/biome": "^1.9.2",
+        "@clockwork-engine/core": "workspace:*",
+        "typescript": "^5.3.3",
+      },
+      "peerDependencies": {
+        "@clockwork-engine/core": "^2.7.0",
+      },
+    },
+    "packages/platform-web-pixi": {
+      "name": "@clockwork-engine/platform-web-pixi",
+      "version": "2.7.1",
+      "dependencies": {
+        "pixi-viewport": "=6.0.3",
+        "pixi.js": "=8.13.2",
+      },
+      "devDependencies": {
+        "@biomejs/biome": "^1.9.2",
+        "@clockwork-engine/core": "workspace:*",
+        "typescript": "^5.3.3",
+      },
+      "peerDependencies": {
+        "@clockwork-engine/core": "^2.7.0",
       },
     },
   },
@@ -67,7 +97,11 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@1.9.4", "", { "os": "win32", "cpu": "x64" }, "sha512-8Y5wMhVIPaWe6jw2H+KlEm4wP/f7EW3810ZLmDlrEEy5KvBsb9ECEfu/kMWD484ijfQ8+nIi0giMgu9g1UAuuA=="],
 
-    "@clockwork-engine/core": ["@clockwork-engine/core@workspace:packages/engine"],
+    "@clockwork-engine/core": ["@clockwork-engine/core@workspace:packages/core"],
+
+    "@clockwork-engine/platform-memory": ["@clockwork-engine/platform-memory@workspace:packages/platform-memory"],
+
+    "@clockwork-engine/platform-web-pixi": ["@clockwork-engine/platform-web-pixi@workspace:packages/platform-web-pixi"],
 
     "@commitlint/cli": ["@commitlint/cli@19.8.1", "", { "dependencies": { "@commitlint/format": "^19.8.1", "@commitlint/lint": "^19.8.1", "@commitlint/load": "^19.8.1", "@commitlint/read": "^19.8.1", "@commitlint/types": "^19.8.1", "tinyexec": "^1.0.0", "yargs": "^17.0.0" }, "bin": { "commitlint": "./cli.js" } }, "sha512-LXUdNIkspyxrlV6VDHWBmCZRtkEVRpBKxi2Gtw3J54cGWhLCTouVD/Q6ZSaSvd2YaDObWK8mDjrz3TIKtaQMAA=="],
 

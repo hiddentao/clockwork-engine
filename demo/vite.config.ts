@@ -9,10 +9,18 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@engine": path.resolve(__dirname, "../packages/engine/src"),
+      "@engine": path.resolve(__dirname, "../packages/core/src"),
       "@clockwork-engine/core": path.resolve(
         __dirname,
-        "../packages/engine/src/index.ts",
+        "../packages/core/src/index.ts",
+      ),
+      "@clockwork-engine/platform-memory": path.resolve(
+        __dirname,
+        "../packages/platform-memory/src/index.ts",
+      ),
+      "@clockwork-engine/platform-web-pixi": path.resolve(
+        __dirname,
+        "../packages/platform-web-pixi/src/index.ts",
       ),
     },
   },

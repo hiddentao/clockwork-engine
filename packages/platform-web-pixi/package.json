@@ -1,0 +1,62 @@
+{
+  "name": "@clockwork-engine/platform-web-pixi",
+  "version": "2.7.1",
+  "description": "Web platform layer with PIXI.js rendering for Clockwork Engine",
+  "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
+  "license": "MIT",
+  "homepage": "https://github.com/hiddentao/clockwork-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/clockwork-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hiddentao/clockwork-engine/issues"
+  },
+  "keywords": [
+    "game-engine",
+    "typescript",
+    "clockwork",
+    "platform",
+    "web",
+    "pixi",
+    "pixijs",
+    "rendering",
+    "2d-graphics"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "LICENSE.md",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo",
+    "lint": "tsc --noEmit && biome check .",
+    "lint:fix": "tsc --noEmit && biome check --write .",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "pixi.js": "=8.13.2",
+    "pixi-viewport": "=6.0.3"
+  },
+  "peerDependencies": {
+    "@clockwork-engine/core": "^2.7.0"
+  },
+  "devDependencies": {
+    "@clockwork-engine/core": "workspace:*",
+    "@biomejs/biome": "^1.9.2",
+    "typescript": "^5.3.3"
+  }
+}

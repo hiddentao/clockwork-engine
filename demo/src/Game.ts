@@ -6,10 +6,12 @@ import {
   ReplayManager,
   UserInputEventSource,
   Vector2D,
+} from "@clockwork-engine/core"
+import {
   WebPlatformLayer,
   type WebPlatformOptions,
-} from "@clockwork-engine/core"
-import pkg from "../../packages/engine/package.json"
+} from "@clockwork-engine/platform-web-pixi"
+import pkg from "../../packages/core/package.json"
 import { SnakeGameCanvas } from "./SnakeGameCanvas"
 import { UI } from "./UI"
 import { DemoGameEngine } from "./engine/DemoGameEngine"

@@ -1,0 +1,79 @@
+{
+  "name": "@clockwork-engine/core",
+  "version": "2.7.1",
+  "description": "A TypeScript game engine for deterministic, replayable games with platform-agnostic rendering",
+  "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
+  "license": "MIT",
+  "homepage": "https://github.com/hiddentao/clockwork-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/clockwork-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hiddentao/clockwork-engine/issues"
+  },
+  "keywords": [
+    "game-engine",
+    "typescript",
+    "deterministic",
+    "replay",
+    "recording",
+    "rendering",
+    "2d-graphics",
+    "collision-detection"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "dist/clockwork-engine.js",
+    "dist/clockwork-engine.min.js",
+    "LICENSE.md",
+    "README.md",
+    "docs/",
+    "package.json",
+    "bun.lock"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "dev": "bun run clean && tsc --watch",
+    "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo",
+    "coverage": "bun test --coverage --coverage-reporter=lcov && ./scripts/sanitize-lcov.sh",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:server": "bun run tests/browser/server.ts",
+    "test:browser": "playwright test",
+    "lint": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && biome check .",
+    "lint:fix": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && biome check --write .",
+    "format": "biome format --write .",
+    "prepublishOnly": "bun run build",
+    "release": "commit-and-tag-version && git push --follow-tags origin main && bun publish",
+    "release:dry-run": "commit-and-tag-version --dry-run",
+    "release:patch": "commit-and-tag-version --release-as patch && git push --follow-tags origin main && bun publish",
+    "release:minor": "commit-and-tag-version --release-as minor && git push --follow-tags origin main && bun publish",
+    "release:major": "commit-and-tag-version --release-as major && git push --follow-tags origin main && bun publish"
+  },
+  "dependencies": {
+    "alea": "=1.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.2",
+    "@clockwork-engine/platform-memory": "workspace:*",
+    "@clockwork-engine/platform-web-pixi": "workspace:*",
+    "@playwright/test": "^1.56.1",
+    "@types/bun": "^1.2.21",
+    "bun-types": "^1.2.21",
+    "commit-and-tag-version": "^12.6.0",
+    "happy-dom": "^20.0.10",
+    "playwright": "^1.56.1",
+    "typescript": "^5.3.3"
+  }
+}
