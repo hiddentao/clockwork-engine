@@ -352,8 +352,12 @@ describe("Performance Integration Tests", () => {
       const overhead =
         ((avgWithRecording - avgNoRecording) / avgNoRecording) * 100
 
-      // Recording should not add more than 50% overhead
-      expect(overhead).toBeLessThan(50)
+      // When base time is very small, percentage comparisons are unreliable
+      if (avgNoRecording < 1) {
+        expect(avgWithRecording).toBeLessThan(5)
+      } else {
+        expect(overhead).toBeLessThan(50)
+      }
 
       // Recording should be successful
       expect(recording).toBeDefined()
