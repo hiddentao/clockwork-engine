@@ -169,6 +169,154 @@ describe("MemoryRenderingLayer", () => {
     })
   })
 
+  describe("Tint and Graphics Interaction", () => {
+    it("should preserve tint when drawing graphics after setTint", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0xff0000)
+      rendering.drawRectangle(node, 0, 0, 100, 50, 0x00ff00)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xff0000)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+    })
+
+    it("should preserve tint when setTint is called after drawing graphics", () => {
+      const node = rendering.createNode()
+      rendering.drawRectangle(node, 0, 0, 100, 50, 0x00ff00)
+      rendering.setTint(node, 0xff0000)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xff0000)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+    })
+
+    it("should preserve tint after clearing graphics", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0xff0000)
+      rendering.drawRectangle(node, 0, 0, 100, 50)
+      rendering.clearGraphics(node)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xff0000)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(0)
+    })
+
+    it("should allow updating tint multiple times with graphics", () => {
+      const node = rendering.createNode()
+      rendering.drawCircle(node, 50, 50, 25, 0x00ff00)
+
+      rendering.setTint(node, 0xff0000)
+      expect(rendering.getTint(node)).toBe(0xff0000)
+
+      rendering.setTint(node, 0x0000ff)
+      expect(rendering.getTint(node)).toBe(0x0000ff)
+
+      rendering.setTint(node, { r: 128, g: 128, b: 128 })
+      expect(rendering.getTint(node)).toEqual({ r: 128, g: 128, b: 128 })
+    })
+
+    it("should handle tint with multiple graphics commands", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0xff00ff)
+
+      rendering.drawRectangle(node, 0, 0, 50, 50, 0xffffff)
+      rendering.drawCircle(node, 100, 100, 25, 0xffffff)
+      rendering.drawPolygon(node, [0, 0, 50, 0, 25, 50], 0xffffff)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xff00ff)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(3)
+    })
+
+    it("should handle tint with line drawing", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0xaabbcc)
+      rendering.drawLine(node, 0, 0, 100, 100, 0xffffff, 2)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xaabbcc)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+      expect(graphics[0].type).toBe("line")
+    })
+
+    it("should handle tint with polyline drawing", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0xddeeff)
+      rendering.drawPolyline(node, [0, 0, 50, 50, 100, 0], 0xffffff, 3)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0xddeeff)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+      expect(graphics[0].type).toBe("polyline")
+    })
+
+    it("should handle tint with rounded rectangle", () => {
+      const node = rendering.createNode()
+      rendering.setTint(node, 0x112233)
+      rendering.drawRoundRect(node, 10, 10, 80, 60, 10, 0xffffff)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0x112233)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+      expect(graphics[0].type).toBe("roundRect")
+    })
+
+    it("should maintain separate tints for different nodes", () => {
+      const node1 = rendering.createNode()
+      const node2 = rendering.createNode()
+
+      rendering.setTint(node1, 0xff0000)
+      rendering.setTint(node2, 0x00ff00)
+
+      rendering.drawRectangle(node1, 0, 0, 50, 50)
+      rendering.drawRectangle(node2, 0, 0, 50, 50)
+
+      expect(rendering.getTint(node1)).toBe(0xff0000)
+      expect(rendering.getTint(node2)).toBe(0x00ff00)
+    })
+
+    it("should handle drawing graphics before any tint is set", () => {
+      const node = rendering.createNode()
+      rendering.drawRectangle(node, 0, 0, 100, 100, 0xffffff)
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBeUndefined()
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(1)
+    })
+
+    it("should handle interleaved tint and graphics operations", () => {
+      const node = rendering.createNode()
+
+      rendering.drawRectangle(node, 0, 0, 50, 50)
+      rendering.setTint(node, 0xff0000)
+      rendering.drawCircle(node, 100, 100, 25)
+      rendering.setTint(node, 0x00ff00)
+      rendering.drawPolygon(node, [0, 0, 100, 0, 50, 100])
+
+      const tint = rendering.getTint(node)
+      expect(tint).toBe(0x00ff00)
+
+      const graphics = rendering.getGraphics(node)
+      expect(graphics.length).toBe(3)
+    })
+  })
+
   describe("Bounds", () => {
     it("should calculate bounds for positioned node", () => {
       const node = rendering.createNode()

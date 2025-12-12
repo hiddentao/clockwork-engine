@@ -335,9 +335,14 @@ export class PixiRenderingLayer implements RenderingLayer {
     if (!state) return
 
     state.tint = color
+    const normalizedColor = normalizeColor(color)
 
     if (state.currentSprite) {
-      state.currentSprite.tint = normalizeColor(color)
+      state.currentSprite.tint = normalizedColor
+    }
+
+    if (state.graphics) {
+      state.graphics.tint = normalizedColor
     }
 
     this._needsRepaint = true
@@ -874,6 +879,9 @@ export class PixiRenderingLayer implements RenderingLayer {
     if (!state.graphics) {
       state.graphics = new PIXI.Graphics()
       state.graphics.blendMode = this.toPixiBlendMode(state.blendMode)
+      if (state.tint !== null) {
+        state.graphics.tint = normalizeColor(state.tint)
+      }
       state.container.addChild(state.graphics)
     }
   }
