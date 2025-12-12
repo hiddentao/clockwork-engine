@@ -50,7 +50,10 @@ async function main() {
     console.log(`   Release type: ${releaseType}`)
   }
 
-  // Step 1: Run commit-and-tag-version (bumps core version)
+  // Step 1: Login to npm
+  await run("npm login", "Logging in to npm")
+
+  // Step 2: Run commit-and-tag-version (bumps core version)
   const releaseAsArg = releaseType ? ` --release-as ${releaseType}` : ""
   const dryRunArg = dryRun ? " --dry-run" : ""
   await run(`commit-and-tag-version${releaseAsArg}${dryRunArg}`, "Bumping version and updating changelog")
@@ -60,19 +63,19 @@ async function main() {
     return
   }
 
-  // Step 2: Sync versions across all packages (now reads updated core version)
+  // Step 3: Sync versions across all packages (now reads updated core version)
   await run("bun run scripts/run.ts sync-versions", "Syncing package versions")
 
-  // Step 3: Stage all changes (including synced versions)
+  // Step 4: Stage all changes (including synced versions)
   await run("git add -A", "Staging all changes")
 
-  // Step 4: Amend the version commit to include synced versions
+  // Step 5: Amend the version commit to include synced versions
   await run("git commit --amend --no-edit", "Amending commit with synced versions")
 
-  // Step 5: Push with tags
+  // Step 6: Push with tags
   await run("git push --follow-tags origin main", "Pushing to origin with tags")
 
-  // Step 6: Publish all packages
+  // Step 7: Publish all packages
   await run('bun run scripts/run.ts "npm publish" --exclude demo', "Publishing packages to npm")
 
   console.log("\n✓ Release complete!")
