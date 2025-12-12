@@ -100,7 +100,7 @@ export function getRenderingSetup(
   const worldHeight = options.worldHeight ?? height
 
   return `
-    const { PixiRenderingLayer } = await import("/dist/clockwork-engine.js")
+    const { PixiRenderingLayer } = await import("/dist/platform-web-pixi.js")
 
     const canvas = document.createElement("canvas")
     canvas.width = ${width}

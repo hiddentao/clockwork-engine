@@ -1,6 +1,6 @@
 /**
  * Simple test server for browser tests
- * Serves the clockwork-engine bundles and test page
+ * Serves the platform-web-pixi bundles and test page
  */
 
 const server = Bun.serve({
@@ -17,10 +17,10 @@ const server = Bun.serve({
       })
     }
 
-    // Serve bundles and other dist files
+    // Serve platform-web-pixi bundles
     if (filePath.startsWith("/dist/")) {
       try {
-        const file = Bun.file("." + filePath)
+        const file = Bun.file("../platform-web-pixi" + filePath)
         const exists = await file.exists()
         if (exists) {
           let contentType = "application/javascript"
@@ -70,4 +70,4 @@ const server = Bun.serve({
 })
 
 console.log(`Test server running at http://localhost:${server.port}`)
-console.log(`Serving clockwork-engine bundles from /dist/`)
+console.log(`Serving platform-web-pixi bundles from /dist/`)

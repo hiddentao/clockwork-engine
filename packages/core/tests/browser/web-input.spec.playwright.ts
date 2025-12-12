@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test"
  */
 function getInputSetup() {
   return `
-    const { WebInputLayer } = await import("/dist/clockwork-engine.js")
+    const { WebInputLayer } = await import("/dist/platform-web-pixi.js")
 
     document.body.style.margin = "0"
     document.body.style.padding = "0"

@@ -38,7 +38,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bun run scripts/build.ts",
     "dev": "tsc --watch",
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo",
     "lint": "tsc --noEmit && biome check .",

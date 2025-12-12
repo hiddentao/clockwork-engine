@@ -99,7 +99,7 @@ test.describe("Visual Regression Tests", () => {
       ${BROWSER_HELPERS.extractPixels}
       ${BROWSER_HELPERS.getPixel}
 
-      const { BlendMode } = await import("/dist/clockwork-engine.js")
+      const { BlendMode } = await import("/dist/platform-web-pixi.js")
 
       // Normal blending
       const normalNode = platform.rendering.createNode()
@@ -315,7 +315,7 @@ test.describe("Visual Regression Tests", () => {
       `(async () => {
       ${getRenderingSetup()}
 
-      const { TextureFiltering } = await import("/dist/clockwork-engine.js")
+      const { TextureFiltering } = await import("/dist/platform-web-pixi.js")
 
       // Create two nodes with different filtering
       const linearNode = platform.rendering.createNode()

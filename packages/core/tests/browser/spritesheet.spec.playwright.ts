@@ -85,7 +85,7 @@ test.describe("PixiRenderingLayer Spritesheet", () => {
       `(async () => {
       ${getRenderingSetup()}
 
-      const { asSpritesheetId } = await import("/dist/clockwork-engine.js")
+      const { asSpritesheetId } = await import("/dist/platform-web-pixi.js")
 
       const invalidSpritesheetId = asSpritesheetId(999)
       const texture = rendering.getTexture(invalidSpritesheetId, "frame1.png")

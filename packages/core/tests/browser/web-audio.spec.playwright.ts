@@ -6,7 +6,7 @@ import { AudioContextState } from "../../src/platform"
  */
 function getAudioSetup() {
   return `
-    const { WebAudioLayer } = await import("/dist/clockwork-engine.js")
+    const { WebAudioLayer } = await import("/dist/platform-web-pixi.js")
     const audio = new WebAudioLayer()
     await audio.initialize()
   `
@@ -301,7 +301,7 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
   }) => {
     const result = await page.evaluate(
       `(async () => {
-      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/platform-web-pixi.js")
 
       const testContainer = document.createElement("div")
       document.body.appendChild(testContainer)
@@ -343,7 +343,7 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
   }) => {
     const result = await page.evaluate(
       `(async () => {
-      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/platform-web-pixi.js")
 
       const testContainer = document.createElement("div")
       document.body.appendChild(testContainer)
@@ -384,7 +384,7 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
   }) => {
     const result = await page.evaluate(
       `(async () => {
-      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/platform-web-pixi.js")
 
       const testContainer = document.createElement("div")
       document.body.appendChild(testContainer)
@@ -434,7 +434,7 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
   }) => {
     const result = await page.evaluate(
       `(async () => {
-      const { WebAudioLayer, WebInputLayer } = await import("/dist/clockwork-engine.js")
+      const { WebAudioLayer, WebInputLayer } = await import("/dist/platform-web-pixi.js")
       ${CREATE_TEST_BUFFER}
 
       const testContainer = document.createElement("div")
