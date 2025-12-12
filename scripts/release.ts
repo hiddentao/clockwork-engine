@@ -39,14 +39,14 @@ async function run(cmd: string, description: string): Promise<void> {
   await $`cd ${ROOT} && ${{ raw: cmd }}`
 }
 
-async function promptForOtp(): Promise<string> {
+async function promptForToken(): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   })
 
   return new Promise((resolve) => {
-    rl.question("\n🔐 Enter npm OTP code: ", (answer) => {
+    rl.question("\n🔑 Enter npm token: ", (answer) => {
       rl.close()
       resolve(answer.trim())
     })
@@ -87,9 +87,11 @@ async function main() {
   // Step 5: Push with tags
   await run("git push --follow-tags origin main", "Pushing to origin with tags")
 
-  // Step 6: Publish all packages (prompt for OTP)
-  const otp = await promptForOtp()
-  await run(`bun run scripts/run.ts "npm publish --otp=${otp}" --exclude demo`, "Publishing packages to npm")
+  // Step 6: Publish all packages
+  const token = await promptForToken()
+  console.log("\n▶ Publishing packages to npm")
+  console.log('  $ NPM_TOKEN=*** bun run scripts/run.ts "npm publish" --exclude demo')
+  await $`cd ${ROOT} && NPM_TOKEN=${token} bun run scripts/run.ts "npm publish" --exclude demo`
 
   console.log("\n✓ Release complete!")
 }
