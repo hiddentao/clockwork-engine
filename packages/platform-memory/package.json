@@ -43,7 +43,8 @@
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo",
     "lint": "tsc --noEmit && biome check .",
     "lint:fix": "tsc --noEmit && biome check --write .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
     "@clockwork-engine/core": "^2.7.0"

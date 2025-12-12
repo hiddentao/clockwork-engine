@@ -12,6 +12,7 @@
 
 import { $ } from "bun"
 import { join } from "node:path"
+import * as readline from "node:readline"
 
 const ROOT = join(import.meta.dir, "..")
 
@@ -38,6 +39,20 @@ async function run(cmd: string, description: string): Promise<void> {
   await $`cd ${ROOT} && ${{ raw: cmd }}`
 }
 
+async function promptForOtp(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) => {
+    rl.question("\n🔐 Enter npm OTP code: ", (answer) => {
+      rl.close()
+      resolve(answer.trim())
+    })
+  })
+}
+
 async function main() {
   const args = process.argv.slice(2)
   const { releaseType, dryRun } = parseArgs(args)
@@ -50,10 +65,7 @@ async function main() {
     console.log(`   Release type: ${releaseType}`)
   }
 
-  // Step 1: Sync versions across all packages
-  await run("bun run scripts/run.ts sync-versions", "Syncing package versions")
-
-  // Step 2: Run commit-and-tag-version
+  // Step 1: Run commit-and-tag-version (bumps core version)
   const releaseAsArg = releaseType ? ` --release-as ${releaseType}` : ""
   const dryRunArg = dryRun ? " --dry-run" : ""
   await run(`commit-and-tag-version${releaseAsArg}${dryRunArg}`, "Bumping version and updating changelog")
@@ -62,6 +74,9 @@ async function main() {
     console.log("\n✓ Dry run complete. No changes were made.")
     return
   }
+
+  // Step 2: Sync versions across all packages (now reads updated core version)
+  await run("bun run scripts/run.ts sync-versions", "Syncing package versions")
 
   // Step 3: Stage all changes (including synced versions)
   await run("git add -A", "Staging all changes")
@@ -72,8 +87,9 @@ async function main() {
   // Step 5: Push with tags
   await run("git push --follow-tags origin main", "Pushing to origin with tags")
 
-  // Step 6: Publish all packages
-  await run('bun run scripts/run.ts "bun publish" --exclude demo', "Publishing packages to npm")
+  // Step 6: Publish all packages (prompt for OTP)
+  const otp = await promptForOtp()
+  await run(`bun run scripts/run.ts "npm publish --otp=${otp}" --exclude demo`, "Publishing packages to npm")
 
   console.log("\n✓ Release complete!")
 }

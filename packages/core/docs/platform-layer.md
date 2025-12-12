@@ -4,26 +4,30 @@ The platform abstraction layer decouples Clockwork from web-specific dependencie
 
 ## Architecture Overview
 
-The platform layer consists of four main interfaces:
+The platform layer consists of four main interfaces defined in `@clockwork-engine/core`:
 
-* [`PlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/PlatformLayer.ts) - Top-level container providing `rendering`, `audio`, and `input` properties
-* [`RenderingLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/RenderingLayer.ts) - Graphics operations, scene graph management, texture loading
-* [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/AudioLayer.ts) - Sound loading and playback
-* [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/InputLayer.ts) - Pointer and keyboard event handling
+* [`PlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/PlatformLayer.ts) - Top-level container providing `rendering`, `audio`, and `input` properties
+* [`RenderingLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/RenderingLayer.ts) - Graphics operations, scene graph management, texture loading
+* [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/AudioLayer.ts) - Sound loading and playback
+* [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/InputLayer.ts) - Pointer and keyboard event handling
 
-Platform implementations provide concrete behavior for these interfaces.
+Platform implementations are provided in separate npm packages.
 
 ## Available Platforms
 
 ### WebPlatformLayer
 
+**Package**: `@clockwork-engine/platform-web-pixi`
+
 **Purpose**: Browser-based games with full rendering and audio
 
-**Implementation**: [src/platform/web/WebPlatformLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/web/WebPlatformLayer.ts)
+**Implementation**: [packages/platform-web-pixi/src/WebPlatformLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-web-pixi/src/WebPlatformLayer.ts)
 
 Uses PIXI.js for rendering, Web Audio API for sound, and DOM events for input. Requires an HTML container element.
 
 ```typescript
+import { WebPlatformLayer } from '@clockwork-engine/platform-web-pixi'
+
 const container = document.getElementById('game') as HTMLDivElement
 const platform = new WebPlatformLayer(container, 800, 600)
 
@@ -32,13 +36,17 @@ const engine = new GameEngine({ loader, platform })
 
 ### MemoryPlatformLayer
 
+**Package**: `@clockwork-engine/platform-memory`
+
 **Purpose**: Headless replay validation and testing without rendering
 
-**Implementation**: [src/platform/memory/MemoryPlatformLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts)
+**Implementation**: [packages/platform-memory/src/MemoryPlatformLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-memory/src/MemoryPlatformLayer.ts)
 
 Tracks rendering state internally but produces no visual output. Audio and input layers are no-ops. Perfect for server-side replay validation.
 
 ```typescript
+import { MemoryPlatformLayer } from '@clockwork-engine/platform-memory'
+
 const platform = new MemoryPlatformLayer()
 const engine = new GameEngine({ loader, platform })
 ```
@@ -47,7 +55,7 @@ See [Headless Replay Guide](./headless-replay.md) for usage patterns.
 
 ## DisplayNode
 
-The [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/DisplayNode.ts) class provides a platform-agnostic scene graph node with fluent API:
+The [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/DisplayNode.ts) class provides a platform-agnostic scene graph node with fluent API:
 
 ```typescript
 const node = rendering.createNode()
@@ -70,14 +78,14 @@ The RenderingLayer supports common operations:
 * **Hierarchy**: `addChild()`, `removeChild()`, scene graph management
 * **Viewport**: `setViewportPosition()`, `setViewportZoom()`, `screenToWorld()`, `worldToScreen()`
 
-Full API: [RenderingLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/RenderingLayer.ts)
+Full API: [RenderingLayer.ts](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/RenderingLayer.ts)
 
 ## Asset Loading
 
-The platform layer integrates with asset loading through [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts):
+The platform layer integrates with asset loading through [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/assets/AssetLoader.ts):
 
 ```typescript
-import { AssetLoader, AssetType } from 'clockwork-engine'
+import { AssetLoader, AssetType } from '@clockwork-engine/core'
 
 const assetLoader = new AssetLoader(loader, platform.rendering, platform.audio)
 
@@ -120,7 +128,7 @@ class MyPlatformLayer implements PlatformLayer {
 }
 ```
 
-See [MemoryPlatformLayer](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts) for a minimal reference implementation.
+See [MemoryPlatformLayer](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-memory/src/MemoryPlatformLayer.ts) for a minimal reference implementation.
 
 
 ## Error Handling

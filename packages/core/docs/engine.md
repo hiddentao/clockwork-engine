@@ -15,13 +15,19 @@ This document is not intended to cover every class and method in the engine, but
 
 Clockwork is written in Typescript and is designed to be platform-agnostic, though by default it ships with support for browser-based games.
 
-The engine is distributed as an NPM package: [@hiddentao/clockwork-engine](https://github.com/hiddentao/clockwork-engine). The package contains modern Javascript (transpiled from the source Typescript) as well as Typescript types. 
+The engine is distributed as a monorepo with multiple NPM packages under the `@clockwork-engine` namespace:
+
+* [`@clockwork-engine/core`](https://www.npmjs.com/package/@clockwork-engine/core) - Core engine with game objects, recording/replay, serialization, and platform abstraction interfaces
+* [`@clockwork-engine/platform-web-pixi`](https://www.npmjs.com/package/@clockwork-engine/platform-web-pixi) - Web platform implementation with PIXI.js 2D rendering
+* [`@clockwork-engine/platform-memory`](https://www.npmjs.com/package/@clockwork-engine/platform-memory) - Headless memory platform for testing and replay validation
+
+All packages contain modern Javascript (transpiled from the source Typescript) as well as Typescript types. 
 
 The engine does not (currently) include a networking stack - games are free to _"bring their own"_. Object-oriented Javascript is used to keep the code neat and organised and to also make it easy to extend.
 
 The engine uses a platform abstraction layer that decouples game logic from input, rendering and audio implementations. The default web implementation uses [Pixi.js](https://pixijs.com/) for rendering and [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) for sound. Pixi is a well-established rendering library that provides fast hardware-accelerated rendering into a WebGL `canvas` so any performance bottleneck you encounter is likely to be due to inefficiencies in your own game logic. 
 
-The engine also ships with a dummy "memory platform" implementation which enables in-memory game replays - see [Platform Layer Guide](./platform-layer.md) and [Headless Replay Guide](./headless-replay.md) for details.
+The `@clockwork-engine/platform-memory` package provides a headless "memory platform" implementation which enables in-memory game replays - see [Platform Layer Guide](./platform-layer.md) and [Headless Replay Guide](./headless-replay.md) for details.
 
 ### Deterministic replays
 
@@ -42,29 +48,34 @@ By recording the discrete events (e.g user inputs), initial PRNG seed and per-fr
 
 The code is organized into classes (object-oriented programming) to make it easy to extend the engine when building your own games. Here are the key classes to be aware of:
 
-* [`GameEngine`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameEngine.ts) - Abstract base class which is responsible for setting up the initial game configuration, PRNG instance, event manager, data loader, recorder, coillision tree, and also handles the game loop logic (collision detection, game state transitions).
-* [`GameCanvas`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameCanvas.ts) -  Abstract base class for creating iteractive game canvases with Pixi.js. Provides viewport management, event handling, and rendering infrastructure for with pan, zoom, and interaction capabilities. The Pixi.js ticker will call into this class, which in turn will call the engine's game loop.
-* [`Timer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Timer.ts) - Tick-based timer as a replacement for Javascript's `setTimeout` and `setInterval`.
-* [`EventEmitter`](https://github.com/hiddentao/clockwork-engine/blob/main/src/EventEmitter.ts) - Event emitter base class - used by the `GameEngine` and game object classes. It makes it easy to know when game state changes without having to poll for changes.
-* [`PRNG`](https://github.com/hiddentao/clockwork-engine/blob/main/src/PRNG.ts) - Pseudo-random number generator implementation that allow for deterministic randomness (makes game replays possible!).
-* [`GameEventManager`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameEventManager.ts) - System for processing external events (such as user input) that integrates with the game loop. This also allows for game objects to be updated outside of the core game engine logic but to still have those updates be recorded as part of the gameplay session.
-* [`GameObject`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameObject.ts) - Base class for in-game objects. By default objects have certain attributes such as position, rotation, velocity, health, etc. Objects are grouped in the game engine by their type, get updated as part of the game loop, and can be serialized and deserialized.
-* [`GameRecorder`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameRecorder.ts) - Used to record a gameplay session for replay later on.
-* [`ReplayManager`](https://github.com/hiddentao/clockwork-engine/blob/main/src/ReplayManager.ts) - Used to replay a previously recorded gameplay session.
-* [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) - Abstract base class for data loaders. The engine uses the data loader instance to load external data at runtime. This is how you can inject external data and assets into your game in a clean, reproducible way.
-* [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts) - Concrete asset loader for spritesheets, images, and sounds with automatic preloading during engine reset.
-* [`Spritesheet`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/Spritesheet.ts) - Spritesheet loader supporting TexturePacker and Leshy JSON formats with frame-based texture access.
-* [`Vector2D`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/Vector2D.ts) - Simple vector math implementation with basic vector arithmetic.
-* [`CollisionGrid`](https://github.com/hiddentao/clockwork-engine/blob/main/src/geometry/CollisionGrid.ts) - Extremely fast and simple collision detection with hashmaps for game grids of fixed sizes.
-* [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) - Base class for rendering layers (used by `GameCanvas`) with platform-agnostic rendering and helper methods that make it easy to render large numbers of items.
-* [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/DisplayNode.ts) - Platform-agnostic scene graph node with fluent API for transforms, graphics, and sprite rendering.
-* [`PlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/PlatformLayer.ts) - Top-level platform interface composing rendering, audio, and input subsystems with device-level capabilities.
-* [`RenderingLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/RenderingLayer.ts) - Platform-agnostic rendering interface for node lifecycle, transforms, graphics primitives, sprites, and viewport management.
-* [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/AudioLayer.ts) - Platform-agnostic audio interface for sound loading, playback, and procedural audio generation.
-* [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/InputLayer.ts) - Platform-agnostic input interface for pointer and keyboard event handling.
-* [`WebPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/web/WebPlatformLayer.ts) - Browser-based platform implementation using PIXI.js for rendering, Web Audio API for sound, and DOM events for input.
-* [`MemoryPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts) - Headless platform implementation for server-side replay validation and testing without browser dependencies.
-* [`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) - Loader wrapper that returns empty data for non-essential assets, forwarding only replay-essential requests to the wrapped loader.
+**Core classes (`@clockwork-engine/core`):**
+
+* [`GameEngine`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameEngine.ts) - Abstract base class which is responsible for setting up the initial game configuration, PRNG instance, event manager, data loader, recorder, coillision tree, and also handles the game loop logic (collision detection, game state transitions).
+* [`GameCanvas`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameCanvas.ts) -  Abstract base class for creating iteractive game canvases. Provides viewport management, event handling, and rendering infrastructure for with pan, zoom, and interaction capabilities. The rendering layer's ticker will call into this class, which in turn will call the engine's game loop.
+* [`Timer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/Timer.ts) - Tick-based timer as a replacement for Javascript's `setTimeout` and `setInterval`.
+* [`EventEmitter`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/EventEmitter.ts) - Event emitter base class - used by the `GameEngine` and game object classes. It makes it easy to know when game state changes without having to poll for changes.
+* [`PRNG`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/PRNG.ts) - Pseudo-random number generator implementation that allow for deterministic randomness (makes game replays possible!).
+* [`GameEventManager`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameEventManager.ts) - System for processing external events (such as user input) that integrates with the game loop. This also allows for game objects to be updated outside of the core game engine logic but to still have those updates be recorded as part of the gameplay session.
+* [`GameObject`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameObject.ts) - Base class for in-game objects. By default objects have certain attributes such as position, rotation, velocity, health, etc. Objects are grouped in the game engine by their type, get updated as part of the game loop, and can be serialized and deserialized.
+* [`GameRecorder`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameRecorder.ts) - Used to record a gameplay session for replay later on.
+* [`ReplayManager`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/ReplayManager.ts) - Used to replay a previously recorded gameplay session.
+* [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/Loader.ts) - Abstract base class for data loaders. The engine uses the data loader instance to load external data at runtime. This is how you can inject external data and assets into your game in a clean, reproducible way.
+* [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/assets/AssetLoader.ts) - Concrete asset loader for spritesheets, images, and sounds with automatic preloading during engine reset.
+* [`Spritesheet`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/assets/Spritesheet.ts) - Spritesheet loader supporting TexturePacker and Leshy JSON formats with frame-based texture access.
+* [`Vector2D`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/geometry/Vector2D.ts) - Simple vector math implementation with basic vector arithmetic.
+* [`CollisionGrid`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/geometry/CollisionGrid.ts) - Extremely fast and simple collision detection with hashmaps for game grids of fixed sizes.
+* [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/rendering/AbstractRenderer.ts) - Base class for rendering layers (used by `GameCanvas`) with platform-agnostic rendering and helper methods that make it easy to render large numbers of items.
+* [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/DisplayNode.ts) - Platform-agnostic scene graph node with fluent API for transforms, graphics, and sprite rendering.
+* [`PlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/PlatformLayer.ts) - Top-level platform interface composing rendering, audio, and input subsystems with device-level capabilities.
+* [`RenderingLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/RenderingLayer.ts) - Platform-agnostic rendering interface for node lifecycle, transforms, graphics primitives, sprites, and viewport management.
+* [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/AudioLayer.ts) - Platform-agnostic audio interface for sound loading, playback, and procedural audio generation.
+* [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/InputLayer.ts) - Platform-agnostic input interface for pointer and keyboard event handling.
+* [`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/loaders/HeadlessLoader.ts) - Loader wrapper that returns empty data for non-essential assets, forwarding only replay-essential requests to the wrapped loader.
+
+**Platform implementations (separate packages):**
+
+* [`WebPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-web-pixi/src/WebPlatformLayer.ts) (`@clockwork-engine/platform-web-pixi`) - Browser-based platform implementation using PIXI.js for rendering, Web Audio API for sound, and DOM events for input.
+* [`MemoryPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-memory/src/MemoryPlatformLayer.ts) (`@clockwork-engine/platform-memory`) - Headless platform implementation for server-side replay validation and testing without browser dependencies.
 
 ### Demo game
 
@@ -129,11 +140,11 @@ update(deltaTicks: number): void {
 
 Notice the `deltaTicks` parameter. 
 
-The [rendering layer](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/RenderingLayer.ts) is ultimately responsible for calling the game loop. In Clockwork the rendering system aims for atleast 60 FPS (frames per second), and it passes along a *delta time* parameter indicating the no. of frames that have elapsed since the last call to the game loop. This value is usually a floating point number. In order to avoid rounding errors during to floating point calculations (and because we want to do deterministic replays) we [multiply this value by 1000](https://github.com/hiddentao/clockwork-engine/blob/main/src/lib/internals.ts) and rounding to the nearest integer to get what we call _ticks_. Thus, we are aiming for 60,000 ticks per second (TPS) and the game loop gets passed the no. of ticks that have elapsed since the last call to it. Integer math allows us to avoid floating-point rounding errors and makes deterministic replays easier to do.
+The [rendering layer](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/RenderingLayer.ts) is ultimately responsible for calling the game loop. In Clockwork the rendering system aims for atleast 60 FPS (frames per second), and it passes along a *delta time* parameter indicating the no. of frames that have elapsed since the last call to the game loop. This value is usually a floating point number. In order to avoid rounding errors during to floating point calculations (and because we want to do deterministic replays) we [multiply this value by 1000](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/lib/internals.ts) and rounding to the nearest integer to get what we call _ticks_. Thus, we are aiming for 60,000 ticks per second (TPS) and the game loop gets passed the no. of ticks that have elapsed since the last call to it. Integer math allows us to avoid floating-point rounding errors and makes deterministic replays easier to do.
 
 ### Sub-loops
 
-Within the `GameEngine` game loop other objects referenced by the engine are also updated according to the tick delta. Objects which can be updated in this way **must** implement the [`IGameLoop` interface](https://github.com/hiddentao/clockwork-engine/blob/main/src/IGameLoop.ts):
+Within the `GameEngine` game loop other objects referenced by the engine are also updated according to the tick delta. Objects which can be updated in this way **must** implement the [`IGameLoop` interface](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/IGameLoop.ts):
 
 ```typescript
 export interface IGameLoop {
@@ -191,7 +202,7 @@ setInterval(callback: () => void, ticks: number): number {
 }
 ```
 
-Additionally, there is a [`millisecondsToTicks()`](https://github.com/hiddentao/clockwork-engine/blob/main/src/lib/internals.ts) method that makes it easy to convert real clock time into ticks-based time.
+Additionally, there is a [`millisecondsToTicks()`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/lib/internals.ts) method that makes it easy to convert real clock time into ticks-based time.
 
 ℹ️ **You should never use Javascript's built-in timer methods for scheduling events in your game. Always use the above methods and the game engine's timer instance instead - this will ensure that deterministic replays work as expected.**
 
@@ -269,7 +280,7 @@ And subclasses of `GameObject` can define a custom set of event identifiers whic
 
 ## Rendering system
 
-The rendering system in Clockwork uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. `GameObject` instances are queried for their size, position, etc and rendered using [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/DisplayNode.ts) instances that represent visual elements in the scene graph.
+The rendering system in Clockwork uses a platform-agnostic rendering layer that abstracts the underlying graphics implementation. `GameObject` instances are queried for their size, position, etc and rendered using [`DisplayNode`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/DisplayNode.ts) instances that represent visual elements in the scene graph.
 
 The platform layer provides:
 
@@ -281,12 +292,12 @@ See [Platform Layer Guide](./platform-layer.md) for architectural details.
 
 In addition to the above, Clockwork makes rendering easier and efficient by:
 
-* **GameObject-specific renderers** - [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/rendering/AbstractRenderer.ts) is the base class for any and all renderers which render a list of game objects. It handles per-object updates, adding and removing objects from the renderer nodes, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
+* **GameObject-specific renderers** - [`AbstractRenderer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/rendering/AbstractRenderer.ts) is the base class for any and all renderers which render a list of game objects. It handles per-object updates, adding and removing objects from the renderer nodes, sprite rendering, and provides methods for rendering primitives such as circles and rectangles.
 * **Only re-rendering what has changed** - the `GameObject.needsRepaint` boolean value indicates whether a given game object needs to be re-rendered by the rendering pipeline. This helps with rendering performance. The boolean is set from within the game loop, and it must be unset by the renderer instance that is responsible for rendering that item, once the item has re-rendered.
 
 *Note: `AbstractRenderer` is actually a generic type, meaning you don't need to use `GameObject`s with it, you could use any type of object you want.*
 
-Renderers are loaded and executed from within the [`GameCanvas`](https://github.com/hiddentao/clockwork-engine/blob/main/src/GameCanvas.ts) instance. This object holds a list of renderers and sets up the rendering system and associated viewport (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
+Renderers are loaded and executed from within the [`GameCanvas`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/GameCanvas.ts) instance. This object holds a list of renderers and sets up the rendering system and associated viewport (to enable panning and zooming of a game map). It is also responsible for rescaling the game canvas when the viewing window size changes.
 
 `GameCanvas` provides the game loop entrypoint method, which internally calls the `GameEngine` game loop method:
 
@@ -319,11 +330,11 @@ User inputs are an example of game events. All game events are processed by the 
 
 ### Raw input from the platform layer
 
-Raw user input (keyboard presses, pointer clicks, etc.) comes through the platform abstraction layer's [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/InputLayer.ts) interface. This provides a platform-agnostic way to receive input events, which are then translated to game engine input events.
+Raw user input (keyboard presses, pointer clicks, etc.) comes through the platform abstraction layer's [`InputLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/InputLayer.ts) interface. This provides a platform-agnostic way to receive input events, which are then translated to game engine input events.
 
 ### Queuing input to the game event system
 
-The event manager has a single [`GameEventSource`](https://github.com/hiddentao/clockwork-engine/blob/main/src/EventSource.ts) it reads events from. In normal gameplay mode we use the [`UserInputSource`](https://github.com/hiddentao/clockwork-engine/blob/main/src/UserInputEventSource.ts). This class provides a `queueInput` method through which user input can be queued for processing in the next game loop iteration:
+The event manager has a single [`GameEventSource`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/EventSource.ts) it reads events from. In normal gameplay mode we use the [`UserInputSource`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/UserInputEventSource.ts). This class provides a `queueInput` method through which user input can be queued for processing in the next game loop iteration:
 
 ```typescript
 /**
@@ -366,16 +377,16 @@ export type AnyGameEvent = UserInputEvent | ObjectUpdateEvent
 
 Very often a game may need to load assets and other data in from external data sources rather than bundling them within. This is especially true for games which have dynamically changing assets - for example, you may wish to make the background map of your game be changeable and store the map on a server somewhere.
 
-The `GameEngine` holds a reference to a [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/Loader.ts) object which must implement a simple `fetchData()` method. This provides flexibility in terms of where assets come from - local files, remote servers, or dynamically generated data. You could also use the `Loader` to load in dynamic configuration at runtime. For instance, the colours used in the game, the speed of movement, and various other parameters could, if you wanted, be loaded in dynamically.
+The `GameEngine` holds a reference to a [`Loader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/Loader.ts) object which must implement a simple `fetchData()` method. This provides flexibility in terms of where assets come from - local files, remote servers, or dynamically generated data. You could also use the `Loader` to load in dynamic configuration at runtime. For instance, the colours used in the game, the speed of movement, and various other parameters could, if you wanted, be loaded in dynamically.
 
 The `fetchData()` method accepts an optional `options` parameter with a `requiredForValidation` flag. When set to `true`, this indicates the data is essential for deterministic replay validation (e.g., level maps that affect gameplay outcomes). This is used by `HeadlessLoader` to decide whether to forward the request to its wrapped loader or return empty data.
 
 ### AssetLoader
 
-For game assets (spritesheets, images, sounds), use [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/assets/AssetLoader.ts):
+For game assets (spritesheets, images, sounds), use [`AssetLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/assets/AssetLoader.ts):
 
 ```typescript
-import { AssetType } from 'clockwork-engine'
+import { AssetType } from '@clockwork-engine/core'
 
 const engine = new MyGameEngine({ loader, platform })
 const assetLoader = engine.getAssetLoader()!
@@ -424,11 +435,13 @@ const gameEngine = new MyGameEngine({ loader, platform, assetLoader })
 
 ## Audio playback
 
-Clockwork provides a platform-agnostic audio system through the [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/AudioLayer.ts) interface. This abstraction allows audio to work consistently no matter the platform.
+Clockwork provides a platform-agnostic audio system through the [`AudioLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/platform/AudioLayer.ts) interface. This abstraction allows audio to work consistently no matter the platform.
 
 The audio layer is accessed through the platform abstraction:
 
 ```typescript
+import { WebPlatformLayer } from '@clockwork-engine/platform-web-pixi'
+
 const platform = new WebPlatformLayer(container, options)
 await platform.init()  // Initializes audio context
 
@@ -498,7 +511,7 @@ If the above requirements are met then the `ReplayManager` can be used to replay
 
 When replaying a game we typically want to display the replay visually. This means we want to re-use the rendering layer (and `GameCanvas`) but we need to replace the `GameEngine` instance with one that does a replay instead of playing the game normally. The `ReplayManager.createProxyEngine()` method exists for this purpose - to create a proxy `GameEngine` that in its game loop will translate the incoming tick deltas into the ones from the gameplay session recording.
 
-Additionally, `ReplayManager` sets up the `GameEventManager` event source to be a [`RecordedEventSource`](https://github.com/hiddentao/clockwork-engine/blob/main/src/RecordedEventSource.ts) instance. This is how recorded user input events are played back at the right tick count during the replay game loops.
+Additionally, `ReplayManager` sets up the `GameEventManager` event source to be a [`RecordedEventSource`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/RecordedEventSource.ts) instance. This is how recorded user input events are played back at the right tick count during the replay game loops.
 
 Because replays are also be driven by the Pixi ticker we can increase the ticker speed to increase the speed of the replay. The proxy engine created by the replay manager automatically handles translating the speeded-up tick deltas to the recorded tick deltas.
 
@@ -514,9 +527,12 @@ This section briefly covers key points to be aware of when implementing a game u
 
 You will need to implement a concrete subclass of `GameEngine`.
 
-Before creating your game engine instance, you must initialize the platform abstraction layer. For browser-based games, use `WebPlatformLayer`:
+Before creating your game engine instance, you must initialize the platform abstraction layer. For browser-based games, use `WebPlatformLayer` from the `@clockwork-engine/platform-web-pixi` package:
 
 ```typescript
+import { WebPlatformLayer } from '@clockwork-engine/platform-web-pixi'
+import { AssetLoader } from '@clockwork-engine/core'
+
 // Initialize the platform layer for browser-based rendering
 const container = document.getElementById('game-container')
 const platform = new WebPlatformLayer(container, {

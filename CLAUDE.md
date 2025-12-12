@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-This project is a browser-based game engine focused on deterministic, replayable games. The `./docs/engine.md` file contains a high-level overview of the engine and coding guidelines that should be adhered to for anyone building games with this engine.
+This project is a browser-based game engine focused on deterministic, replayable games. The `./packages/core/docs/engine.md` file contains a high-level overview of the engine and coding guidelines that should be adhered to for anyone building games with this engine.
 
 ## Project Overview
 
@@ -60,17 +60,30 @@ The rendering system uses a platform-agnostic rendering layer that abstracts the
 - Event-driven architecture with GameEventType enum (USER_INPUT, OBJECT_UPDATE)
 - Universal serialization supporting primitives, arrays, objects, and custom classes with serialize/deserialize methods
 
+### Monorepo Structure
+
+This is a Bun-based monorepo with three publishable packages:
+
+| Package | Description |
+|---------|-------------|
+| `@clockwork-engine/core` | Core engine with game objects, recording/replay, serialization, and platform abstraction interfaces |
+| `@clockwork-engine/platform-web-pixi` | Web platform implementation with PIXI.js 2D rendering |
+| `@clockwork-engine/platform-memory` | Headless memory platform for testing and replay validation |
+
 ### Directory Structure
-- `src/` - Main engine source code
-- `src/geometry/` - Vector math, collision detection, spatial utilities
-- `src/enums/` - Game state and event type definitions  
-- `src/rendering/` - GameCanvas, AbstractRenderer, BaseRenderer classes
-- `demo/` - Example implementation using SnakeGameCanvas and renderer classes
-- `tests/` - Unit tests for core systems
+- `packages/core/src/` - Core engine source code
+- `packages/core/src/geometry/` - Vector math, collision detection, spatial utilities
+- `packages/core/src/platform/` - Platform abstraction interfaces (PlatformLayer, RenderingLayer, AudioLayer, InputLayer)
+- `packages/core/src/rendering/` - AbstractRenderer, BaseRenderer classes
+- `packages/platform-web-pixi/src/` - Web platform with PIXI.js rendering
+- `packages/platform-memory/src/` - Headless memory platform for testing
+- `demo/` - Example Snake game implementation
+- `packages/core/tests/` - Unit tests for core systems
 
 ### Dependencies
 
-- **Runtime**: pixi.js (2D graphics through WebPlatformLayer), pixi-viewport (viewport/camera), alea (seeded PRNG)
+- **Core runtime** (`@clockwork-engine/core`): alea (seeded PRNG)
+- **Web platform** (`@clockwork-engine/platform-web-pixi`): pixi.js (2D rendering), pixi-viewport (viewport/camera)
 - **Development**: TypeScript, Biome (linting/formatting), Bun (runtime/testing)
 
 ## Development Guidelines

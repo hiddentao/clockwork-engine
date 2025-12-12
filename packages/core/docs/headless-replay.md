@@ -13,10 +13,10 @@ Headless replay is **significantly faster than real-time**:
 
 ### HeadlessLoader
 
-[`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/src/loaders/HeadlessLoader.ts) wraps an existing loader and selectively loads only replay-essential data:
+[`HeadlessLoader`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/src/loaders/HeadlessLoader.ts) wraps an existing loader and selectively loads only replay-essential data:
 
 ```typescript
-import { HeadlessLoader } from '@hiddentao/clockwork-engine'
+import { HeadlessLoader } from '@clockwork-engine/core'
 
 const actualLoader = new MyDataLoader()
 const loader = new HeadlessLoader(actualLoader)
@@ -32,10 +32,10 @@ This minimizes asset loading while still loading data that affects gameplay outc
 
 ### MemoryPlatformLayer
 
-[`MemoryPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/src/platform/memory/MemoryPlatformLayer.ts) tracks game state without rendering:
+[`MemoryPlatformLayer`](https://github.com/hiddentao/clockwork-engine/blob/main/packages/platform-memory/src/MemoryPlatformLayer.ts) (`@clockwork-engine/platform-memory`) tracks game state without rendering:
 
 ```typescript
-import { MemoryPlatformLayer } from '@hiddentao/clockwork-engine'
+import { MemoryPlatformLayer } from '@clockwork-engine/platform-memory'
 
 const platform = new MemoryPlatformLayer()
 ```
@@ -45,9 +45,8 @@ Rendering, audio, and input are no-ops. State updates work identically to other 
 ## Basic Usage
 
 ```typescript
-import { HeadlessLoader } from '@hiddentao/clockwork-engine'
-import { MemoryPlatformLayer } from '@hiddentao/clockwork-engine'
-import { ReplayManager } from '@hiddentao/clockwork-engine'
+import { HeadlessLoader, ReplayManager } from '@clockwork-engine/core'
+import { MemoryPlatformLayer } from '@clockwork-engine/platform-memory'
 
 // Create headless components - HeadlessLoader wraps your actual data loader
 const actualLoader = new MyDataLoader()
@@ -93,7 +92,7 @@ while (progress.progress < 1.0) {
 }
 ```
 
-Pattern from [tests/integration/RecordReplayIntegration.test.ts](https://github.com/hiddentao/clockwork-engine/blob/main/tests/integration/RecordReplayIntegration.test.ts).
+Pattern from [tests/integration/RecordReplayIntegration.test.ts](https://github.com/hiddentao/clockwork-engine/blob/main/packages/core/tests/integration/RecordReplayIntegration.test.ts).
 
 ## Progress Tracking
 
