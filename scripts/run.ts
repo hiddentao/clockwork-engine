@@ -62,7 +62,12 @@ function getPackages(): PackageInfo[] {
     })
   }
 
-  return packages
+  // Sort packages: core first (other packages depend on it), then alphabetically
+  return packages.sort((a, b) => {
+    if (a.name === "core") return -1
+    if (b.name === "core") return 1
+    return a.name.localeCompare(b.name)
+  })
 }
 
 function parseArgs(args: string[]): {
