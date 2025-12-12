@@ -12,7 +12,6 @@
 
 import { $ } from "bun"
 import { join } from "node:path"
-import * as readline from "node:readline"
 
 const ROOT = join(import.meta.dir, "..")
 
@@ -37,20 +36,6 @@ async function run(cmd: string, description: string): Promise<void> {
   console.log(`\n▶ ${description}`)
   console.log(`  $ ${cmd}`)
   await $`cd ${ROOT} && ${{ raw: cmd }}`
-}
-
-async function promptForToken(): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  return new Promise((resolve) => {
-    rl.question("\n🔑 Enter npm token: ", (answer) => {
-      rl.close()
-      resolve(answer.trim())
-    })
-  })
 }
 
 async function main() {
@@ -88,10 +73,7 @@ async function main() {
   await run("git push --follow-tags origin main", "Pushing to origin with tags")
 
   // Step 6: Publish all packages
-  const token = await promptForToken()
-  console.log("\n▶ Publishing packages to npm")
-  console.log('  $ NPM_TOKEN=*** bun run scripts/run.ts "npm publish" --exclude demo')
-  await $`cd ${ROOT} && NPM_TOKEN=${token} bun run scripts/run.ts "npm publish" --exclude demo`
+  await run('bun run scripts/run.ts "npm publish" --exclude demo', "Publishing packages to npm")
 
   console.log("\n✓ Release complete!")
 }
