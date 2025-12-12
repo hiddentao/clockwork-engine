@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+All notable changes to this project will be documented in this file.
+
+## [2.7.2](https://github.com/hiddentao/clockwork-engine/compare/v2.7.1...v2.7.2) (2025-12-12)
+
+
+### Refactoring
+
+* convert to monorepo structure with engine package ([#4](https://github.com/hiddentao/clockwork-engine/issues/4)) ([d22f1f6](https://github.com/hiddentao/clockwork-engine/commit/d22f1f683ac366ee6563c9e83049f2efc8b55f5c))
 
 ## [2.7.1](https://github.com/hiddentao/clockwork-engine/compare/v2.7.0...v2.7.1) (2025-12-01)
 
