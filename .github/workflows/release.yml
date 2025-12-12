@@ -37,8 +37,8 @@ jobs:
         id: changelog
         run: |
           VERSION="${{ steps.tag.outputs.tag }}"
-          if [ -f "packages/engine/CHANGELOG.md" ]; then
-            awk "/^## \[?${VERSION#v}\]?/ {flag=1; next} /^## / && flag {exit} flag" packages/engine/CHANGELOG.md > release_notes.md
+          if [ -f "CHANGELOG.md" ]; then
+            awk "/^## \[?${VERSION#v}\]?/ {flag=1; next} /^## / && flag {exit} flag" CHANGELOG.md > release_notes.md
             if [ -s release_notes.md ]; then
               echo "HAS_CHANGELOG=true" >> $GITHUB_OUTPUT
             else

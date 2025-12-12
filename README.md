@@ -195,7 +195,7 @@ The release process will:
 
 ## Changelog
 
-See [CHANGELOG.md](./packages/core/CHANGELOG.md)
+See [CHANGELOG.md](./CHANGELOG.md)
 
 ## License
 

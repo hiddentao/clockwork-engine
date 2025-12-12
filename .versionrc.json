@@ -1,0 +1,20 @@
+{
+  "packageFiles": [
+    "packages/core/package.json"
+  ],
+  "bumpFiles": [
+    "packages/core/package.json"
+  ],
+  "infile": "CHANGELOG.md",
+  "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n",
+  "types": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "test", "section": "Tests" },
+    { "type": "build", "section": "Build System" },
+    { "type": "ci", "section": "CI/CD" }
+  ]
+}
