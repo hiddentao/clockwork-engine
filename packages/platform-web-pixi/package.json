@@ -1,6 +1,6 @@
 {
   "name": "@clockwork-engine/platform-web-pixi",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "Web platform layer with PIXI.js rendering for Clockwork Engine",
   "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
   "license": "MIT",
