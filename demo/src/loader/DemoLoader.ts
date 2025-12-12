@@ -1,4 +1,4 @@
-import { type FetchDataOptions, Loader } from "@hiddentao/clockwork-engine"
+import { type FetchDataOptions, Loader } from "@clockwork-engine/core"
 
 /**
  * Demo implementation of the Loader interface

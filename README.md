@@ -4,87 +4,109 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/hiddentao/clockwork-engine/ci.yml?branch=main)](https://github.com/hiddentao/clockwork-engine/actions)
 [![Coverage Status](https://coveralls.io/repos/github/hiddentao/clockwork-engine/badge.svg?branch=main)](https://coveralls.io/github/hiddentao/clockwork-engine?branch=main)
-[![NPM Version](https://img.shields.io/npm/v/@hiddentao/clockwork-engine.svg)](https://www.npmjs.com/package/@hiddentao/clockwork-engine)
+[![NPM Version](https://img.shields.io/npm/v/@clockwork-engine/core.svg)](https://www.npmjs.com/package/@clockwork-engine/core)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 
-**A TypeScript game engine for deterministic, replayable games with built-in recording, replay, and rendering capabilities.**
+**A TypeScript game engine for deterministic, replayable games with platform-agnostic rendering.**
 
-[Documentation](./docs)
+[Documentation](./packages/core/docs)
 
 </div>
 
 ---
 
-## 🎮 Live Demo
+## Live Demo
 
 **[Try the Interactive Demo →](https://hiddentao.github.io/clockwork-engine)**
 
-## ✨ Features
+## Features
 
-- 🎯 **Deterministic Gameplay** - Frame-based updates with seeded PRNG for perfect reproducibility
-- 📹 **Record & Replay** - Built-in recording system for gameplay sessions with frame-accurate playback
-- 🎮 **Game Object System** - Type-safe game entities with automatic grouping and lifecycle management
-- 🎨 **Built-in PIXI.js Renderer** - Built-in [pixi.js](https://pixijs.com/) integration with viewport management, event handling, and rendering abstractions
-- 🏃‍♂️ **High-Performance Collision Detection** - Spatial partitioning with BSP trees for efficient collision queries
-- ⚡ **Event-Driven Architecture** - Flexible event system with custom event sources and managers
-- 🔄 **Universal Serialization** - Automatic serialization for all game data with custom type support
-- ⏱️ **Frame-Based Timers** - Deterministic timing system replacing JavaScript's native timers
-- 🔧 **TypeScript First** - Full type safety with comprehensive interfaces and generics
+- **Deterministic Gameplay** - Frame-based updates with seeded PRNG for perfect reproducibility
+- **Record & Replay** - Built-in recording system for gameplay sessions with frame-accurate playback
+- **Game Object System** - Type-safe game entities with automatic grouping and lifecycle management
+- **Platform-Agnostic Rendering** - Separate rendering implementations (PIXI.js for web, headless for testing)
+- **High-Performance Collision Detection** - Spatial partitioning with BSP trees for efficient collision queries
+- **Event-Driven Architecture** - Flexible event system with custom event sources and managers
+- **Universal Serialization** - Automatic serialization for all game data with custom type support
+- **Frame-Based Timers** - Deterministic timing system replacing JavaScript's native timers
+- **TypeScript First** - Full type safety with comprehensive interfaces and generics
 
-## 🚀 Quick Start
+## Packages
+
+This monorepo contains the following packages:
+
+| Package | Description |
+|---------|-------------|
+| [`@clockwork-engine/core`](./packages/core) | Core engine with game objects, recording/replay, serialization, and platform abstraction |
+| [`@clockwork-engine/platform-web-pixi`](./packages/platform-web-pixi) | Web platform with PIXI.js 2D rendering |
+| [`@clockwork-engine/platform-memory`](./packages/platform-memory) | Headless platform for testing and replay validation |
+
+## Quick Start
 
 ### Installation
 
 ```bash
-npm install @hiddentao/clockwork-engine
-# or
-bun add @hiddentao/clockwork-engine
+# Install core engine and web platform
+bun add @clockwork-engine/core @clockwork-engine/platform-web-pixi
+
+# For testing/headless use
+bun add @clockwork-engine/platform-memory
 ```
 
 ### Basic Usage
 
 ```typescript
-import { GameEngine, GameObject, Vector2D, GameCanvas } from '@hiddentao/clockwork-engine'
+import { GameEngine, GameObject, Vector2D, GameCanvas } from '@clockwork-engine/core'
+import { WebPlatformLayer } from '@clockwork-engine/platform-web-pixi'
 
+// 1. Define your game engine
 class MyGame extends GameEngine {
   setup() {
-    // Initialize your game world
     const player = new Player(new Vector2D(100, 100))
     this.registerGameObject(player)
   }
 }
 
+// 2. Define your game canvas
 class MyGameCanvas extends GameCanvas {
-  protected initializeGameLayers(): void {
+  protected setupRenderers(): void {
     // Set up your game rendering layers
   }
 
   protected render(deltaFrames: number): void {
-    // Custom rendering logic (optional)
+    // Custom rendering logic
   }
 }
 
-const game = new MyGame()
-game.reset("my-seed")
-
-// Create canvas with built-in PIXI.js integration
-const container = document.getElementById('game-container')
-const canvas = await MyGameCanvas.create(container, {
-  width: 800,
-  height: 600,
+// 3. Initialize the platform and canvas
+const container = document.getElementById('game-container')!
+const platform = new WebPlatformLayer(container, {
+  screenWidth: 800,
+  screenHeight: 600,
   worldWidth: 800,
-  worldHeight: 600
+  worldHeight: 600,
 })
+await platform.init()
 
+// 4. Create and initialize the canvas
+const canvas = new MyGameCanvas(
+  { width: 800, height: 600, worldWidth: 800, worldHeight: 600 },
+  platform
+)
+await canvas.initialize()
+
+// 5. Create game engine and connect to canvas
+const game = new MyGame()
+await game.reset({ seed: 'my-seed' })
 canvas.setGameEngine(game)
 game.start()
 ```
 
-## 📚 Documentation
+## Documentation
 
-Comprehensive documentation is available in the [docs](./docs) directory:
+Comprehensive documentation is available in the [docs](./packages/core/docs) directory.
 
-## 🛠️ Development
+## Development
 
 ### Prerequisites
 
@@ -101,7 +123,7 @@ cd clockwork-engine
 # Install dependencies
 bun install
 
-# Build the project
+# Build all packages
 bun run build
 
 # Run in watch mode
@@ -134,9 +156,9 @@ bun run format
 ### Demo Application
 
 ```bash
-# Run the demo (from project root)
+# Run the demo
 cd demo
-bun i 
+bun i
 bun run dev
 ```
 
@@ -173,9 +195,8 @@ The release process will:
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md)
+See [CHANGELOG.md](./CHANGELOG.md)
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-

@@ -16,7 +16,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@engine/*": ["../src/*"]
+      "@engine/*": ["../packages/core/src/*"]
     }
   },
   "include": ["./src/**/*.ts"],

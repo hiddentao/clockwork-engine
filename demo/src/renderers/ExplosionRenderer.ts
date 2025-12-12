@@ -1,4 +1,4 @@
-import { AbstractRenderer, DisplayNode } from "@hiddentao/clockwork-engine"
+import { AbstractRenderer, DisplayNode } from "@clockwork-engine/core"
 import { ExplosionEffect } from "../gameObjects/ExplosionEffect"
 
 export class ExplosionRenderer extends AbstractRenderer<ExplosionEffect> {

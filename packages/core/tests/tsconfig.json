@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["bun-types"],
+    "skipLibCheck": true,
+    "rootDir": ".."
+  },
+  "include": ["./**/*", "../src/**/*"],
+  "exclude": ["../node_modules", "../dist", "./browser"]
+}

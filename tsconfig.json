@@ -15,13 +15,8 @@
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "types": ["bun-types"],
     "allowJs": true,
-    "incremental": true,
-    "tsBuildInfoFile": "tsconfig.tsbuildinfo"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "demo", "tests"]
+    "incremental": true
+  }
 }

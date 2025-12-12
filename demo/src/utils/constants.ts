@@ -1,4 +1,4 @@
-import { millisecondsToTicks } from "@hiddentao/clockwork-engine"
+import { millisecondsToTicks } from "@clockwork-engine/core"
 
 export const GAME_CONFIG = {
   GRID_SIZE: 25,

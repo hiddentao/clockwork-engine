@@ -3,7 +3,7 @@ import {
   GameCanvas,
   type GameCanvasOptions,
   type PlatformLayer,
-} from "@hiddentao/clockwork-engine"
+} from "@clockwork-engine/core"
 import { Apple, Bomb, Snake, Wall } from "./gameObjects"
 import { ExplosionEffect } from "./gameObjects/ExplosionEffect"
 import { AppleRenderer } from "./renderers/AppleRenderer"

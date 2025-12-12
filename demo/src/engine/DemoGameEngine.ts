@@ -4,9 +4,9 @@ import {
   type GameEngineOptions,
   GameState,
   type Loader,
-  MemoryPlatformLayer,
   Vector2D,
-} from "@hiddentao/clockwork-engine"
+} from "@clockwork-engine/core"
+import { MemoryPlatformLayer } from "@clockwork-engine/platform-memory"
 import { Apple, Bomb, Snake, Wall } from "../gameObjects"
 import { ExplosionEffect } from "../gameObjects/ExplosionEffect"
 import { Direction, GAME_CONFIG } from "../utils/constants"

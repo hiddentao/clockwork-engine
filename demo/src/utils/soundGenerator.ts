@@ -1,4 +1,4 @@
-import type { AudioLayer } from "@hiddentao/clockwork-engine"
+import type { AudioLayer } from "@clockwork-engine/core"
 
 /**
  * Generates a pleasant eating sound (ascending tone)
