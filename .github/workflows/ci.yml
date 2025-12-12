@@ -52,4 +52,4 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./packages/engine/lcov.info
+        file: ./packages/core/lcov.info
