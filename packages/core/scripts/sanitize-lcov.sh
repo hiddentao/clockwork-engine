@@ -8,4 +8,4 @@ lcov \
     --output-file lcov.info
 
 # filter junk
-lcov --remove lcov.info "tests/*" "dist/*" "demo/*" --output-file lcov.info
+lcov --ignore-errors unused --remove lcov.info "tests/*" "dist/*" "demo/*" --output-file lcov.info
