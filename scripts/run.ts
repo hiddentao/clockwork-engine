@@ -132,7 +132,7 @@ async function runCommand(pkg: PackageInfo, command: string): Promise<boolean> {
     if (hasScript) {
       await $`bun run --cwd ${pkg.path} ${command}`.quiet()
     } else {
-      await $`cd ${pkg.path} && ${command}`.quiet()
+      await $`${command}`.cwd(pkg.path).quiet()
     }
 
     console.log(`   ✓ Success`)

@@ -1,6 +1,6 @@
 {
   "name": "@clockwork-engine/platform-memory",
-  "version": "2.7.5",
+  "version": "2.7.6",
   "description": "Headless memory platform layer for Clockwork Engine - testing and replay validation",
   "author": "Ramesh Nair <ram@hiddentao.com> (https://hiddentao.com)",
   "license": "MIT",
