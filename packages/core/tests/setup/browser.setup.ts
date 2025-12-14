@@ -22,6 +22,15 @@ export function setupBrowserEnvironment() {
   global.MouseEvent = window.MouseEvent as any
   global.KeyboardEvent = window.KeyboardEvent as any
 
+  // Mock MediaStream for recording tests
+  global.MediaStream = class MediaStream {
+    id = "mock-stream-id"
+    active = true
+    getTracks() {
+      return []
+    }
+  } as any
+
   // Web Audio API mocks (basic stubs for testing)
   global.AudioContext = class AudioContext {
     state = "running"
@@ -50,6 +59,15 @@ export function setupBrowserEnvironment() {
         connect: () => {
           // No-op mock
         },
+        disconnect: () => {
+          // No-op mock
+        },
+      }
+    }
+
+    createMediaStreamDestination() {
+      return {
+        stream: new (global as any).MediaStream(),
       }
     }
 
@@ -91,4 +109,5 @@ export function cleanupBrowserEnvironment() {
   delete (global as any).MouseEvent
   delete (global as any).KeyboardEvent
   delete (global as any).AudioContext
+  delete (global as any).MediaStream
 }

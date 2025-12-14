@@ -14,6 +14,11 @@ export class WebAudioLayer implements AudioLayer {
   private isClosed = false
   private hasResumed = false
 
+  // Recording support
+  private masterGain: GainNode | null = null
+  private recordingDestination: MediaStreamAudioDestinationNode | null = null
+  private isRecordingEnabled = false
+
   private async resumeWithTimeout(maxWaitMs = 2000): Promise<void> {
     if (!this.context) {
       return
@@ -35,6 +40,10 @@ export class WebAudioLayer implements AudioLayer {
       return
     }
     this.context = new AudioContext()
+
+    // Create master gain node for all audio routing
+    this.masterGain = this.context.createGain()
+    this.masterGain.connect(this.context.destination)
   }
 
   destroy(): void {
@@ -44,6 +53,8 @@ export class WebAudioLayer implements AudioLayer {
     }
 
     this.stopAll()
+    this.disableRecording()
+    this.masterGain = null
     this.context.close()
     this.context = null
     this.buffers.clear()
@@ -95,7 +106,7 @@ export class WebAudioLayer implements AudioLayer {
   }
 
   playSound(id: string, volume = 1.0, loop = false): void {
-    if (!this.context) {
+    if (!this.context || !this.masterGain) {
       return
     }
 
@@ -111,8 +122,9 @@ export class WebAudioLayer implements AudioLayer {
     const gainNode = this.context.createGain()
     gainNode.gain.value = volume
 
+    // Route through master gain for both playback and recording
     source.connect(gainNode)
-    gainNode.connect(this.context.destination)
+    gainNode.connect(this.masterGain)
 
     source.start()
 
@@ -171,5 +183,39 @@ export class WebAudioLayer implements AudioLayer {
       return AudioContextState.SUSPENDED
     }
     return this.context.state as AudioContextState
+  }
+
+  // Recording methods
+  enableRecording(): void {
+    if (!this.context || !this.masterGain || this.isRecordingEnabled) {
+      return
+    }
+
+    // Create recording destination and connect master gain to it
+    this.recordingDestination = this.context.createMediaStreamDestination()
+    this.masterGain.connect(this.recordingDestination)
+    this.isRecordingEnabled = true
+  }
+
+  disableRecording(): void {
+    if (
+      !this.masterGain ||
+      !this.recordingDestination ||
+      !this.isRecordingEnabled
+    ) {
+      return
+    }
+
+    // Disconnect recording destination
+    this.masterGain.disconnect(this.recordingDestination)
+    this.recordingDestination = null
+    this.isRecordingEnabled = false
+  }
+
+  getRecordingStream(): MediaStream | null {
+    if (!this.recordingDestination) {
+      return null
+    }
+    return this.recordingDestination.stream
   }
 }

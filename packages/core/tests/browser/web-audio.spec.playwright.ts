@@ -484,6 +484,146 @@ test.describe("WebAudioLayer Autoplay Policy Fix", () => {
   })
 })
 
+test.describe("WebAudioLayer Recording", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/tests/browser/test-page.html")
+  })
+
+  test("should return null stream before recording enabled", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      return {
+        stream: audio.getRecordingStream(),
+      }
+    })()`,
+    )
+
+    expect(result.stream).toBeNull()
+  })
+
+  test("should enable recording and return MediaStream", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      audio.enableRecording()
+      const stream = audio.getRecordingStream()
+
+      return {
+        hasStream: stream !== null,
+        isMediaStream: stream instanceof MediaStream,
+        streamActive: stream ? stream.active : false,
+      }
+    })()`,
+    )
+
+    expect(result.hasStream).toBe(true)
+    expect(result.isMediaStream).toBe(true)
+  })
+
+  test("should disable recording and return null stream", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      audio.enableRecording()
+      const streamBefore = audio.getRecordingStream()
+
+      audio.disableRecording()
+      const streamAfter = audio.getRecordingStream()
+
+      return {
+        hadStreamBefore: streamBefore !== null,
+        hasStreamAfter: streamAfter !== null,
+      }
+    })()`,
+    )
+
+    expect(result.hadStreamBefore).toBe(true)
+    expect(result.hasStreamAfter).toBe(false)
+  })
+
+  test("should handle enable/disable cycle multiple times", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      const states = []
+
+      for (let i = 0; i < 3; i++) {
+        audio.enableRecording()
+        states.push(audio.getRecordingStream() !== null)
+        audio.disableRecording()
+        states.push(audio.getRecordingStream() === null)
+      }
+
+      return { states }
+    })()`,
+    )
+
+    expect(result.states).toEqual([true, true, true, true, true, true])
+  })
+
+  test("should cleanup recording on destroy", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+
+      audio.enableRecording()
+      const streamBefore = audio.getRecordingStream()
+
+      audio.destroy()
+      const streamAfter = audio.getRecordingStream()
+
+      return {
+        hadStreamBefore: streamBefore !== null,
+        hasStreamAfter: streamAfter !== null,
+      }
+    })()`,
+    )
+
+    expect(result.hadStreamBefore).toBe(true)
+    expect(result.hasStreamAfter).toBe(false)
+  })
+
+  test("should allow sound playback while recording", async ({ page }) => {
+    const result = await page.evaluate(
+      `(async () => {
+      ${getAudioSetup()}
+      ${CREATE_TEST_BUFFER}
+
+      const buffer = createTestBuffer(audio, 440, 0.05)
+      audio.loadSoundFromBuffer("test-tone", buffer)
+
+      await audio.tryResumeOnce()
+
+      audio.enableRecording()
+      const stream = audio.getRecordingStream()
+
+      audio.playSound("test-tone", 0.5, false)
+
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      audio.stopSound("test-tone")
+
+      return {
+        hasStream: stream !== null,
+        state: audio.getState(),
+      }
+    })()`,
+    )
+
+    expect(result.hasStream).toBe(true)
+    expect(result.state).toBe(AudioContextState.RUNNING)
+  })
+})
+
 test.describe("WebAudioLayer Data URL Loading", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("http://localhost:3000/tests/browser/test-page.html")

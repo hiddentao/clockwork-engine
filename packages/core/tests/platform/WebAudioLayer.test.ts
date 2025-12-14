@@ -178,4 +178,78 @@ describe("WebAudioLayer", () => {
       expect(() => audio.playSound("test")).not.toThrow()
     })
   })
+
+  describe("Recording", () => {
+    beforeEach(async () => {
+      await audio.initialize()
+    })
+
+    it("should return null stream before recording enabled", () => {
+      expect(audio.getRecordingStream()).toBeNull()
+    })
+
+    it("should enable recording without errors", () => {
+      expect(() => audio.enableRecording()).not.toThrow()
+    })
+
+    it("should return MediaStream when recording enabled", () => {
+      audio.enableRecording()
+      const stream = audio.getRecordingStream()
+      expect(stream).not.toBeNull()
+    })
+
+    it("should be idempotent when enabling recording multiple times", () => {
+      audio.enableRecording()
+      const stream1 = audio.getRecordingStream()
+      audio.enableRecording()
+      const stream2 = audio.getRecordingStream()
+      expect(stream1).toBe(stream2)
+    })
+
+    it("should disable recording without errors", () => {
+      audio.enableRecording()
+      expect(() => audio.disableRecording()).not.toThrow()
+    })
+
+    it("should return null stream after recording disabled", () => {
+      audio.enableRecording()
+      expect(audio.getRecordingStream()).not.toBeNull()
+      audio.disableRecording()
+      expect(audio.getRecordingStream()).toBeNull()
+    })
+
+    it("should be idempotent when disabling recording multiple times", () => {
+      audio.enableRecording()
+      audio.disableRecording()
+      expect(() => audio.disableRecording()).not.toThrow()
+      expect(audio.getRecordingStream()).toBeNull()
+    })
+
+    it("should handle enable/disable cycle multiple times", () => {
+      for (let i = 0; i < 3; i++) {
+        audio.enableRecording()
+        expect(audio.getRecordingStream()).not.toBeNull()
+        audio.disableRecording()
+        expect(audio.getRecordingStream()).toBeNull()
+      }
+    })
+
+    it("should disable recording on destroy", () => {
+      audio.enableRecording()
+      expect(audio.getRecordingStream()).not.toBeNull()
+      audio.destroy()
+      expect(audio.getRecordingStream()).toBeNull()
+    })
+
+    it("should handle enableRecording before initialization", () => {
+      const uninitAudio = new WebAudioLayer()
+      expect(() => uninitAudio.enableRecording()).not.toThrow()
+      expect(uninitAudio.getRecordingStream()).toBeNull()
+    })
+
+    it("should handle disableRecording before initialization", () => {
+      const uninitAudio = new WebAudioLayer()
+      expect(() => uninitAudio.disableRecording()).not.toThrow()
+    })
+  })
 })

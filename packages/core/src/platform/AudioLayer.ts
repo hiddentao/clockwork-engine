@@ -52,4 +52,9 @@ export interface AudioLayer {
   // Context management
   tryResumeOnce(): Promise<void>
   getState(): AudioContextState
+
+  // Recording (optional - only implemented by WebAudioLayer)
+  enableRecording?(): void
+  disableRecording?(): void
+  getRecordingStream?(): MediaStream | null
 }

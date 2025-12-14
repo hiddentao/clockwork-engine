@@ -1,10 +1,6 @@
 {
-  "packageFiles": [
-    "packages/core/package.json"
-  ],
-  "bumpFiles": [
-    "packages/core/package.json"
-  ],
+  "packageFiles": ["packages/core/package.json"],
+  "bumpFiles": ["packages/core/package.json"],
   "infile": "CHANGELOG.md",
   "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n",
   "types": [

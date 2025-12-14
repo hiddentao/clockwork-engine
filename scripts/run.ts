@@ -75,7 +75,11 @@ function parseArgs(args: string[]): {
   include: string[]
   exclude: string[]
 } {
-  const result = { command: "", include: [] as string[], exclude: [] as string[] }
+  const result = {
+    command: "",
+    include: [] as string[],
+    exclude: [] as string[],
+  }
   let i = 0
 
   while (i < args.length) {
@@ -176,7 +180,9 @@ async function main() {
   const args = process.argv.slice(2)
 
   if (args.length === 0) {
-    console.log("Usage: bun run scripts/run.ts <command> [--include|-i <pkgs>] [--exclude|-e <pkgs>]")
+    console.log(
+      "Usage: bun run scripts/run.ts <command> [--include|-i <pkgs>] [--exclude|-e <pkgs>]",
+    )
     console.log("\nCommands:")
     console.log("  <script>           Run npm script in each package")
     console.log('  "<shell command>"  Run arbitrary shell command')
@@ -193,7 +199,9 @@ async function main() {
     process.exit(0)
   }
 
-  console.log(`Running "${command}" on ${packages.length} package(s): ${packages.map((p) => p.name).join(", ")}`)
+  console.log(
+    `Running "${command}" on ${packages.length} package(s): ${packages.map((p) => p.name).join(", ")}`,
+  )
 
   if (command === "sync-versions") {
     const success = await syncVersions(allPackages)

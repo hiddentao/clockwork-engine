@@ -17,7 +17,10 @@ const ROOT = join(import.meta.dir, "..")
 
 type ReleaseType = "patch" | "minor" | "major" | null
 
-function parseArgs(args: string[]): { releaseType: ReleaseType; dryRun: boolean } {
+function parseArgs(args: string[]): {
+  releaseType: ReleaseType
+  dryRun: boolean
+} {
   let releaseType: ReleaseType = null
   let dryRun = false
 
@@ -69,7 +72,10 @@ async function main() {
   // Step 1: Run commit-and-tag-version (bumps core version)
   const releaseAsArg = releaseType ? ` --release-as ${releaseType}` : ""
   const dryRunArg = dryRun ? " --dry-run" : ""
-  await run(`commit-and-tag-version${releaseAsArg}${dryRunArg}`, "Bumping version and updating changelog")
+  await run(
+    `commit-and-tag-version${releaseAsArg}${dryRunArg}`,
+    "Bumping version and updating changelog",
+  )
 
   if (dryRun) {
     console.log("\n✓ Dry run complete. No changes were made.")
@@ -83,14 +89,20 @@ async function main() {
   await run("git add -A", "Staging all changes")
 
   // Step 4: Amend the version commit to include synced versions
-  await run("git commit --amend --no-edit", "Amending commit with synced versions")
+  await run(
+    "git commit --amend --no-edit",
+    "Amending commit with synced versions",
+  )
 
   // Step 5: Push with tags
   await run("git push --follow-tags origin main", "Pushing to origin with tags")
 
   // Step 6: Publish all packages
   const otp = await prompt("\n🔐 Enter npm OTP: ")
-  await run(`bun run scripts/run.ts "npm publish --otp=${otp}" --exclude demo`, "Publishing packages to npm")
+  await run(
+    `bun run scripts/run.ts "npm publish --otp=${otp}" --exclude demo`,
+    "Publishing packages to npm",
+  )
 
   console.log("\n✓ Release complete!")
 }
