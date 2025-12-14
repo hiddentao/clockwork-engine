@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0](https://github.com/hiddentao/clockwork-engine/compare/v2.7.2...v2.8.0) (2025-12-14)
+
+
+### Features
+
+* **audio:** add recording support to WebAudioLayer ([b4de04e](https://github.com/hiddentao/clockwork-engine/commit/b4de04ea205468947f5735fcecfae3bd197ef3e2))
+
+
+### Bug Fixes
+
+* **platform-web-pixi:** apply tint to graphics objects in PixiRenderingLayer ([a6d4d98](https://github.com/hiddentao/clockwork-engine/commit/a6d4d982b7ea0049bf6adaa6dd71030f75e2fab4))
+* **release:** fix version sync order and use npm publish ([7e99a89](https://github.com/hiddentao/clockwork-engine/commit/7e99a899785c72556cafdc94106a60689b8a3a1e))
+
+
+### Documentation
+
+* update documentation for monorepo structure ([9828e85](https://github.com/hiddentao/clockwork-engine/commit/9828e85a78ab190832f52af91642bfa76c3cc9e0))
+
 ## [2.7.9](https://github.com/hiddentao/clockwork-engine/compare/v2.7.2...v2.7.9) (2025-12-12)
 
 
