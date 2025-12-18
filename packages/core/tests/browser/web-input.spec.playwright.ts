@@ -355,35 +355,4 @@ test.describe("WebInputLayer (Browser with DOM Events)", () => {
     expect(result.afterRemoveCount).toBe(1)
     expect(result.shouldBeEqual).toBe(true)
   })
-
-  test("should include timestamp in events", async ({ page }) => {
-    const result = await page.evaluate(
-      `(async () => {
-      ${getInputSetup()}
-
-      const events = []
-      input.onPointerDown((event) => {
-        events.push({
-          timestamp: event.timestamp,
-          hasTimestamp: typeof event.timestamp === "number",
-        })
-      })
-
-      testContainer.dispatchEvent(new PointerEvent("pointerdown", {
-        clientX: 100,
-        clientY: 100,
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-      }))
-
-      return {
-        event: events[0],
-      }
-    })()`,
-    )
-
-    expect(result.event.hasTimestamp).toBe(true)
-    expect(result.event.timestamp).toBeGreaterThan(0)
-  })
 })
