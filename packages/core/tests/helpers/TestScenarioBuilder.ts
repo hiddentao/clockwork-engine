@@ -249,7 +249,6 @@ export class TestScenarioBuilder {
     this.inputEvents.push({
       type: GameEventType.USER_INPUT,
       tick,
-      timestamp: Date.now() + tick * 16.67, // Simulate 60 FPS timing
       inputType,
       params,
     })
@@ -431,7 +430,6 @@ export class TestScenarioBuilder {
     const event: ObjectUpdateEvent = {
       type: GameEventType.OBJECT_UPDATE,
       tick,
-      timestamp: Date.now(),
       objectType,
       objectId,
       method,

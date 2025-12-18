@@ -74,7 +74,6 @@ describe("GameRecorder", () => {
       const testEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
         tick: 1,
-        timestamp: Date.now(),
         inputType: "keyboard",
         params: { key: "W" },
       }
@@ -152,7 +151,6 @@ describe("GameRecorder", () => {
       const userInputEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
         tick: 1,
-        timestamp: Date.now(),
         inputType: "keyboard",
         params: { key: "SPACE", pressed: true },
       }
@@ -168,7 +166,6 @@ describe("GameRecorder", () => {
       const objectUpdateEvent: ObjectUpdateEvent = {
         type: GameEventType.OBJECT_UPDATE,
         tick: 2,
-        timestamp: Date.now(),
         objectType: "Player",
         objectId: "player1",
         method: "setPosition",
@@ -219,7 +216,6 @@ describe("GameRecorder", () => {
       const originalEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
         tick: 1,
-        timestamp: 1000,
         inputType: "keyboard",
         params: { key: "W", pressed: true },
       }
@@ -248,7 +244,6 @@ describe("GameRecorder", () => {
       const event: UserInputEvent = {
         type: GameEventType.USER_INPUT,
         tick: 1,
-        timestamp: Date.now(),
         inputType: "test",
         params: {},
       }
@@ -263,7 +258,6 @@ describe("GameRecorder", () => {
       const complexEvent: ObjectUpdateEvent = {
         type: GameEventType.OBJECT_UPDATE,
         tick: 1,
-        timestamp: Date.now(),
         objectType: "ComplexObject",
         objectId: "complex1",
         method: "complexMethod",
@@ -529,7 +523,6 @@ describe("GameRecorder", () => {
         const event: UserInputEvent = {
           type: GameEventType.USER_INPUT,
           tick: Math.floor(i / 10) + 1,
-          timestamp: Date.now() + Math.random() * 100,
           inputType: `concurrent${i}`,
           params: { value: i },
         }
@@ -548,27 +541,32 @@ describe("GameRecorder", () => {
 
   describe("Data Integrity", () => {
     it("should maintain event order across recording sessions", () => {
-      const timestamps = [1000, 1100, 1200, 1050, 1150]
-
       recorder.startRecording(mockEventManager as any, {
         prngSeed: "order-test",
       })
 
-      timestamps.forEach((timestamp, index) => {
+      for (let i = 0; i < 5; i++) {
         recorder.recordEvent({
           type: GameEventType.USER_INPUT,
-          tick: index + 1,
-          timestamp,
-          inputType: `event${index}`,
+          tick: i + 1,
+          inputType: `event${i}`,
           params: {},
         } as UserInputEvent)
-      })
+      }
 
       recorder.stopRecording()
 
       const recording = recorder.getCurrentRecording()
-      const recordedTimestamps = recording!.events.map((e) => e.timestamp)
-      expect(recordedTimestamps).toEqual(timestamps) // Should preserve original order
+      const recordedInputTypes = recording!.events.map(
+        (e) => (e as UserInputEvent).inputType,
+      )
+      expect(recordedInputTypes).toEqual([
+        "event0",
+        "event1",
+        "event2",
+        "event3",
+        "event4",
+      ])
     })
 
     it("should create shallow copies of recording data", () => {
@@ -579,7 +577,6 @@ describe("GameRecorder", () => {
       const originalEvent: UserInputEvent = {
         type: GameEventType.USER_INPUT,
         tick: 1,
-        timestamp: 1000,
         inputType: "keyboard",
         params: { nested: { data: [1, 2, 3] } },
       }

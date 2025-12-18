@@ -12,7 +12,6 @@ export interface InputEvent {
   x: number
   y: number
   button?: number
-  timestamp: number
 }
 
 /**
@@ -21,7 +20,6 @@ export interface InputEvent {
 export interface KeyboardInputEvent {
   key: string
   code: string
-  timestamp: number
 }
 
 /**

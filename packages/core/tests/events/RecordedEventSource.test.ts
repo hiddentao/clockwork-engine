@@ -153,8 +153,8 @@ describe("RecordedEventSource", () => {
       const events = eventSource.getNextEvents(1)
 
       expect(events).toHaveLength(2)
-      expect(events[0].timestamp).toBe(1000) // Earlier timestamp
-      expect(events[1].timestamp).toBe(1001) // Later timestamp
+      expect((events[0] as any).inputType).toBe("keyboard")
+      expect((events[1] as any).objectType).toBe("Player")
     })
 
     it("should track current position correctly", () => {
@@ -233,7 +233,6 @@ describe("RecordedEventSource", () => {
       expect(userInputEvent).toBeDefined()
       expect(userInputEvent.inputType).toBe("keyboard")
       expect(userInputEvent.params).toEqual({ key: "W", pressed: true })
-      expect(userInputEvent.timestamp).toBe(1000)
     })
 
     it("should preserve object update event details", () => {
@@ -247,7 +246,6 @@ describe("RecordedEventSource", () => {
       expect(objectUpdateEvent.objectId).toBe("player1")
       expect(objectUpdateEvent.method).toBe("setPosition")
       expect(objectUpdateEvent.params).toEqual([{ x: 10, y: 20 }])
-      expect(objectUpdateEvent.timestamp).toBe(1001)
     })
 
     it("should handle complex parameter types", () => {

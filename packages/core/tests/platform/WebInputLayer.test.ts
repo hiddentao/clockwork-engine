@@ -63,7 +63,6 @@ describe("WebInputLayer", () => {
       expect(receivedEvent.x).toBe(150)
       expect(receivedEvent.y).toBe(250)
       expect(receivedEvent.button).toBe(0)
-      expect(receivedEvent.timestamp).toBeDefined()
     })
 
     it("should trigger pointer up callback", () => {
@@ -133,7 +132,6 @@ describe("WebInputLayer", () => {
       expect(receivedEvent).toBeDefined()
       expect(receivedEvent.key).toBe("Enter")
       expect(receivedEvent.code).toBe("Enter")
-      expect(receivedEvent.timestamp).toBeDefined()
     })
 
     it("should trigger key up callback", () => {

@@ -665,42 +665,42 @@ export class MockInputLayer implements InputLayer {
 
   // Test helpers - simulate events
   simulatePointerDown(x: number, y: number, button = 0): void {
-    const event: InputEvent = { x, y, button, timestamp: Date.now() }
+    const event: InputEvent = { x, y, button }
     for (const callback of this.pointerDownCallbacks) {
       callback(event)
     }
   }
 
   simulatePointerUp(x: number, y: number, button = 0): void {
-    const event: InputEvent = { x, y, button, timestamp: Date.now() }
+    const event: InputEvent = { x, y, button }
     for (const callback of this.pointerUpCallbacks) {
       callback(event)
     }
   }
 
   simulatePointerMove(x: number, y: number): void {
-    const event: InputEvent = { x, y, timestamp: Date.now() }
+    const event: InputEvent = { x, y }
     for (const callback of this.pointerMoveCallbacks) {
       callback(event)
     }
   }
 
   simulateClick(x: number, y: number): void {
-    const event: InputEvent = { x, y, timestamp: Date.now() }
+    const event: InputEvent = { x, y }
     for (const callback of this.clickCallbacks) {
       callback(event)
     }
   }
 
   simulateKeyDown(key: string, code: string): void {
-    const event: KeyboardInputEvent = { key, code, timestamp: Date.now() }
+    const event: KeyboardInputEvent = { key, code }
     for (const callback of this.keyDownCallbacks) {
       callback(event)
     }
   }
 
   simulateKeyUp(key: string, code: string): void {
-    const event: KeyboardInputEvent = { key, code, timestamp: Date.now() }
+    const event: KeyboardInputEvent = { key, code }
     for (const callback of this.keyUpCallbacks) {
       callback(event)
     }

@@ -49,14 +49,12 @@ describe("UserInputEventSource", () => {
       expect(events[0].tick).toBe(currentFrame)
       expect((events[0] as UserInputEvent).inputType).toBe("direction")
       expect(events[0].params).toEqual({ x: 1, y: 0 })
-      expect(typeof events[0].timestamp).toBe("number")
 
       // Check second event
       expect(events[1].type).toBe(GameEventType.USER_INPUT)
       expect(events[1].tick).toBe(currentFrame)
       expect((events[1] as UserInputEvent).inputType).toBe("button")
       expect(events[1].params).toEqual({ action: "jump" })
-      expect(typeof events[1].timestamp).toBe("number")
     })
 
     it("should clear queue after generating events", () => {
@@ -181,44 +179,6 @@ describe("UserInputEventSource", () => {
       // Reset should still work
       inputSource.reset()
       expect(inputSource.hasMoreEvents()).toBe(false)
-    })
-  })
-
-  describe("Timestamp Handling", () => {
-    it("should assign timestamps to queued inputs", async () => {
-      const startTime = Date.now()
-
-      inputSource.queueInput("test", { value: 1 })
-
-      // Small delay
-      await new Promise((resolve) => setTimeout(resolve, 5))
-
-      inputSource.queueInput("test", { value: 2 })
-
-      const events = inputSource.getNextEvents(10)
-
-      expect(events).toHaveLength(2)
-      expect(events[0].timestamp).toBeGreaterThanOrEqual(startTime)
-      expect(events[1].timestamp).toBeGreaterThan(events[0].timestamp)
-    })
-
-    it("should preserve timestamp order", async () => {
-      const timestamps: number[] = []
-
-      // Queue inputs with small delays
-      for (let i = 0; i < 5; i++) {
-        inputSource.queueInput(`input${i}`, { value: i })
-        await new Promise((resolve) => setTimeout(resolve, 1))
-      }
-
-      const events = inputSource.getNextEvents(10)
-
-      events.forEach((event) => timestamps.push(event.timestamp))
-
-      // Timestamps should be in ascending order
-      for (let i = 1; i < timestamps.length; i++) {
-        expect(timestamps[i]).toBeGreaterThanOrEqual(timestamps[i - 1])
-      }
     })
   })
 

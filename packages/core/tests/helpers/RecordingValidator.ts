@@ -31,9 +31,6 @@ export class RecordingValidator {
         if (typeof event.tick !== "number" || event.tick < 0) {
           errors.push(`Event ${index}: missing or invalid frame number`)
         }
-        if (typeof event.timestamp !== "number") {
-          errors.push(`Event ${index}: missing or invalid timestamp`)
-        }
       })
     }
 
@@ -71,18 +68,6 @@ export class RecordingValidator {
             `Event ${i} at frame ${event.tick} exceeds totalTicks ${recording.totalTicks}`,
           )
         }
-      }
-
-      // Check for potential timestamp ordering issues
-      let lastTimestamp = 0
-      for (let i = 0; i < recording.events.length; i++) {
-        const event = recording.events[i]
-        if (event.timestamp < lastTimestamp) {
-          warnings.push(
-            `Event ${i} has timestamp ${event.timestamp} earlier than previous ${lastTimestamp}`,
-          )
-        }
-        lastTimestamp = event.timestamp
       }
     }
 

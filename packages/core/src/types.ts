@@ -16,7 +16,6 @@ export enum GameEventType {
 export interface GameEvent {
   type: GameEventType
   tick: number
-  timestamp: number
 }
 
 export interface UserInputEvent extends GameEvent {

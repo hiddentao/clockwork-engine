@@ -6,7 +6,6 @@ export class UserInputEventSource implements GameEventSource {
   protected dataQueue: Array<{
     inputType: string
     data: any
-    timestamp: number
   }> = []
 
   /**
@@ -15,7 +14,7 @@ export class UserInputEventSource implements GameEventSource {
    * @param data The input data to queue
    */
   queueInput(inputType: string, data: any): void {
-    this.dataQueue.push({ inputType, data, timestamp: Date.now() })
+    this.dataQueue.push({ inputType, data })
   }
 
   /**
@@ -32,7 +31,6 @@ export class UserInputEventSource implements GameEventSource {
     const events: UserInputEvent[] = this.dataQueue.map((item) => ({
       type: GameEventType.USER_INPUT,
       tick: totalTicks,
-      timestamp: item.timestamp,
       inputType: item.inputType,
       params: item.data,
     }))

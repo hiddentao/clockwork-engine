@@ -676,7 +676,6 @@ describe("Record-Replay Integration Tests", () => {
           recorder.recordEvent({
             type: GameEventType.OBJECT_UPDATE,
             tick: originalEngine.getTotalTicks(),
-            timestamp: Date.now(),
             objectType: "Projectile",
             objectId: "serialize_proj",
             method: "setPosition",

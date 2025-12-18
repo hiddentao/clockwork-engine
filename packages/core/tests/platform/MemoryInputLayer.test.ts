@@ -80,7 +80,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerPointerDown({ x: 100, y: 200, timestamp: Date.now() })
+      input.triggerPointerDown({ x: 100, y: 200 })
       expect(called).toBe(true)
     })
 
@@ -90,7 +90,7 @@ describe("MemoryInputLayer", () => {
         receivedEvent = event
       })
 
-      const testEvent = { x: 100, y: 200, button: 0, timestamp: Date.now() }
+      const testEvent = { x: 100, y: 200, button: 0 }
       input.triggerPointerDown(testEvent)
 
       expect(receivedEvent).toEqual(testEvent)
@@ -102,7 +102,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerPointerUp({ x: 100, y: 200, timestamp: Date.now() })
+      input.triggerPointerUp({ x: 100, y: 200 })
       expect(called).toBe(true)
     })
 
@@ -112,7 +112,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerPointerMove({ x: 100, y: 200, timestamp: Date.now() })
+      input.triggerPointerMove({ x: 100, y: 200 })
       expect(called).toBe(true)
     })
 
@@ -122,7 +122,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerClick({ x: 100, y: 200, timestamp: Date.now() })
+      input.triggerClick({ x: 100, y: 200 })
       expect(called).toBe(true)
     })
 
@@ -132,7 +132,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerKeyDown({ key: "a", code: "KeyA", timestamp: Date.now() })
+      input.triggerKeyDown({ key: "a", code: "KeyA" })
       expect(called).toBe(true)
     })
 
@@ -142,7 +142,7 @@ describe("MemoryInputLayer", () => {
         called = true
       })
 
-      input.triggerKeyUp({ key: "a", code: "KeyA", timestamp: Date.now() })
+      input.triggerKeyUp({ key: "a", code: "KeyA" })
       expect(called).toBe(true)
     })
 
@@ -153,7 +153,7 @@ describe("MemoryInputLayer", () => {
       })
 
       input.removeAllListeners()
-      input.triggerPointerDown({ x: 0, y: 0, timestamp: Date.now() })
+      input.triggerPointerDown({ x: 0, y: 0 })
 
       expect(called).toBe(false)
     })
@@ -164,7 +164,7 @@ describe("MemoryInputLayer", () => {
       input.onPointerDown(() => count++)
       input.onPointerDown(() => count++)
 
-      input.triggerPointerDown({ x: 0, y: 0, timestamp: Date.now() })
+      input.triggerPointerDown({ x: 0, y: 0 })
       expect(count).toBe(3)
     })
   })

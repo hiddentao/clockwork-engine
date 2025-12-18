@@ -85,14 +85,13 @@ describe("MemoryPlatformLayer", () => {
       platform.input.onPointerDown(() => count1++)
       platform.input.onKeyDown(() => count2++)
 
-      platform.input.triggerPointerDown({ x: 0, y: 0, timestamp: Date.now() })
+      platform.input.triggerPointerDown({ x: 0, y: 0 })
       expect(count1).toBe(1)
       expect(count2).toBe(0) // Different event type
 
       platform.input.triggerKeyDown({
         key: "a",
         code: "KeyA",
-        timestamp: Date.now(),
       })
       expect(count1).toBe(1) // Still 1
       expect(count2).toBe(1) // Now 1
@@ -121,7 +120,7 @@ describe("MemoryPlatformLayer", () => {
       })
 
       // Simulate click
-      platform.input.triggerClick({ x: 100, y: 200, timestamp: Date.now() })
+      platform.input.triggerClick({ x: 100, y: 200 })
 
       // Verify state
       expect(clickCount).toBe(1)

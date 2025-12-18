@@ -118,7 +118,6 @@ export class WebInputLayer implements InputLayer {
     const event: KeyboardInputEvent = {
       key: e.key,
       code: e.code,
-      timestamp: Date.now(),
     }
     this.keyDownCallbacks.trigger(event)
   }
@@ -127,7 +126,6 @@ export class WebInputLayer implements InputLayer {
     const event: KeyboardInputEvent = {
       key: e.key,
       code: e.code,
-      timestamp: Date.now(),
     }
     this.keyUpCallbacks.trigger(event)
   }
@@ -138,7 +136,6 @@ export class WebInputLayer implements InputLayer {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
       button: e.button,
-      timestamp: Date.now(),
     }
   }
 }
